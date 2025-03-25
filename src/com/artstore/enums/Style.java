@@ -1,4 +1,22 @@
+// This file is part of the ArtInventoryTransaction application, specifically the enums package.
 package com.artstore.enums;
 
+/**
+ * Enum representing styles used in painting and drawing (e.g., abstract, surrealism, impressionism, realism, etc.).
+ */
 public enum Style {
-}
+    ABSTRACT, SURREALISM, IMPRESSIONISM,
+    POST_IMPRESSIONISM, EXPRESSIONISM, REALISM,
+    HYPERREALISM, CUBISM, MINIMALISM,
+    POP_ART, PHOTOREALISM, FAUVISM,
+    BAROQUE, ROCOCO, RENAISSANCE,
+    NEOCLASSICISM, ROMANTICISM, SYMBOLISM,
+    ART_NOUVEAU, ART_DECO, FUTURISM,
+    CONSTRUCTIVISM, DADAISM, CONCEPTUAL_ART,
+    OP_ART, NAÏVE_ART, STREET_ART,
+    FOLK_ART, TACHISME, LUMINISM,
+    SUPREMATISM, AUTOMATISM, COLOR_FIELD_PAINTING,
+    HARD_EDGE_PAINTING, KINETIC_ART, GEOMETRIC_ABSTRACTION,
+    MANGA, GRAPHIC_NOVEL, SKETCH_ART,
+    FANTASY_ART, GOTHIC_ART, CROSSHATCHING, SCIENTIFIC_ILLUSTRATION
+} // End Enum
