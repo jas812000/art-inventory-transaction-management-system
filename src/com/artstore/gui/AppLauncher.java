@@ -1,5 +1,7 @@
+// This file is part of the ArtInventoryTransaction application, specifically the GUI package.
+package com.artstore.gui;
+
 /*
- * AppLauncher.java
  *
  * This class contains the main method and serves as the entry point
  * for launching the Art Inventory and Transaction Manager application.
@@ -12,7 +14,6 @@
  * @version       1.0
  * @since         2025-03-24
  */
-import ArtInventoryTransction.ArtInventoryTransactionGUI;
 
 public class AppLauncher {
     public static void main(String[] args) {
@@ -20,4 +21,4 @@ public class AppLauncher {
         javax.swing.SwingUtilities.invokeLater(ArtInventoryTransactionGUI::new);
 
     } // End main method
-} // End AppLauncher class
+} // End com.artstore.gui.AppLauncher class

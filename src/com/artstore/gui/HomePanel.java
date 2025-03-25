@@ -1,5 +1,6 @@
-// This file is part of the ArtInventoryTransaction package
-package ArtInventoryTransction;
+// This file is part of the ArtInventoryTransaction application, specifically the GUI package.
+package com.artstore.gui;
+
 /*
  * ArtInventoryTransaction.HomePanel.java
  *
@@ -31,7 +32,7 @@ public class HomePanel extends JPanel {
 
     // Path to image resource relative to the root of the project
     private static final String IMAGE_PATH =
-            System.getProperty("user.dir") + "/src/images/graffiti-abstract.jpg";
+            System.getProperty("user.dir") + "/images/graffiti-abstract.jpg";
 
     // declare an instance of Image
     private Image backgroundImage;

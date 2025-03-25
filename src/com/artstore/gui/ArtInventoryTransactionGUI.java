@@ -1,5 +1,7 @@
 // This file is part of the ArtInventoryTransaction package
-package ArtInventoryTransction;
+// This file is part of the ArtInventoryTransaction application, specifically the GUI package.
+package com.artstore.gui;
+
 /*
  * ArtInventoryTransaction.ArtInventoryTransactionGUI.java
  *
@@ -23,6 +25,7 @@ package ArtInventoryTransction;
  *  @since         2025-03-24
  *
  */
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -47,7 +50,7 @@ public class ArtInventoryTransactionGUI {
         //  allows swapping between panels
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
-        mainPanel.add(new ArtInventoryTransction.HomePanel(), "Home");
+        mainPanel.add(new HomePanel(), "Home");
 
         // Add placeholder panels for each menu option
         mainPanel.add(createFeaturePanel("Adding Art to the Inventory"), "AddArt");
