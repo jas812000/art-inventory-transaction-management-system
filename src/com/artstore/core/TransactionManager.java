@@ -22,7 +22,7 @@ import static com.artstore.gui.ArtInventoryTransactionGUI.TRANSACTION_DIRECTORY;
 public class TransactionManager {
 
     // Stores all transactions, keyed by their unique transaction ID
-    private Map<String, Transaction> transactions;
+    private final Map<String, Transaction> transactions;
 
     /**
      * Constructs an empty TransactionManager.
@@ -99,7 +99,6 @@ public class TransactionManager {
     /**
      * Saves all transactions to a text file, one per line.
      *
-     * @param filePath destination file path
      */
     public void saveTransactionsToFile() {
 
@@ -118,7 +117,6 @@ public class TransactionManager {
     /**
      * Loads transactions from a text file. Assumes each line is a transaction.
      *
-     * @param filePath source file path
      */
     public void loadTransactionsFromFile() {
 

@@ -32,7 +32,7 @@ public class HomePanel extends JPanel {
 
     // Path to image resource relative to the root of the project
     private static final String IMAGE_PATH =
-            System.getProperty("user.dir") + "/images/graffiti-abstract.jpg";
+            System.getProperty("user.dir") + "/src/com/images/graffiti-abstract.jpg";
 
     // declare an instance of Image
     private Image backgroundImage;

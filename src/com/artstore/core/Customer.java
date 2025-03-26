@@ -14,10 +14,8 @@ import java.util.List;
  */
 public class Customer {
 
-
     private static final String CUSTOMER_FILE_PATH =
             System.getProperty("user.dir") + "/src/com/data/Customer_Files/customers.txt";
-
 
     // Customer fields
     private String firstName;

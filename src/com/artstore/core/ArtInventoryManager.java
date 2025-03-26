@@ -19,7 +19,7 @@ import static com.artstore.gui.ArtInventoryTransactionGUI.INVENTORY_DIRECTORY;
 public class ArtInventoryManager {
 
     // Holds all art pieces indexed by their unique ID
-    private Map<String, Art> inventory;
+    private final Map<String, Art> inventory;
 
     /**
      * Constructs an empty inventory.

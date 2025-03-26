@@ -43,6 +43,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.io.*;
 
 /**
  * GUI class for the Art Inventory and Transaction Manager
@@ -88,38 +89,7 @@ public class ArtInventoryTransactionGUI {
         transactionManager = new TransactionManager();                              // Initialize TransactionManager
         this.inventoryManager = new ArtInventoryManager();                          // Initialize ArtInventoryManager
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-        customers.add(new Customer("Alice", "Smith",
-                new Address("123 Main St", "New York", "NY", 10001),
-                "2125551234", "alice@example.com"));
-
-        customers.add(new Customer("Bob", "Jones",
-                new Address("456 Market St", "Los Angeles", "CA", 90210),
-                "3105555678", "bob@example.com"));
-
-
-
-
-
-
-
-
-
-
-
-
+        customers.addAll(Customer.loadAllFromFile());
 
         JFrame frame = new JFrame("Art Inventory & Transaction Manager");       // initialize main window with title
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);                        // specifies what occurs upon closing
@@ -141,7 +111,7 @@ public class ArtInventoryTransactionGUI {
         mainPanel.add(createCompleteOrderPanel(), "CompleteOrder");
         mainPanel.add(createRemoveOrderPanel(), "RemoveOrder");
         mainPanel.add(createRetrieveOrderPanel(), "RetrieveOrder");
-        mainPanel.add(createUpdateCustomerPanel(), "UpdateCustomer");
+        mainPanel.add(createManageCustomerPanel(), "ManageCustomer");
         mainPanel.add(createTransactionListPanel(), "ListTransactions");
 
         // Create a custom exit screen panel with a farewell message (no return button)
@@ -206,10 +176,10 @@ public class ArtInventoryTransactionGUI {
         retrieveOrderBtn.setBackground(new Color(245, 235, 220));
         retrieveOrderBtn.setForeground(Color.DARK_GRAY);
 
-        JButton updateCustomerBtn = new JButton("8. Update Customer Information");
-        updateCustomerBtn.setFont(new Font("Papyrus", Font.BOLD, 18));
-        updateCustomerBtn.setBackground(new Color(245, 235, 220));
-        updateCustomerBtn.setForeground(Color.DARK_GRAY);
+        JButton manageCustomerBtn = new JButton("8. Update Customer Information");
+        manageCustomerBtn.setFont(new Font("Papyrus", Font.BOLD, 18));
+        manageCustomerBtn.setBackground(new Color(245, 235, 220));
+        manageCustomerBtn.setForeground(Color.DARK_GRAY);
 
         JButton listTransactionsBtn = new JButton("9. View All Transactions");
         listTransactionsBtn.setFont(new Font("Papyrus", Font.BOLD, 18));
@@ -229,7 +199,7 @@ public class ArtInventoryTransactionGUI {
         completeOrderBtn.addActionListener(e -> cardLayout.show(mainPanel, "CompleteOrder"));
         removeOrderBtn.addActionListener(e -> cardLayout.show(mainPanel, "RemoveOrder"));
         retrieveOrderBtn.addActionListener(e -> cardLayout.show(mainPanel, "RetrieveOrder"));
-        updateCustomerBtn.addActionListener(e -> cardLayout.show(mainPanel, "UpdateCustomer"));
+        manageCustomerBtn.addActionListener(e -> cardLayout.show(mainPanel, "ManageCustomer"));
         listTransactionsBtn.addActionListener(e -> cardLayout.show(mainPanel, "ListTransactions"));
         exitBtn.addActionListener(e -> {
             cardLayout.show(mainPanel, "ExitScreen");
@@ -248,7 +218,7 @@ public class ArtInventoryTransactionGUI {
         menuPanel.add(completeOrderBtn);
         menuPanel.add(removeOrderBtn);
         menuPanel.add(retrieveOrderBtn);
-        menuPanel.add(updateCustomerBtn);
+        menuPanel.add(manageCustomerBtn);
         menuPanel.add(listTransactionsBtn);
         menuPanel.add(exitBtn);
 
@@ -272,18 +242,26 @@ public class ArtInventoryTransactionGUI {
 
 
     /**
-     * Creates a panel that allows the user to add a new Painting to the inventory.
-     * This serves as the "AddArt" panel in the GUI.
+     * Creates a panel that allows the user to add a new Art object to the inventory.
+     * This implementation supports multiple art types and adapts the form based on the selection.
      */
     private JPanel createAddArtPanel() {
         JPanel panel = new JPanel(new BorderLayout());
 
-        // Header label
         JLabel header = new JLabel("Add New Art to Inventory", JLabel.CENTER);
-        header.setFont(new Font("SansSerif", Font.BOLD, 20));
+        header.setFont(new Font("Papyrus", Font.BOLD, 20));
         panel.add(header, BorderLayout.NORTH);
 
-        // Text fields for input
+        // Art type selector
+        JComboBox<String> typeBox = new JComboBox<>();
+        typeBox.addItem(null);
+        typeBox.addItem("Painting");
+        typeBox.addItem("Drawing");
+        typeBox.addItem("Print");
+        typeBox.addItem("Sculpture");
+        typeBox.setFont(new Font("Papyrus", Font.PLAIN, 14));
+
+        // Input fields
         JTextField idField = new JTextField(10);
         JTextField titleField = new JTextField(15);
         JTextField priceField = new JTextField(10);
@@ -292,51 +270,125 @@ public class ArtInventoryTransactionGUI {
         JTextField descriptionField = new JTextField(25);
         JTextField heightField = new JTextField(5);
         JTextField widthField = new JTextField(5);
+        JTextField weightField = new JTextField(5);
 
-        // Dropdowns for enum-based fields
-        JComboBox<Style> styleBox = new JComboBox<>(Style.values());
-        JComboBox<Technique> techniqueBox = new JComboBox<>(Technique.values());
-        JComboBox<Category> categoryBox = new JComboBox<>(Category.values());
+        // Enum dropdowns — start empty, populate with values
+        JComboBox<Style> styleBox = new JComboBox<>();
+        styleBox.addItem(null);
+        for (Style s : Style.values()) styleBox.addItem(s);
 
-        // Button to trigger art creation
-        JButton addBtn = new JButton("Add Art");
+        JComboBox<Technique> techniqueBox = new JComboBox<>();
+        techniqueBox.addItem(null);
+        for (Technique t : Technique.values()) techniqueBox.addItem(t);
 
-        // Output area to display success or error messages
+        JComboBox<Category> categoryBox = new JComboBox<>();
+        categoryBox.addItem(null);
+        for (Category c : Category.values()) categoryBox.addItem(c);
+
+        JComboBox<EditionType> editionTypeBox = new JComboBox<>();
+        editionTypeBox.addItem(null);
+        for (EditionType e : EditionType.values()) editionTypeBox.addItem(e);
+
+        JComboBox<Material> materialBox = new JComboBox<>();
+        materialBox.addItem(null);
+        for (Material m : Material.values()) materialBox.addItem(m);
+
+        // Labels for dynamic fields
+        JLabel styleLabel = new JLabel("Style:");
+        JLabel techniqueLabel = new JLabel("Technique:");
+        JLabel categoryLabel = new JLabel("Category:");
+        JLabel editionLabel = new JLabel("Edition Type:");
+        JLabel materialLabel = new JLabel("Material:");
+        JLabel weightLabel = new JLabel("Weight (lbs):");
+
         JTextArea resultArea = new JTextArea(6, 40);
         resultArea.setEditable(false);
         resultArea.setFont(new Font("Monospaced", Font.PLAIN, 13));
 
-        // Action when user clicks "Add Art"
+        // Add Button
+        JButton addBtn = new JButton("Add Art");
+        addBtn.setFont(new Font("Papyrus", Font.BOLD, 16));
+        addBtn.setBackground(new Color(210, 250, 230));
+
+        // Update field visibility based on art type
+        Runnable updateFieldVisibility = () -> {
+            String selected = (String) typeBox.getSelectedItem();
+
+            boolean isPainting = "Painting".equals(selected);
+            boolean isDrawing = "Drawing".equals(selected);
+            boolean isPrint = "Print".equals(selected);
+            boolean isSculpture = "Sculpture".equals(selected);
+
+            styleLabel.setVisible(isPainting || isDrawing);
+            styleBox.setVisible(isPainting || isDrawing);
+
+            techniqueLabel.setVisible(isPainting || isDrawing);
+            techniqueBox.setVisible(isPainting || isDrawing);
+
+            categoryLabel.setVisible(isPainting || isDrawing || isPrint);
+            categoryBox.setVisible(isPainting || isDrawing || isPrint);
+
+            editionLabel.setVisible(isPrint);
+            editionTypeBox.setVisible(isPrint);
+
+            materialLabel.setVisible(isSculpture);
+            materialBox.setVisible(isSculpture);
+            weightLabel.setVisible(isSculpture);
+            weightField.setVisible(isSculpture);
+        };
+
+
+        typeBox.addActionListener(e -> updateFieldVisibility.run());
+
+        // Initial visibility
+        updateFieldVisibility.run();
+
+        // Button logic
         addBtn.addActionListener(e -> {
             try {
-                // Read and parse user input
                 String id = idField.getText().trim();
                 String title = titleField.getText().trim();
                 double price = Double.parseDouble(priceField.getText().trim());
                 int year = Integer.parseInt(yearField.getText().trim());
                 String author = authorField.getText().trim();
-                String description = descriptionField.getText().trim();
+                String desc = descriptionField.getText().trim();
                 int height = Integer.parseInt(heightField.getText().trim());
                 int width = Integer.parseInt(widthField.getText().trim());
+                String type = (String) typeBox.getSelectedItem();
 
-                // Get selected enum values
-                Style style = (Style) styleBox.getSelectedItem();
-                Technique technique = (Technique) techniqueBox.getSelectedItem();
-                Category category = (Category) categoryBox.getSelectedItem();
+                if (!id.matches("\\d{10}")) {
+                    throw new IllegalArgumentException("Art ID must be a 10-digit number.");
+                }
 
-                // Create and add the new Painting object
-                Art newArt = new Painting(id, price, year, title, description, author, height, width, style, technique, category);
+                Art newArt = switch (type) {
+                    case "Painting" -> new Painting(id, price, year, title, desc, author, height, width,
+                            (Style) styleBox.getSelectedItem(),
+                            (Technique) techniqueBox.getSelectedItem(),
+                            (Category) categoryBox.getSelectedItem());
+                    case "Drawing" -> new Drawing(id, price, year, title, desc, author,
+                            (Style) styleBox.getSelectedItem(),
+                            (Technique) techniqueBox.getSelectedItem(),
+                            (Category) categoryBox.getSelectedItem());
+                    case "Print" -> new Print(id, price, year, title, desc, author,
+                            (EditionType) editionTypeBox.getSelectedItem(),
+                            (Category) categoryBox.getSelectedItem());
+                    case "Sculpture" -> new Sculpture(id, price, year, title, desc, author,
+                            (Material) materialBox.getSelectedItem(),
+                            Double.parseDouble(weightField.getText().trim()));
+                    case null, default -> throw new IllegalArgumentException("Unsupported art type.");
+                };
+
                 inventoryManager.addArt(newArt);
-
-                resultArea.setText("Art successfully added:\n\n" + newArt.toString());
-
+                resultArea.setText("Art added successfully:\n\n" + newArt);
+                inventoryManager.saveInventoryToFile();
             } catch (Exception ex) {
-                resultArea.setText("Error adding art: " + ex.getMessage());
+                resultArea.setText("Error: " + ex.getMessage());
             }
         });
 
-        // Form layout with labels and fields
+        // Layout setup
         JPanel form = new JPanel(new GridLayout(0, 2, 5, 5));
+        form.add(new JLabel("Art Type:")); form.add(typeBox);
         form.add(new JLabel("Art ID (10-digit):")); form.add(idField);
         form.add(new JLabel("Title:")); form.add(titleField);
         form.add(new JLabel("Price:")); form.add(priceField);
@@ -345,24 +397,23 @@ public class ArtInventoryTransactionGUI {
         form.add(new JLabel("Description:")); form.add(descriptionField);
         form.add(new JLabel("Height:")); form.add(heightField);
         form.add(new JLabel("Width:")); form.add(widthField);
-        form.add(new JLabel("Style:")); form.add(styleBox);
-        form.add(new JLabel("Technique:")); form.add(techniqueBox);
-        form.add(new JLabel("Category:")); form.add(categoryBox);
+        form.add(styleLabel); form.add(styleBox);
+        form.add(techniqueLabel); form.add(techniqueBox);
+        form.add(categoryLabel); form.add(categoryBox);
+        form.add(editionLabel); form.add(editionTypeBox);
+        form.add(materialLabel); form.add(materialBox);
+        form.add(weightLabel); form.add(weightField);
 
-        // Central panel holding form and button
         JPanel centerPanel = new JPanel(new BorderLayout());
         centerPanel.add(form, BorderLayout.CENTER);
         centerPanel.add(addBtn, BorderLayout.SOUTH);
 
-        // Add components to main panel
         panel.add(centerPanel, BorderLayout.CENTER);
         panel.add(new JScrollPane(resultArea), BorderLayout.SOUTH);
 
-        // Return-to-menu button
         JButton returnBtn = new JButton("Return to Menu");
         returnBtn.setFont(new Font("Papyrus", Font.BOLD, 16));
         returnBtn.addActionListener(e -> cardLayout.first(mainPanel));
-
         JPanel bottom = new JPanel();
         bottom.add(returnBtn);
         panel.add(bottom, BorderLayout.PAGE_END);
@@ -401,6 +452,34 @@ public class ArtInventoryTransactionGUI {
         JTextArea resultArea = new JTextArea(6, 40);
         resultArea.setEditable(false);
         resultArea.setFont(new Font("Monospaced", Font.PLAIN, 13));
+
+
+
+
+
+
+
+        // Handle case: Inventory is empty
+        if (inventoryManager.getAllArt().isEmpty()) {
+            resultArea.setText("Inventory is empty. No art available to remove.");
+
+            panel.add(new JScrollPane(resultArea), BorderLayout.CENTER);
+
+            JButton returnBtn = new JButton("Return to Menu");
+            returnBtn.setFont(new Font("Papyrus", Font.BOLD, 16));
+            returnBtn.addActionListener(e -> cardLayout.first(mainPanel));
+            JPanel bottom = new JPanel();
+            bottom.add(returnBtn);
+            panel.add(bottom, BorderLayout.PAGE_END);
+
+            return panel; // Stop here — don't build full panel
+        }
+
+
+
+
+
+
 
         // Action when Remove button is clicked
         removeBtn.addActionListener(e -> {
@@ -470,7 +549,7 @@ public class ArtInventoryTransactionGUI {
             List<Art> allArt = inventoryManager.getAllArt();
 
             if (allArt.isEmpty()) {
-                sb.append("Inventory is currently empty.");
+                sb.append("Inventory is currently empty. \nPlease add art using the 'Add Art to Inventory' menu option.");
             } else {
                 for (Art art : allArt) {
                     sb.append(art.toString()).append("\n\n");
@@ -478,6 +557,8 @@ public class ArtInventoryTransactionGUI {
             }
 
             displayArea.setText(sb.toString());
+            refreshBtn.setEnabled(!allArt.isEmpty());
+
         });
 
         // Auto-load inventory when panel is first created
@@ -514,7 +595,38 @@ public class ArtInventoryTransactionGUI {
         header.setFont(new Font("Papyrus", Font.BOLD, 20));
         panel.add(header, BorderLayout.NORTH);
 
-        // --- Customer Dropdown ---
+
+        // Output area to show transaction results or errors
+        JTextPane resultArea = new JTextPane();
+        resultArea.setContentType("text/html");
+        resultArea.setEditable(false);
+        resultArea.setFont(new Font("Monospaced", Font.PLAIN, 13));
+        resultArea.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // Prevent form setup if required data is missing
+        if (customers.isEmpty() || inventoryManager.getAllArt().isEmpty()) {
+
+            resultArea.setContentType("text/html");
+            resultArea.setText("<html><b> Cannot create transaction:</b><br>"
+                    + (customers.isEmpty() ? "• No customers found. Please add a customer.<br>" : "")
+                    + (inventoryManager.getAllArt().isEmpty() ? "• No art in inventory. Please add art.<br>" : "")
+                    + "</html>");
+
+            panel.add(new JScrollPane(resultArea), BorderLayout.CENTER);
+
+            // Return button to go back to main menu
+            JButton returnBtn = new JButton("Return to Menu");
+            returnBtn.setFont(new Font("Papyrus", Font.BOLD, 16));
+            returnBtn.addActionListener(e -> cardLayout.first(mainPanel));
+
+            JPanel bottom = new JPanel();
+            bottom.add(returnBtn);
+            panel.add(bottom, BorderLayout.PAGE_END);
+
+            return panel;
+        } // End if statement
+
+        // Customer Dropdown
         // Allows user to select a customer from the existing list
         JComboBox<Customer> customerDropdown = new JComboBox<>();
         customerDropdown.setFont(new Font("Papyrus", Font.PLAIN, 14));
@@ -527,7 +639,7 @@ public class ArtInventoryTransactionGUI {
             customerDropdown.addItem(c);
         } // End for loop
 
-        // --- Art Selection List ---
+        // Art Selection List
         // Displays all available Art items from inventoryManager
         DefaultListModel<Art> artListModel = new DefaultListModel<>();
         for (Art art : inventoryManager.getAllArt()) {
@@ -539,15 +651,11 @@ public class ArtInventoryTransactionGUI {
         artJList.setVisibleRowCount(6);
         artJList.setFont(new Font("Monospaced", Font.PLAIN, 13));
 
-        // Output area to show transaction results or errors
-        JTextArea resultArea = new JTextArea(10, 40);
-        resultArea.setEditable(false);
-        resultArea.setFont(new Font("Monospaced", Font.PLAIN, 13));
-
-        // --- Create Transaction Button ---
+        // Create Transaction Button
         JButton createBtn = new JButton("Create Transaction");
         createBtn.setFont(new Font("Papyrus", Font.BOLD, 16));
         createBtn.setBackground(new Color(220, 240, 220));
+
 
         // Action performed when user clicks the button
         createBtn.addActionListener(e -> {
@@ -619,9 +727,15 @@ public class ArtInventoryTransactionGUI {
         transactionDropdown.setFont(new Font("Papyrus", Font.PLAIN, 14));
 
         // Text area to display transaction details
-        JTextArea displayArea = new JTextArea(10, 50);
+        JTextPane displayArea = new JTextPane();
+        displayArea.setContentType("text/html");
         displayArea.setEditable(false);
-        displayArea.setFont(new Font("Monospaced", Font.PLAIN, 13));
+        displayArea.setFont(new Font("SansSerif", Font.PLAIN, 13));
+
+
+
+
+
         JScrollPane scrollPane = new JScrollPane(displayArea);
 
         // Button to complete the selected transaction
@@ -638,12 +752,14 @@ public class ArtInventoryTransactionGUI {
             }
 
             if (transaction.isCompleted()) {
-                displayArea.setText("Transaction is already completed.");
+                displayArea.setText("<html><b>Note:</b> This transaction is already completed.<br>No further action needed.</html>");
                 return;
             }
 
+
             transaction.completeTransaction();
-            displayArea.setText("Transaction completed:\n\n" + transaction.toString());
+            displayArea.setText("<html><b>No pending transactions to complete.</b></html>");
+
         });
 
         // Load all pending transactions into the dropdown
@@ -653,19 +769,33 @@ public class ArtInventoryTransactionGUI {
 
         refreshBtn.addActionListener(e -> {
             transactionDropdown.removeAllItems();
+            boolean hasPending = false;
             for (Transaction t : transactionManager.getAllTransactions()) {
                 if (!t.isCompleted()) {
                     transactionDropdown.addItem(t);
+                    hasPending = true;
                 }
             }
-            displayArea.setText("");
+            if (!hasPending) {
+                displayArea.setText("No pending transactions to complete.");
+                completeBtn.setEnabled(false);
+            } else {
+                completeBtn.setEnabled(true);
+            }
         });
 
-        refreshBtn.doClick(); // Initial population
+        refreshBtn.doClick();
 
         // Panel for dropdown + refresh
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.add(transactionDropdown, BorderLayout.CENTER);
+        transactionDropdown.addActionListener(e -> {
+            Transaction selected = (Transaction) transactionDropdown.getSelectedItem();
+            if (selected != null) {
+                displayArea.setText("<html><pre>" + selected.toString() + "</pre></html>");
+            }
+        });
+
         topPanel.add(refreshBtn, BorderLayout.EAST);
 
         JPanel center = new JPanel(new BorderLayout());
@@ -713,21 +843,39 @@ public class ArtInventoryTransactionGUI {
         refreshBtn.setFont(new Font("Papyrus", Font.BOLD, 14));
         refreshBtn.setBackground(new Color(230, 230, 250));
 
+        // Remove button
+        JButton removeBtn = new JButton("Remove Transaction");
+        removeBtn.setFont(new Font("Papyrus", Font.BOLD, 16));
+        removeBtn.setBackground(new Color(250, 220, 220));
+
+        // --- Dropdown selection shows details ---
+        transactionDropdown.addActionListener(e -> {
+            Transaction selected = (Transaction) transactionDropdown.getSelectedItem();
+            if (selected != null) {
+                displayArea.setText("Transaction details:\n\n" + selected.toString());
+            }
+        });
+
+        // --- Refresh Button Logic ---
         refreshBtn.addActionListener(e -> {
             transactionDropdown.removeAllItems();
-            for (Transaction t : transactionManager.getAllTransactions()) {
-                transactionDropdown.addItem(t);
+            List<Transaction> all = transactionManager.getAllTransactions();
+
+            if (all.isEmpty()) {
+                displayArea.setText("No transactions to remove.");
+                removeBtn.setEnabled(false);
+            } else {
+                for (Transaction t : all) {
+                    transactionDropdown.addItem(t);
+                }
+                removeBtn.setEnabled(true);
             }
             displayArea.setText("");
         });
 
         refreshBtn.doClick(); // Load initial data
 
-        // Remove button
-        JButton removeBtn = new JButton("Remove Transaction");
-        removeBtn.setFont(new Font("Papyrus", Font.BOLD, 16));
-        removeBtn.setBackground(new Color(250, 220, 220));
-
+        // --- Remove Button Logic ---
         removeBtn.addActionListener(e -> {
             Transaction selected = (Transaction) transactionDropdown.getSelectedItem();
 
@@ -736,10 +884,19 @@ public class ArtInventoryTransactionGUI {
                 return;
             }
 
+            int confirm = JOptionPane.showConfirmDialog(panel,
+                    "Are you sure you want to remove this transaction?",
+                    "Confirm Removal", JOptionPane.YES_NO_OPTION);
+
+            if (confirm != JOptionPane.YES_OPTION) return;
+
             String id = selected.getTransactionId();
             transactionManager.removeTransaction(id);
             transactionDropdown.removeItem(selected);
             displayArea.setText("Transaction removed:\n\n" + selected.toString());
+
+            // Save changes to file
+            transactionManager.saveTransactionsToFile(); // Ensure this method exists
         });
 
         // Layout setup
@@ -758,12 +915,15 @@ public class ArtInventoryTransactionGUI {
         JButton returnBtn = new JButton("Return to Menu");
         returnBtn.setFont(new Font("Papyrus", Font.BOLD, 16));
         returnBtn.addActionListener(e -> cardLayout.first(mainPanel));
+
         JPanel bottom = new JPanel();
         bottom.add(returnBtn);
         panel.add(bottom, BorderLayout.PAGE_END);
 
         return panel;
     } // End createRemoveOrderPanel method
+
+
 
     /**
      * Creates a panel that allows the user to retrieve a transaction by ID.
@@ -777,17 +937,17 @@ public class ArtInventoryTransactionGUI {
         panel.add(header, BorderLayout.NORTH);
 
         // Input fields
-        JTextField idField = new JTextField(12);           // Transaction ID
-        JTextField emailField = new JTextField(16);        // Customer Email
-        JTextField dateField = new JTextField(10);         // Transaction Date (YYYY-MM-DD)
-        JTextField artIdField = new JTextField(10);        // Art Identification
+        JTextField idField = new JTextField(12);
+        JTextField emailField = new JTextField(16);
+        JTextField dateField = new JTextField(10);
+        JTextField artIdField = new JTextField(10);
 
         idField.setFont(new Font("Papyrus", Font.PLAIN, 14));
         emailField.setFont(new Font("Papyrus", Font.PLAIN, 14));
         dateField.setFont(new Font("Papyrus", Font.PLAIN, 14));
         artIdField.setFont(new Font("Papyrus", Font.PLAIN, 14));
 
-        // --- Search and Clear Buttons ---
+        // Search + Clear Buttons
         JButton searchBtn = new JButton("Search");
         searchBtn.setFont(new Font("Papyrus", Font.BOLD, 16));
         searchBtn.setBackground(new Color(220, 240, 255));
@@ -796,81 +956,81 @@ public class ArtInventoryTransactionGUI {
         clearBtn.setFont(new Font("Papyrus", Font.BOLD, 16));
         clearBtn.setBackground(new Color(255, 240, 220));
 
-        // --- Result Area ---
+        // Results area
         JTextArea resultArea = new JTextArea(12, 50);
         resultArea.setEditable(false);
         resultArea.setFont(new Font("Monospaced", Font.PLAIN, 13));
         JScrollPane scrollPane = new JScrollPane(resultArea);
 
-        // --- Search Logic ---
+        // Search Logic
         searchBtn.addActionListener(e -> {
+            if (transactionManager.getAllTransactions().isEmpty()) {
+                resultArea.setText("⚠ No transactions found in the system.");
+                return;
+            }
+
             String inputId = idField.getText().trim();
             String inputEmail = emailField.getText().trim();
             String inputDate = dateField.getText().trim();
             String inputArtId = artIdField.getText().trim();
 
-            // Clear previous output
-            resultArea.setText("");
+            resultArea.setText(""); // clear old result
 
             try {
                 if (!inputId.isEmpty()) {
-                    // Search by Transaction ID
                     Transaction transaction = transactionManager.getTransactionByIdentification(inputId);
-                    if (transaction != null) {
-                        resultArea.setText("Transaction Found:\n\n" + transaction.toString());
-                    } else {
-                        resultArea.setText("No transaction found with ID: " + inputId);
-                    } // End if-else statements
+                    resultArea.setText(transaction != null
+                            ? "Transaction Found:\n\n" + transaction
+                            : "No transaction found with ID: " + inputId);
                 } else if (!inputEmail.isEmpty()) {
                     if (!isValidEmail(inputEmail)) {
-                        resultArea.setText("Invalid email format. Please enter a valid email.");
+                        resultArea.setText("⚠ Invalid email format. Please enter a valid email.");
                         return;
-                    } // End if statement
+                    }
 
-                    // Search by Customer Email
                     List<Transaction> results = transactionManager.getTransactionsByCustomerEmail(inputEmail);
                     if (!results.isEmpty()) {
-                        resultArea.setText("Transactions for email \"" + inputEmail + "\":\n\n");
-                        results.forEach(t -> resultArea.append(t.toString() + "\n\n"));
+                        resultArea.setText("Transactions for \"" + inputEmail + "\":\n\n");
+                        results.forEach(t -> resultArea.append(t + "\n\n"));
                     } else {
                         resultArea.setText("No transactions found for email: " + inputEmail);
-                    } // End if-else statements
+                    }
                 } else if (!inputDate.isEmpty()) {
                     if (!isValidDate(inputDate)) {
-                        resultArea.setText("Invalid date format. Please use YYYY-MM-DD.");
+                        resultArea.setText("⚠ Invalid date format. Please use YYYY-MM-DD.");
                         return;
-                    } // End if statement
+                    }
+
                     LocalDate date = LocalDate.parse(inputDate);
-                    // Search by date
                     List<Transaction> results = transactionManager.getTransactionsByDate(date);
                     if (!results.isEmpty()) {
                         resultArea.setText("Transactions on " + inputDate + ":\n\n");
-                        results.forEach(t -> resultArea.append(t.toString() + "\n\n"));
+                        results.forEach(t -> resultArea.append(t + "\n\n"));
                     } else {
                         resultArea.setText("No transactions found on date: " + inputDate);
-                    } // End if-else statements
+                    }
                 } else if (!inputArtId.isEmpty()) {
                     if (!isValidArtId(inputArtId)) {
-                        resultArea.setText("Art ID must be a 10-digit number.");
+                        resultArea.setText("⚠ Art ID must be a 10-digit number.");
                         return;
-                    } // End if statement
-                    // Search by Art ID
+                    }
+
                     List<Transaction> results = transactionManager.getTransactionsByArtIdentification(inputArtId);
                     if (!results.isEmpty()) {
                         resultArea.setText("Transactions containing Art ID \"" + inputArtId + "\":\n\n");
-                        results.forEach(t -> resultArea.append(t.toString() + "\n\n"));
+                        results.forEach(t -> resultArea.append(t + "\n\n"));
                     } else {
                         resultArea.setText("No transactions contain Art ID: " + inputArtId);
-                    } // End if-else statements
+                    }
                 } else {
                     resultArea.setText("Please fill at least one field to search.");
-                } // End if-else statements
+                }
             } catch (Exception ex) {
                 resultArea.setText("Error: " + ex.getMessage());
-            } // End try-catch statements
+            }
         });
 
-        // --- Clear Logic ---
+        // Clear button logic
         clearBtn.addActionListener(e -> {
             idField.setText("");
             emailField.setText("");
@@ -879,27 +1039,23 @@ public class ArtInventoryTransactionGUI {
             resultArea.setText("");
         });
 
-        // Input Form Panel
+        // Input form layout
         JPanel formPanel = new JPanel(new GridLayout(5, 2, 10, 8));
         formPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-        formPanel.add(new JLabel("Transaction ID:"));
-        formPanel.add(idField);
-        formPanel.add(new JLabel("Customer Email:"));
-        formPanel.add(emailField);
-        formPanel.add(new JLabel("Transaction Date (YYYY-MM-DD):"));
-        formPanel.add(dateField);
-        formPanel.add(new JLabel("Art Identification:"));
-        formPanel.add(artIdField);
-        formPanel.add(searchBtn);
-        formPanel.add(clearBtn);
+        formPanel.add(new JLabel("Transaction ID:"));     formPanel.add(idField);
+        formPanel.add(new JLabel("Customer Email:"));      formPanel.add(emailField);
+        formPanel.add(new JLabel("Transaction Date (YYYY-MM-DD):")); formPanel.add(dateField);
+        formPanel.add(new JLabel("Art Identification:"));  formPanel.add(artIdField);
+        formPanel.add(searchBtn);                          formPanel.add(clearBtn);
 
         panel.add(formPanel, BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);
 
-        // Return to Menu Button
+        // Return to Menu button
         JButton returnBtn = new JButton("Return to Menu");
         returnBtn.setFont(new Font("Papyrus", Font.BOLD, 16));
         returnBtn.addActionListener(e -> cardLayout.first(mainPanel));
+
         JPanel bottom = new JPanel();
         bottom.add(returnBtn);
         panel.add(bottom, BorderLayout.PAGE_END);
@@ -909,28 +1065,27 @@ public class ArtInventoryTransactionGUI {
 
     // Validates if a string is a properly formatted email address
     private boolean isValidEmail(String email) {
-        return email.matches("^[\\w.-]+@[\\w.-]+\\.[A-Za-z]{2,}$");
+        return email != null && email.matches("^[\\w.-]+@[\\w.-]+\\.[A-Za-z]{2,}$");
     } // End isValidEmail method
 
     // Validates if a string is in the correct date format (YYYY-MM-DD)
     private boolean isValidDate(String date) {
-        return date.matches("^\\d{4}-\\d{2}-\\d{2}$");
+        return date != null && date.matches("^\\d{4}-\\d{2}-\\d{2}$");
     } // End isValidDate method
 
     // Validates if an art ID is a 10-digit numeric string
     private boolean isValidArtId(String artId) {
-        return artId.matches("^\\d{10}$");
+        return artId != null && artId.matches("^\\d{10}$");
     } // End isValidArtId method
 
-
     /**
-     * Creates a panel that allows the user to update basic customer information.
+     * Creates a panel that allows the user to update or add customer information.
      */
-    private JPanel createUpdateCustomerPanel() {
+    private JPanel createManageCustomerPanel() {
         JPanel panel = new JPanel(new BorderLayout());
 
         // Header label
-        JLabel header = new JLabel("Update Customer Information", JLabel.CENTER);
+        JLabel header = new JLabel("Manage Customer Information", JLabel.CENTER);
         header.setFont(new Font("Papyrus", Font.BOLD, 20));
         panel.add(header, BorderLayout.NORTH);
 
@@ -943,6 +1098,10 @@ public class ArtInventoryTransactionGUI {
         JTextField lastNameField = new JTextField(15);
         JTextField phoneField = new JTextField(12);
         JTextField emailField = new JTextField(20);
+        JTextField addressField = new JTextField(20);
+        JTextField cityField = new JTextField(15);
+        JTextField stateField = new JTextField(2);
+        JTextField zipField = new JTextField(5);
 
         // Text area to show messages
         JTextArea resultArea = new JTextArea(6, 40);
@@ -955,8 +1114,12 @@ public class ArtInventoryTransactionGUI {
             if (selected != null) {
                 firstNameField.setText(selected.getFirstName());
                 lastNameField.setText(selected.getLastName());
-                phoneField.setText(selected.getPhoneNumber().replaceAll("[^\\d]", "")); // Remove formatting
+                phoneField.setText(selected.getPhoneNumber().replaceAll("[^\\d]", ""));
                 emailField.setText(selected.getEmail());
+                addressField.setText(selected.getAddress().getMailingAddress());
+                cityField.setText(selected.getAddress().getCity());
+                stateField.setText(selected.getAddress().getState());
+                zipField.setText(String.valueOf(selected.getAddress().getZipCode()));
             }
         });
 
@@ -983,6 +1146,24 @@ public class ArtInventoryTransactionGUI {
                 selected.setLastName(lastNameField.getText().trim());
                 selected.setPhoneNumber(phoneField.getText().trim());
                 selected.setEmail(emailField.getText().trim());
+                Address updatedAddress = new Address(
+                        addressField.getText().trim(),
+                        cityField.getText().trim(),
+                        stateField.getText().trim(),
+                        Integer.parseInt(zipField.getText().trim())
+                );
+                selected.setAddress(updatedAddress);
+
+                // Save all customer changes to file
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter(CUSTOMER_DIRECTORY))) {
+                    for (Customer c : customers) {
+                        writer.write(c.toString());
+                        writer.newLine();
+                    }
+                } catch (IOException ex) {
+                    resultArea.setText("Failed to update customer file: " + ex.getMessage());
+                    return;
+                }
 
                 resultArea.setText("Customer updated successfully:\n\n" + selected.getFirstName()
                         + " " + selected.getLastName() + "\nEmail: " + selected.getEmail());
@@ -991,13 +1172,65 @@ public class ArtInventoryTransactionGUI {
             }
         });
 
+        // Add Customer button
+        JButton addBtn = new JButton("Add New Customer");
+        addBtn.setFont(new Font("Papyrus", Font.BOLD, 16));
+        addBtn.setBackground(new Color(220, 220, 255));
+
+        addBtn.addActionListener(e -> {
+            try {
+                String first = firstNameField.getText().trim();
+                String last = lastNameField.getText().trim();
+                String phone = phoneField.getText().trim();
+                String email = emailField.getText().trim();
+                String street = addressField.getText().trim();
+                String city = cityField.getText().trim();
+                String state = stateField.getText().trim();
+                int zip = Integer.parseInt(zipField.getText().trim());
+
+                Address newAddress = new Address(street, city, state, zip);
+                Customer newCustomer = new Customer(first, last, newAddress, phone, email);
+                customers.add(newCustomer);
+                newCustomer.saveToFile();
+                customerDropdown.addItem(newCustomer);
+
+                resultArea.setText("New customer added successfully:\n\n" +
+                        newCustomer.getFirstName() + " " + newCustomer.getLastName());
+            } catch (Exception ex) {
+                resultArea.setText("Error adding customer: " + ex.getMessage());
+            }
+        });
+
+        // Clear Fields button
+        JButton clearBtn = new JButton("Clear Fields");
+        clearBtn.setFont(new Font("Papyrus", Font.BOLD, 16));
+        clearBtn.setBackground(new Color(255, 255, 220));
+
+        clearBtn.addActionListener(e -> {
+            firstNameField.setText("");
+            lastNameField.setText("");
+            phoneField.setText("");
+            emailField.setText("");
+            addressField.setText("");
+            cityField.setText("");
+            stateField.setText("");
+            zipField.setText("");
+            customerDropdown.setSelectedIndex(-1);
+            resultArea.setText("");
+        });
+
         // Form layout
-        JPanel form = new JPanel(new GridLayout(5, 2, 5, 5));
+        JPanel form = new JPanel(new GridLayout(9, 2, 5, 5));
         form.add(new JLabel("First Name:")); form.add(firstNameField);
         form.add(new JLabel("Last Name:")); form.add(lastNameField);
         form.add(new JLabel("Phone Number:")); form.add(phoneField);
         form.add(new JLabel("Email:")); form.add(emailField);
-        form.add(new JLabel()); form.add(updateBtn);
+        form.add(new JLabel("Street Address:")); form.add(addressField);
+        form.add(new JLabel("City:")); form.add(cityField);
+        form.add(new JLabel("State (2-letter):")); form.add(stateField);
+        form.add(new JLabel("ZIP Code:")); form.add(zipField);
+        form.add(updateBtn); form.add(addBtn);
+        form.add(clearBtn); form.add(new JLabel());
 
         // Center section (customer selector + form)
         JPanel center = new JPanel(new BorderLayout());
@@ -1017,7 +1250,8 @@ public class ArtInventoryTransactionGUI {
         panel.add(bottom, BorderLayout.PAGE_END);
 
         return panel;
-    } // End createUpdateCustomerPanel method
+    } // End createManageCustomerPanel method
+
 
     // Helper method to display a list of all transactions (to be wired to TransactionManager)
     private JPanel createTransactionListPanel() {
