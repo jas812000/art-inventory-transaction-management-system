@@ -61,4 +61,4 @@ public enum Style {
     public String getStyleName() {
         return styleName;
     } // End getStyleName method
-} // End Enum
+} // End Style Enum

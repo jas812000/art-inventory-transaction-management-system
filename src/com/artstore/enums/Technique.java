@@ -61,4 +61,4 @@ public enum Technique {
         return techniqueName;
     } // End getTechniqueName method
 
-} // End Enum
+} // End Technique Enum

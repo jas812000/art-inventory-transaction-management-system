@@ -24,7 +24,7 @@ public enum Category {
     public String getCategoryName() {
         return categoryName;
     } // End getCategoryName method
-} // End Enum
+} // End Category Enum
 
 
 
