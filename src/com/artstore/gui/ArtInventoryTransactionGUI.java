@@ -61,6 +61,9 @@ public class ArtInventoryTransactionGUI {
     private static final String DATA_DIRECTORY =
             System.getProperty("user.dir") + "/src/com/data";
 
+    private static final String COUNTER_FILE =
+            System.getProperty("user.dir") + "/src/com/data/transaction_counter.txt";
+
     public static final String CUSTOMER_DIRECTORY = DATA_DIRECTORY + "/Customer_Files";
     public static final String INVENTORY_DIRECTORY = DATA_DIRECTORY + "/Art_Inventory";
     public static final String TRANSACTION_DIRECTORY = DATA_DIRECTORY + "/Art_Transactions";
@@ -93,6 +96,8 @@ public class ArtInventoryTransactionGUI {
         // Reference to transaction manager for retrieving transaction data
         transactionManager = new TransactionManager();                              // Initialize TransactionManager
         this.inventoryManager = new ArtInventoryManager();                          // Initialize ArtInventoryManager
+
+        transactionCounter = loadTransactionCounter();                              // Load persisted counter
 
         customers.addAll(Customer.loadAllFromFile());
 
@@ -685,6 +690,7 @@ public class ArtInventoryTransactionGUI {
             transaction.completeTransaction();
             transactionManager.addTransaction(transaction);
 
+            saveTransactionCounter();
             // Display the transaction summary
             resultArea.setText("Transaction created:\n\n" + transaction.toString());
         });
@@ -1387,27 +1393,68 @@ public class ArtInventoryTransactionGUI {
     private void loadTransactions() {
         List<Transaction> transactions = transactionManager.getAllTransactions();
 
-        if (sortToggleButton != null && sortToggleButton.isSelected()) {
-            sortToggleButton.setText("Sort by ID");
+        boolean sortByDate = sortToggleButton != null && sortToggleButton.isSelected();
+
+        if (sortByDate) {
+            // Sort by transaction date (newest first)
             transactions.sort(Comparator.comparing(Transaction::getTransactionDate).reversed());
         } else {
-            sortToggleButton.setText("Sort by Date");
-            // Optional: You could also sort by ID here if you want consistent order
-        }
+            // Sort by transaction ID (lexicographically)
+            transactions.sort(Comparator.comparing(Transaction::getTransactionId));
+        }  // End try-catch statements
 
+        // Update toggle button label
+        if (sortToggleButton != null) {
+            sortToggleButton.setText(sortByDate ? "Sort by ID" : "Sort by Date");
+        }  // End if statement
+
+        // Build and display the result
         StringBuilder sb = new StringBuilder();
         if (transactions.isEmpty()) {
             sb.append("No transactions recorded yet.");
         } else {
             for (Transaction t : transactions) {
                 sb.append(t.toString()).append("\n\n");
-            }
-        }
+            } // End for loop
+        } // End if-else statements
 
         transactionTextArea.setText(sb.toString());
-    }
+    } // End loadTransactions method
 
+    private int loadTransactionCounter() {
+        File counterFile = new File(COUNTER_FILE);
 
+        // If the counter file exists, read the number
+        if (counterFile.exists()) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(counterFile))) {
+                String line = reader.readLine();
+                return Integer.parseInt(line.trim());
+            } catch (IOException | NumberFormatException e) {
+                System.err.println("Failed to load transaction counter. Falling back to scan.");
+            } // End try-catch statements
+        } // End if statement
 
+        // If the file doesn't exist or fails, scan transactions to get max ID
+        int maxId = 0;
+        for (Transaction t : transactionManager.getAllTransactions()) {
+            String id = t.getTransactionId(); // e.g., "TXN-0012"
+            try {
+                String numericPart = id.replaceAll("\\D+", ""); // Extract digits
+                int num = Integer.parseInt(numericPart);
+                if (num > maxId) maxId = num;
+            } catch (NumberFormatException ignored) {
+            }  // End try-catch statements
+        } // End for loop
+
+        return maxId + 1;
+    } // End loadTransactionCounter method
+
+    private void saveTransactionCounter() {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(COUNTER_FILE))) {
+            writer.write(Integer.toString(transactionCounter));
+        } catch (IOException e) {
+            System.err.println("Failed to save transaction counter: " + e.getMessage());
+        } // End try-catch statements
+    } // End saveTransactionCounter method
 
 } // End ArtInventoryTransactionGUI class
