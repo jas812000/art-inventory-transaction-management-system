@@ -38,7 +38,6 @@ import java.awt.*;
 
 // Import utility classes for handling data and file I/O
 import java.io.*;                     // General file I/O (BufferedReader, Writer, etc.)
-import java.io.File;                 // Represents file and directory path names
 import java.time.LocalDate;         // For handling transaction dates
 import java.util.ArrayList;         // List implementation used for customers and art
 import java.util.Comparator;        // Used for sorting transactions
@@ -114,19 +113,13 @@ public class ArtInventoryTransactionGUI {
         // Load all existing customers from the customer data file into memory
         customers.addAll(Customer.loadAllFromFile());
 
-        // initialize main window with title
-        JFrame frame = new JFrame("Art Inventory & Transaction Manager");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(1200, 900);
-        frame.setResizable(true);
 
-        // initialize card layout and main panel
-        //  allows swapping between panels
+        // Set up layout manager and main panel
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
         mainPanel.add(new HomePanel(), "Home");
 
-        // Add placeholder panels for each menu option
+        // Add core content panels
         mainPanel.add(createAddArtPanel(), "AddArt");
         mainPanel.add(createRemoveArtPanel(), "RemoveArt");
         mainPanel.add(createListArtPanel(), "ListArt");
@@ -137,84 +130,69 @@ public class ArtInventoryTransactionGUI {
         mainPanel.add(createManageCustomerPanel(), "ManageCustomer");
         mainPanel.add(createOrderListPanel(), "ListOrders");
 
-        // Create a custom exit screen panel with a farewell message (no return button)
+        // Add exit screen panel
         JPanel exitPanel = new JPanel(new BorderLayout());
         JLabel exitLabel = new JLabel(
                 "<html><div style='text-align: center;'>"
                         + "Thank you for using the Art Inventory & Transaction Manager.<br/><br/>Goodbye!!!"
-                        + "</div></html>",
-                JLabel.CENTER
-        );
+                        + "</div></html>", JLabel.CENTER);
         exitLabel.setFont(new Font("Trattatello", Font.PLAIN, 36));
         exitLabel.setForeground(Color.BLACK);
         exitLabel.setBorder(BorderFactory.createEmptyBorder(40, 40, 40, 40));
         exitPanel.add(exitLabel, BorderLayout.CENTER);
         mainPanel.add(exitPanel, "ExitScreen");
 
-        // Create the menu panel with buttons
-        JLabel headerLabel = new JLabel("Art Inventory & Transaction Manager", JLabel.CENTER);
-        headerLabel.setFont(new Font("Papyrus", Font.BOLD, 42));
-        headerLabel.setBorder(BorderFactory.createEmptyBorder(10, 7, 10, 7));
-        frame.getContentPane().add(headerLabel, BorderLayout.NORTH);
+        // Create and set up the main application window
+        JPanel menuPanel = createMenuPanel();
+        JFrame frame = MainFrameInitializer.createMainFrame(mainPanel, menuPanel);
+        frame.setVisible(true);
+        SwingUtilities.invokeLater(mainPanel::requestFocusInWindow);
+
+    } // End constructor
+
+    /**
+     * Creates the main navigation menu panel with buttons for each feature.
+     * Each button navigates to a corresponding panel using CardLayout.
+     *
+     * @return JPanel containing all navigation buttons
+     */
+    private JPanel createMenuPanel() {
         JPanel menuPanel = new JPanel();
-        menuPanel.setLayout(new GridLayout(0, 1));
+        menuPanel.setLayout(new GridLayout(0, 1)); // Stack buttons vertically
 
-        // Initialize and style all main menu buttons
-        // Each button is labeled with a unique menu option and styled with:
-        // - Papyrus font (bold, 16pt) for artistic flair
-        // - Soft beige background for aesthetic cohesion
-        // - Dark gray text for high readability
+        // Common styling for all menu buttons
+        Font buttonFont = new Font("Papyrus", Font.BOLD, 18);
+        Color buttonBackground = new Color(245, 235, 220);
+        Color textColor = Color.DARK_GRAY;
+
+        // Menu Buttons
         JButton addArtBtn = new JButton("1. Add Art to Inventory");
-        addArtBtn.setFont(new Font("Papyrus", Font.BOLD, 18));
-        addArtBtn.setBackground(new Color(245, 235, 220));
-        addArtBtn.setForeground(Color.DARK_GRAY);
-
         JButton removeArtBtn = new JButton("2. Remove Art from Inventory");
-        removeArtBtn.setFont(new Font("Papyrus", Font.BOLD, 18));
-        removeArtBtn.setBackground(new Color(245, 235, 220));
-        removeArtBtn.setForeground(Color.DARK_GRAY);
-
         JButton listArtBtn = new JButton("3. List Art in Inventory");
-        listArtBtn.setFont(new Font("Papyrus", Font.BOLD, 18));
-        listArtBtn.setBackground(new Color(245, 235, 220));
-        listArtBtn.setForeground(Color.DARK_GRAY);
-
         JButton createOrderBtn = new JButton("4. Create Order");
-        createOrderBtn.setFont(new Font("Papyrus", Font.BOLD, 18));
-        createOrderBtn.setBackground(new Color(245, 235, 220));
-        createOrderBtn.setForeground(Color.DARK_GRAY);
-
         JButton completeOrderBtn = new JButton("5. Complete Order");
-        completeOrderBtn.setFont(new Font("Papyrus", Font.BOLD, 18));
-        completeOrderBtn.setBackground(new Color(245, 235, 220));
-        completeOrderBtn.setForeground(Color.DARK_GRAY);
-
         JButton removeOrderBtn = new JButton("6. Remove Order");
-        removeOrderBtn.setFont(new Font("Papyrus", Font.BOLD, 18));
-        removeOrderBtn.setBackground(new Color(245, 235, 220));
-        removeOrderBtn.setForeground(Color.DARK_GRAY);
-
         JButton retrieveOrderBtn = new JButton("7. Retrieve Order");
-        retrieveOrderBtn.setFont(new Font("Papyrus", Font.BOLD, 18));
-        retrieveOrderBtn.setBackground(new Color(245, 235, 220));
-        retrieveOrderBtn.setForeground(Color.DARK_GRAY);
-
         JButton manageCustomerBtn = new JButton("8. Manage Customer Information");
-        manageCustomerBtn.setFont(new Font("Papyrus", Font.BOLD, 18));
-        manageCustomerBtn.setBackground(new Color(245, 235, 220));
-        manageCustomerBtn.setForeground(Color.DARK_GRAY);
-
         JButton listTransactionsBtn = new JButton("9. View All Orders");
-        listTransactionsBtn.setFont(new Font("Papyrus", Font.BOLD, 18));
-        listTransactionsBtn.setBackground(new Color(245, 235, 220));
-        listTransactionsBtn.setForeground(Color.DARK_GRAY);
-
         JButton exitBtn = new JButton("10. Exit");
-        exitBtn.setFont(new Font("Papyrus", Font.BOLD, 18));
-        exitBtn.setBackground(new Color(245, 235, 220));
-        exitBtn.setForeground(Color.DARK_GRAY);
 
-        // Action listeners to switch panels
+        // Apply consistent styling to buttons
+        JButton[] allButtons = {
+                addArtBtn, removeArtBtn, listArtBtn, createOrderBtn,
+                completeOrderBtn, removeOrderBtn, retrieveOrderBtn,
+                manageCustomerBtn, listTransactionsBtn, exitBtn
+        };
+
+        // Loop through all menu buttons to apply consistent styling and add them to the menu panel
+        for (JButton btn : allButtons) {
+            btn.setFont(buttonFont);
+            btn.setBackground(buttonBackground);
+            btn.setForeground(textColor);
+            menuPanel.add(btn);
+        } // End for loop
+
+        // Button Logic
         addArtBtn.addActionListener(e -> cardLayout.show(mainPanel, "AddArt"));
         removeArtBtn.addActionListener(e -> cardLayout.show(mainPanel, "RemoveArt"));
         listArtBtn.addActionListener(e -> cardLayout.show(mainPanel, "ListArt"));
@@ -223,68 +201,45 @@ public class ArtInventoryTransactionGUI {
         removeOrderBtn.addActionListener(e -> cardLayout.show(mainPanel, "RemoveOrder"));
         retrieveOrderBtn.addActionListener(e -> cardLayout.show(mainPanel, "RetrieveOrder"));
         manageCustomerBtn.addActionListener(e -> cardLayout.show(mainPanel, "ManageCustomer"));
+
+        // Refresh transactions before showing the list
         listTransactionsBtn.addActionListener(e -> {
             loadTransactions();
             cardLayout.show(mainPanel, "ListOrders");
         });
 
+        // Exit with delay and farewell message
         exitBtn.addActionListener(e -> {
             cardLayout.show(mainPanel, "ExitScreen");
-
-            // Delay before exiting (3 seconds)
             Timer timer = new Timer(3000, evt -> System.exit(0));
             timer.setRepeats(false);
             timer.start();
         });
 
-        // Add buttons to the menu panel
-        menuPanel.add(addArtBtn);
-        menuPanel.add(removeArtBtn);
-        menuPanel.add(listArtBtn);
-        menuPanel.add(createOrderBtn);
-        menuPanel.add(completeOrderBtn);
-        menuPanel.add(removeOrderBtn);
-        menuPanel.add(retrieveOrderBtn);
-        menuPanel.add(manageCustomerBtn);
-        menuPanel.add(listTransactionsBtn);
-        menuPanel.add(exitBtn);
-
-        // Add menu and main content to the frame
-        frame.getContentPane().add(menuPanel, BorderLayout.WEST);
-        cardLayout.show(mainPanel, "Home");
-        frame.getContentPane().add(mainPanel, BorderLayout.CENTER);
-
-        // Display the GUI
-        frame.setVisible(true);
-        SwingUtilities.invokeLater(mainPanel::requestFocusInWindow);
-
-    } // End constructor
+        return menuPanel;
+    } // End createMenuPanel method
 
     /**
-     * Initializes the required directory structure for the application.
-     * Attempts to create folders for storing customer, inventory, and transaction data
-     * if they do not already exist. Logs a warning if creation fails.
+     * Initializes the required directory structure for the application
+     * using the centralized DirectoryManager utility.
      */
     private void initializeDataDirectories() {
-        createDirectoryIfMissing(CUSTOMER_DIRECTORY);
-        createDirectoryIfMissing(INVENTORY_DIRECTORY);
-        createDirectoryIfMissing(TRANSACTION_DIRECTORY);
+        DirectoryManager.initializeDirectories(CUSTOMER_DIRECTORY, INVENTORY_DIRECTORY, TRANSACTION_DIRECTORY);
     } // End initializeDataDirectories method
 
     /**
-     * Helper method to create a directory if it doesn't exist,
-     * and print a warning if creation fails.
-     *
-     * @param path The directory path to create
+     * Loads the transaction counter from file, or scans transactions if needed.
      */
-    private void createDirectoryIfMissing(String path) {
-        File dir = new File(path);
-        if (!dir.exists()) {
-            if (!dir.mkdirs()) {
-                System.err.println("Warning: Failed to create directory: " + path);
-            } // End if statement
-        }  // End if statement
-    }  // End createDirectoryIfMissing method
+    private int loadTransactionCounter() {
+        return TransactionCounterManager.loadCounter(COUNTER_FILE, transactionManager);
+    } // End loadTransactionCounter method
+
+    /**
+     * Saves the current transaction counter to file.
+     */
+    private void saveTransactionCounter() {
+        TransactionCounterManager.saveCounter(COUNTER_FILE, transactionCounter);
+    } // End saveTransactionCounter method
 
     /**
      * Creates a panel that allows the user to add a new Art object to the inventory.
@@ -353,7 +308,7 @@ public class ArtInventoryTransactionGUI {
         // Result area to show success/error messages
         JTextArea resultArea = new JTextArea(6, 40);
         resultArea.setEditable(false);
-        resultArea.setFont(new Font("Monospaced", Font.PLAIN, 13));
+        resultArea.setFont(new Font("Arial", Font.PLAIN, 16));
 
         // "Add Art" button logic
         JButton addBtn = new JButton("Add Art");
@@ -432,8 +387,10 @@ public class ArtInventoryTransactionGUI {
                 // Add to inventory and persist
                 inventoryManager.addArt(newArt);
                 inventoryManager.saveInventoryToFile();
+                resultArea.setFont(new Font("Arial", Font.PLAIN, 16));
                 resultArea.setText("Art added successfully:\n\n" + newArt);
             } catch (Exception ex) {
+                resultArea.setFont(new Font("Arial", Font.PLAIN, 16));
                 resultArea.setText("Error: " + ex.getMessage());
             } // End try-catch statements
         });
@@ -509,11 +466,14 @@ public class ArtInventoryTransactionGUI {
         // Text area to provide feedback to the user
         JTextArea resultArea = new JTextArea(6, 40);
         resultArea.setEditable(false);
-        resultArea.setFont(new Font("Monospaced", Font.PLAIN, 13));
+        resultArea.setFont(new Font("Arial", Font.PLAIN, 16));
 
         // If there is no art in the inventory, show a message and disable removal functionality
         if (inventoryManager.getAllArt().isEmpty()) {
-            resultArea.setText("Inventory is empty. No art available to remove.");
+            resultArea.setFont(new Font("Arial", Font.PLAIN, 16));
+            resultArea.setText("\nInventory is empty. \n\nNo art available to remove.");
+            resultArea.setAlignmentX(Component.CENTER_ALIGNMENT);
+
 
             panel.add(new JScrollPane(resultArea), BorderLayout.CENTER);
 
@@ -546,6 +506,7 @@ public class ArtInventoryTransactionGUI {
                         .append(" (").append(art.getArtIdentification()).append(")\n");
             } // End for loop
 
+            resultArea.setFont(new Font("Arial", Font.PLAIN, 16));
             resultArea.setText(sb.toString());
         });
 
@@ -583,7 +544,7 @@ public class ArtInventoryTransactionGUI {
         // Text area to show art inventory (non-editable)
         JTextArea displayArea = new JTextArea(16, 50);
         displayArea.setEditable(false);
-        displayArea.setFont(new Font("Monospaced", Font.PLAIN, 13));
+        displayArea.setFont(new Font("Arial", Font.PLAIN, 16));
         JScrollPane scrollPane = new JScrollPane(displayArea);
 
         // Button to manually refresh the inventory list
@@ -598,7 +559,7 @@ public class ArtInventoryTransactionGUI {
 
             // If inventory is empty, show a helpful message
             if (allArt.isEmpty()) {
-                sb.append("Inventory is currently empty. \nPlease add art using the 'Add Art to Inventory' menu option.");
+                sb.append("\nInventory is currently empty. \n\nPlease add art using the 'Add Art to Inventory' menu option.");
             } else {
                 // Iterate through each art piece and format its details
                 for (Art art : allArt) {
@@ -643,6 +604,7 @@ public class ArtInventoryTransactionGUI {
             }  // End if-else statements
 
             // Display the constructed inventory string in the text area
+            displayArea.setFont(new Font("Arial", Font.PLAIN, 16));
             displayArea.setText(sb.toString());
 
             // Disable refresh button if inventory is empty
@@ -683,20 +645,28 @@ public class ArtInventoryTransactionGUI {
         panel.add(header, BorderLayout.NORTH);
 
         // Output area to show transaction results or errors
-        JTextPane resultArea = new JTextPane();
-        resultArea.setContentType("text/html");
+        JTextArea resultArea = new JTextArea(6, 40);
         resultArea.setEditable(false);
-        resultArea.setFont(new Font("Monospaced", Font.PLAIN, 13));
+        resultArea.setFont(new Font("Arial", Font.PLAIN, 16));
+        resultArea.setLineWrap(true);
+        resultArea.setWrapStyleWord(true);
         resultArea.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         // Prevent form setup if required data is missing
         if (customers.isEmpty() || inventoryManager.getAllArt().isEmpty()) {
 
-            resultArea.setContentType("text/html");
-            resultArea.setText("<html><b> Cannot create transaction:</b><br>"
-                    + (customers.isEmpty() ? "• No customers found. Please add a customer.<br>" : "")
-                    + (inventoryManager.getAllArt().isEmpty() ? "• No art in inventory. Please add art.<br>" : "")
-                    + "</html>");
+            resultArea.setFont(new Font("Arial", Font.PLAIN, 16));
+
+            // Build the plain message
+            StringBuilder message = new StringBuilder("Cannot create transaction:\n\n");
+            if (customers.isEmpty()) {
+                message.append("• No customers found. Please add a customer.\n\n");
+            } // End if statement
+            if (inventoryManager.getAllArt().isEmpty()) {
+                message.append("• No art in inventory. Please add art.\n\n");
+            } // End if statement
+
+            resultArea.setText(message.toString());
 
             panel.add(new JScrollPane(resultArea), BorderLayout.CENTER);
 
@@ -749,6 +719,7 @@ public class ArtInventoryTransactionGUI {
 
             // Ensure a customer and at least one art item is selected
             if (selectedCustomer == null || selectedArt.isEmpty()) {
+                resultArea.setFont(new Font("Arial", Font.PLAIN, 16));
                 resultArea.setText("Please select a customer and at least one art item.");
                 return;
             }
@@ -763,6 +734,7 @@ public class ArtInventoryTransactionGUI {
 
             saveTransactionCounter();
             // Display the transaction summary
+            resultArea.setFont(new Font("Arial", Font.PLAIN, 16));
             resultArea.setText("Transaction created:\n\n" + transaction.toString());
         });
 
@@ -817,10 +789,11 @@ public class ArtInventoryTransactionGUI {
         transactionDropdown.setFont(new Font("Papyrus", Font.PLAIN, 14));
 
         // Text pane to display transaction details (HTML supported)
-        JTextPane displayArea = new JTextPane();
-        displayArea.setContentType("text/html");
+        JTextArea displayArea = new JTextArea(10, 50);
         displayArea.setEditable(false);
-        displayArea.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        displayArea.setFont(new Font("Arial", Font.PLAIN, 16));
+        displayArea.setLineWrap(true);
+        displayArea.setWrapStyleWord(true);
 
         JScrollPane scrollPane = new JScrollPane(displayArea);
 
@@ -834,18 +807,23 @@ public class ArtInventoryTransactionGUI {
             Transaction transaction = (Transaction) transactionDropdown.getSelectedItem();
 
             if (transaction == null) {
+                displayArea.setFont(new Font("Arial", Font.PLAIN, 16));
                 displayArea.setText("No transaction selected.");
                 return;
             } // End if statement
 
             if (transaction.isCompleted()) {
-                displayArea.setText("<html><b>Note:</b> This transaction is already completed.<br>No further action needed.</html>");
+                displayArea.setFont(new Font("Arial", Font.PLAIN, 16));
+                displayArea.setText("Note: This transaction is already completed.\nNo further action needed.");
+
                 return;
             } // End if statement
 
             // Complete the transaction
             transaction.completeTransaction();
-            displayArea.setText("<html><b>No pending transactions to complete.</b></html>");
+            displayArea.setFont(new Font("Arial", Font.PLAIN, 16));
+            displayArea.setText("\nNo pending transactions to complete.");
+
         });
 
         // Button to refresh the list of pending transactions
@@ -868,7 +846,8 @@ public class ArtInventoryTransactionGUI {
 
             // Disable complete button if no pending transactions
             if (!hasPending) {
-                displayArea.setText("No pending transactions to complete.");
+                displayArea.setFont(new Font("Arial", Font.PLAIN, 16));
+                displayArea.setText("\nNo pending transactions to complete.");
                 completeBtn.setEnabled(false);
             } else {
                 completeBtn.setEnabled(true);
@@ -885,7 +864,8 @@ public class ArtInventoryTransactionGUI {
         transactionDropdown.addActionListener(e -> {
             Transaction selected = (Transaction) transactionDropdown.getSelectedItem();
             if (selected != null) {
-                displayArea.setText("<html><pre>" + selected.toString() + "</pre></html>");
+                displayArea.setFont(new Font("Arial", Font.PLAIN, 16));
+                displayArea.setText(selected.toString());
             } // End if statement
         });
 
@@ -933,7 +913,7 @@ public class ArtInventoryTransactionGUI {
         // Text area for displaying selected transaction's details
         JTextArea displayArea = new JTextArea(10, 50);
         displayArea.setEditable(false);
-        displayArea.setFont(new Font("Monospaced", Font.PLAIN, 13));
+        displayArea.setFont(new Font("Arial", Font.PLAIN, 16));
         JScrollPane scrollPane = new JScrollPane(displayArea);
 
         // Button to reload the transaction list
@@ -950,6 +930,7 @@ public class ArtInventoryTransactionGUI {
         transactionDropdown.addActionListener(e -> {
             Transaction selected = (Transaction) transactionDropdown.getSelectedItem();
             if (selected != null) {
+                displayArea.setFont(new Font("Arial", Font.PLAIN, 16));
                 displayArea.setText("Transaction details:\n\n" + selected.toString());
             } // End if statement
         });
@@ -960,15 +941,17 @@ public class ArtInventoryTransactionGUI {
             List<Transaction> all = transactionManager.getAllTransactions();
 
             if (all.isEmpty()) {
-                displayArea.setText("No transactions to remove.");
+                displayArea.setFont(new Font("Arial", Font.PLAIN, 16));
+                displayArea.setText("\nNo transactions to remove.");
                 removeBtn.setEnabled(false); // Disable remove button if none exist
             } else {
                 for (Transaction t : all) {
                     transactionDropdown.addItem(t);
                 } // End for loop
                 removeBtn.setEnabled(true); // Enable if transactions found
+                displayArea.setText(""); // Clear display area
             } // End if-else statements
-            displayArea.setText(""); // Clear display area
+
         });
 
         refreshBtn.doClick(); // Load initial transaction list automatically on panel open
@@ -978,6 +961,7 @@ public class ArtInventoryTransactionGUI {
             Transaction selected = (Transaction) transactionDropdown.getSelectedItem();
 
             if (selected == null) {
+                displayArea.setFont(new Font("Arial", Font.PLAIN, 16));
                 displayArea.setText("No transaction selected.");
                 return;
             } // End if statement
@@ -993,6 +977,7 @@ public class ArtInventoryTransactionGUI {
             String id = selected.getTransactionId();
             transactionManager.removeTransaction(id);
             transactionDropdown.removeItem(selected);
+            displayArea.setFont(new Font("Arial", Font.PLAIN, 16));
             displayArea.setText("Transaction removed:\n\n" + selected.toString());
 
             // Persist changes
@@ -1062,13 +1047,14 @@ public class ArtInventoryTransactionGUI {
         // Area to display search results
         JTextArea resultArea = new JTextArea(12, 50);
         resultArea.setEditable(false);
-        resultArea.setFont(new Font("Monospaced", Font.PLAIN, 13));
+        resultArea.setFont(new Font("Arial", Font.PLAIN, 16));
         JScrollPane scrollPane = new JScrollPane(resultArea);
 
         // Search logic based on available input
         searchBtn.addActionListener(e -> {
             if (transactionManager.getAllTransactions().isEmpty()) {
-                resultArea.setText("⚠ No transactions found in the system.");
+                resultArea.setFont(new Font("Arial", Font.PLAIN, 16));
+                resultArea.setText("No transactions found in the system.");
                 return;
             } // End if statement
 
@@ -1084,57 +1070,69 @@ public class ArtInventoryTransactionGUI {
                 if (!inputId.isEmpty()) {
                     // Search by transaction ID
                     Transaction transaction = transactionManager.getTransactionByIdentification(inputId);
+                    resultArea.setFont(new Font("Arial", Font.PLAIN, 16));
                     resultArea.setText(transaction != null
                             ? "Transaction Found:\n\n" + transaction
                             : "No transaction found with ID: " + inputId);
                 } else if (!inputEmail.isEmpty()) {
                     // Validate and search by customer email
                     if (!isValidEmail(inputEmail)) {
-                        resultArea.setText("⚠ Invalid email format. Please enter a valid email.");
+                        resultArea.setFont(new Font("Arial", Font.PLAIN, 16));
+                        resultArea.setText("Invalid email format. Please enter a valid email.");
                         return;
                     } // End if statement
 
                     List<Transaction> results = transactionManager.getTransactionsByCustomerEmail(inputEmail);
                     if (!results.isEmpty()) {
+                        resultArea.setFont(new Font("Arial", Font.PLAIN, 16));
                         resultArea.setText("Transactions for \"" + inputEmail + "\":\n\n");
                         results.forEach(t -> resultArea.append(t + "\n\n"));
                     } else {
+                        resultArea.setFont(new Font("Arial", Font.PLAIN, 16));
                         resultArea.setText("No transactions found for email: " + inputEmail);
                     } // End if-else statements
                 } else if (!inputDate.isEmpty()) {
                     // Validate and search by transaction date
                     if (!isValidDate(inputDate)) {
-                        resultArea.setText("⚠ Invalid date format. Please use YYYY-MM-DD.");
+                        resultArea.setFont(new Font("Arial", Font.PLAIN, 16));
+                        resultArea.setText("Invalid date format. Please use YYYY-MM-DD.");
                         return;
                     } // End if statement
 
                     LocalDate date = LocalDate.parse(inputDate);
                     List<Transaction> results = transactionManager.getTransactionsByDate(date);
                     if (!results.isEmpty()) {
+                        resultArea.setFont(new Font("Arial", Font.PLAIN, 16));
                         resultArea.setText("Transactions on " + inputDate + ":\n\n");
                         results.forEach(t -> resultArea.append(t + "\n\n"));
                     } else {
+                        resultArea.setFont(new Font("Arial", Font.PLAIN, 16));
                         resultArea.setText("No transactions found on date: " + inputDate);
                     } // End if-else statements
                 } else if (!inputArtId.isEmpty()) {
                     // Validate and search by art ID
                     if (!isValidArtId(inputArtId)) {
-                        resultArea.setText("⚠ Art ID must be a 10-digit number.");
+                        resultArea.setFont(new Font("Arial", Font.PLAIN, 16));
+                        resultArea.setText("Art ID must be a 10-digit number.");
                         return;
                     } // End if statement
 
                     List<Transaction> results = transactionManager.getTransactionsByArtIdentification(inputArtId);
                     if (!results.isEmpty()) {
+                        resultArea.setFont(new Font("Arial", Font.PLAIN, 16));
                         resultArea.setText("Transactions containing Art ID \"" + inputArtId + "\":\n\n");
                         results.forEach(t -> resultArea.append(t + "\n\n"));
                     } else {
+                        resultArea.setFont(new Font("Arial", Font.PLAIN, 16));
                         resultArea.setText("No transactions contain Art ID: " + inputArtId);
                     } // End if-else statements
                 } else {
                     // No input provided
+                    resultArea.setFont(new Font("Arial", Font.PLAIN, 16));
                     resultArea.setText("Please fill at least one field to search.");
                 } // End if-else statements
             } catch (Exception ex) {
+                resultArea.setFont(new Font("Arial", Font.PLAIN, 16));
                 resultArea.setText("Error: " + ex.getMessage());
             } // End try-catch statements
         });
@@ -1249,7 +1247,7 @@ public class ArtInventoryTransactionGUI {
         // Area to show feedback or confirmation
         JTextArea existingResultArea = new JTextArea(6, 40);
         existingResultArea.setEditable(false);
-        existingResultArea.setFont(new Font("Monospaced", Font.PLAIN, 13));
+        existingResultArea.setFont(new Font("Arial", Font.PLAIN, 16));
         JScrollPane existingResultScroll = new JScrollPane(existingResultArea);
 
         // Load selected customer data into the form fields
@@ -1301,6 +1299,7 @@ public class ArtInventoryTransactionGUI {
         updateBtn.addActionListener(e -> {
             Customer selected = (Customer) customerDropdown.getSelectedItem();
             if (selected == null) {
+                existingResultArea.setFont(new Font("Arial", Font.PLAIN, 16));
                 existingResultArea.setText("No customer selected.");
                 return;
             } // End if statement
@@ -1325,14 +1324,17 @@ public class ArtInventoryTransactionGUI {
                         writer.newLine();
                     }
                 } catch (IOException ex) {
+                    existingResultArea.setFont(new Font("Arial", Font.PLAIN, 16));
                     existingResultArea.setText("Failed to update customer file: " + ex.getMessage());
                     return;
                 } // End try-catch statements
 
+                existingResultArea.setFont(new Font("Arial", Font.PLAIN, 16));
                 existingResultArea.setText("Customer updated successfully:\n\n" +
                         selected.getFirstName() + " " + selected.getLastName() +
                         "\nEmail: " + selected.getEmail());
             } catch (Exception ex) {
+                existingResultArea.setFont(new Font("Arial", Font.PLAIN, 16));
                 existingResultArea.setText("Error updating customer: " + ex.getMessage());
             } // End try-catch statements
         });
@@ -1357,7 +1359,7 @@ public class ArtInventoryTransactionGUI {
 
         JTextArea newResultArea = new JTextArea(6, 40);
         newResultArea.setEditable(false);
-        newResultArea.setFont(new Font("Monospaced", Font.PLAIN, 13));
+        newResultArea.setFont(new Font("Arial", Font.PLAIN, 16));
         JScrollPane newResultScroll = new JScrollPane(newResultArea);
 
         JPanel newInner = new JPanel();
@@ -1397,9 +1399,11 @@ public class ArtInventoryTransactionGUI {
                 newCustomer.saveToFile();
                 customerDropdown.addItem(newCustomer); // Update dropdown for reuse
 
+                newResultArea.setFont(new Font("Arial", Font.PLAIN, 16));
                 newResultArea.setText("New customer added successfully:\n\n" +
                         newCustomer.getFirstName() + " " + newCustomer.getLastName());
             } catch (Exception ex) {
+                newResultArea.setFont(new Font("Arial", Font.PLAIN, 16));
                 newResultArea.setText("Error adding customer: " + ex.getMessage());
             } // End try-catch statements
         });
@@ -1483,7 +1487,7 @@ public class ArtInventoryTransactionGUI {
 
         // Text area to show transaction list (wrapped in a scroll pane)
         transactionTextArea = new JTextArea();
-        transactionTextArea.setFont(new Font("Monospaced", Font.PLAIN, 14));
+        transactionTextArea.setFont(new Font("Arial", Font.PLAIN, 16));
         transactionTextArea.setEditable(false);
         JScrollPane scrollPane = new JScrollPane(transactionTextArea);
         panel.add(scrollPane, BorderLayout.CENTER);
@@ -1536,7 +1540,7 @@ public class ArtInventoryTransactionGUI {
         // Build the output string for display
         StringBuilder sb = new StringBuilder();
         if (transactions.isEmpty()) {
-            sb.append("No transactions recorded yet.");
+            sb.append("\nNo transactions recorded yet.");
         } else {
             for (Transaction t : transactions) {
                 sb.append(t.toString()).append("\n\n");
@@ -1547,52 +1551,6 @@ public class ArtInventoryTransactionGUI {
         transactionTextArea.setText(sb.toString());
     } // End loadTransactions method
 
-    /**
-     * Loads the transaction counter from a file to ensure transaction IDs remain sequential
-     * between application restarts. If the file does not exist or is unreadable, it scans
-     * existing transactions to find the highest used ID and continues from there.
-     *
-     * @return the next available transaction counter value
-     */
-    private int loadTransactionCounter() {
-        File counterFile = new File(COUNTER_FILE);
 
-        // If the counter file exists, read the number and parse the stored value
-        if (counterFile.exists()) {
-            try (BufferedReader reader = new BufferedReader(new FileReader(counterFile))) {
-                String line = reader.readLine();
-                return Integer.parseInt(line.trim());
-            } catch (IOException | NumberFormatException e) {
-                System.err.println("Failed to load transaction counter. Falling back to scan.");
-            } // End try-catch statements
-        } // End if statement
-
-        // If the file doesn't exist or fails, scan transactions to get max ID
-        int maxId = 0;
-        for (Transaction t : transactionManager.getAllTransactions()) {
-            String id = t.getTransactionId(); // e.g., "TXN-0012"
-            try {
-                String numericPart = id.replaceAll("\\D+", ""); // Extract digits
-                int num = Integer.parseInt(numericPart);
-                if (num > maxId) maxId = num;
-            } catch (NumberFormatException ignored) {
-            }  // End try-catch statements
-        } // End for loop
-
-        // Start from the next available number
-        return maxId + 1;
-    } // End loadTransactionCounter method
-
-    /**
-     * Persists the current transaction counter to a file so that
-     * future sessions can resume ID generation from the correct point.
-     */
-    private void saveTransactionCounter() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(COUNTER_FILE))) {
-            writer.write(Integer.toString(transactionCounter));
-        } catch (IOException e) {
-            System.err.println("Failed to save transaction counter: " + e.getMessage());
-        } // End try-catch statements
-    } // End saveTransactionCounter method
 
 } // End ArtInventoryTransactionGUI class

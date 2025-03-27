@@ -12,6 +12,7 @@ import java.io.*;
 
 // Import domain and exception classes
 import com.artstore.exceptions.InvalidTransactionOperationException;
+import com.artstore.gui.ArtInventoryTransactionGUI;
 
 // Static import of TRANSACTION_DIRECTORY for convenient file path reference
 import static com.artstore.gui.ArtInventoryTransactionGUI.TRANSACTION_DIRECTORY;
@@ -127,9 +128,16 @@ public class TransactionManager {
      */
     public void loadTransactionsFromFile() {
 
-        String filePath = TRANSACTION_DIRECTORY + "/transactions.txt";
+        //String filePath = TRANSACTION_DIRECTORY + "/transactions.txt";
+        File file = new File(ArtInventoryTransactionGUI.TRANSACTION_DIRECTORY + "/transactions.txt");
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+        if (!file.exists()) {
+            System.out.println("No transaction file found. Starting with an empty transaction list.");
+            transactions.clear();  // Ensure it's empty
+            return;
+        }// End if statement
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
 
             // Read each line from the file
@@ -142,7 +150,8 @@ public class TransactionManager {
                 transactions.put(transaction.getTransactionId(), transaction);
             } // End while loop
         } catch (IOException e) {
-            throw new InvalidTransactionOperationException("Load Transactions", "Unable to read from file.");
+            System.err.println("Warning: Unable to read transactions from file. Starting with an empty list.");
+            transactions.clear();  // Start fresh
         } // End try-catch statements
     } // End loadTransactionsFromFile method
 
