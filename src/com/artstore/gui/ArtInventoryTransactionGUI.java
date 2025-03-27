@@ -52,7 +52,6 @@ import java.util.List;              // Interface for ordered collections
  * - Manage customer information.
  * - Create, retrieve, complete, and remove transactions.
  * - View and persist data related to customers, inventory, and transactions.
- *
  * It uses a card layout for switching between panels and handles data persistence
  * via text files under the application's data directory.
  */
