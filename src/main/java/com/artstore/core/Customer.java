@@ -16,7 +16,7 @@ public class Customer {
 
     // Absolute path to the customer data file, constructed using the current working directory
     private static final String CUSTOMER_FILE_PATH =
-            System.getProperty("user.dir") + "/src/com/data/Customer_Files/customers.txt";
+            System.getProperty("user.dir") + "/src/main/java/data/Customer_Files/customers.txt";
 
     // Customer fields
     private String firstName;

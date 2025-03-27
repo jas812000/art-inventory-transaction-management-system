@@ -66,7 +66,6 @@ public class Painting extends Art {
         this.category = category;
     } // End constructor
 
-
     // Getters
     public int getHeight() {
         return paintingHeight;
@@ -88,7 +87,6 @@ public class Painting extends Art {
         return category;
     } // End getCategory method
 
-
     /**
      * Returns the type of this art piece.
      * Used to distinguish between different subclasses of Art.
@@ -97,7 +95,6 @@ public class Painting extends Art {
     public String getType() {
         return "Painting";
     } // End getType method
-
 
     /**
      * Converts the Painting object into a CSV-formatted string.
@@ -120,7 +117,6 @@ public class Painting extends Art {
                 category.name()
         );
     } // End toString method
-
 
     /**
      * Creates a Painting object from a CSV-formatted string.
@@ -146,7 +142,6 @@ public class Painting extends Art {
         );
     } // End fromString method
 
-
     /**
      * Calculates the painting price based on its area and base price.
      * Area < 100: surcharge 5.99
@@ -169,7 +164,6 @@ public class Painting extends Art {
 
         return getArtPrice() + surcharge;
     } // End calculateArtPrice method
-
 
     /**
      * Total price includes calculated price and base shipping cost.

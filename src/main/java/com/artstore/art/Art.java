@@ -7,7 +7,6 @@ import com.artstore.exceptions.InvalidArtOperationException;
 // Import Year utility to validate the creation year of the artwork
 import java.time.Year;
 
-
 /**
  * Abstract class representing a general piece of art in the system.
  * All specific art types (e.g., Painting, Sculpture) extend this class.
@@ -101,16 +100,13 @@ public abstract class Art {
         return artAuthor;
     } // End getAuthor method
 
-
     /// Abstract methods to be implemented by subclasses
     //Returns the type of the art object (e.g., Painting, Drawing).
     public abstract String getType();
 
-
     // Returns a string representation of the art object in a CSV format.
     @Override
     public abstract String toString();
-
 
     /**
      * Parses a CSV-formatted string and dispatches to the appropriate subclass.
@@ -132,14 +128,11 @@ public abstract class Art {
         };
     } // End fromString method
 
-
     // Calculates the art price based on subclass-specific rules.
     public abstract double calculateArtPrice();
 
-
     // Returns the total price including the base shipping cost.
     public abstract double getTotalPrice();
-
 
     /**
      * Helper method to ensure a given string field is not null or empty.

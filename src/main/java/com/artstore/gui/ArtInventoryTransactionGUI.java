@@ -32,16 +32,25 @@ import com.artstore.core.*;
 import com.artstore.art.*;
 import com.artstore.enums.*;
 
-// Import core Swing components and AWT layout classes for GUI construction
-import javax.swing.*;
-import java.awt.*;
+// Swing GUI Components
+import javax.swing.*;                       // Core Swing components (JFrame, JButton, JPanel, etc.)
+import javax.swing.text.SimpleAttributeSet; // For styling text in JTextPane
+import javax.swing.text.StyleConstants;     // Constants used to align/format styled text
+import javax.swing.text.StyledDocument;     // Styled document model used by JTextPane
 
-// Import utility classes for handling data and file I/O
-import java.io.*;                     // General file I/O (BufferedReader, Writer, etc.)
-import java.time.LocalDate;         // For handling transaction dates
-import java.util.ArrayList;         // List implementation used for customers and art
-import java.util.Comparator;        // Used for sorting transactions
-import java.util.List;              // Interface for ordered collections
+// AWT for Layouts and Styling
+import java.awt.*;                          // Basic GUI layout tools (Font, Color, BorderLayout, etc.)
+
+// Java I/O
+import java.io.*;                           // File I/O classes: BufferedReader, BufferedWriter, FileReader, FileWriter
+
+// Date & Time
+import java.time.LocalDate;                // Date-only representation used for transactions
+
+// Collections
+import java.util.ArrayList;                // Resizable list implementation
+import java.util.Comparator;               // Custom sorting logic
+import java.util.List;                     // List interface (used for customers, art, etc.)
 
 /**
  * GUI class for the Art Inventory and Transaction Manager.
@@ -62,9 +71,9 @@ public class ArtInventoryTransactionGUI {
 
     // Base directory paths for storing data files
     private static final String DATA_DIRECTORY =
-            System.getProperty("user.dir") + "/src/com/data";
+            System.getProperty("user.dir") + "/src/main/java/data";
     private static final String COUNTER_FILE =
-            System.getProperty("user.dir") + "/src/com/data/transaction_counter.txt";
+            System.getProperty("user.dir") + "/src/main/java/data/transaction_counter.txt";
 
     // Subdirectories for organizing specific types of data
     public static final String CUSTOMER_DIRECTORY = DATA_DIRECTORY + "/Customer_Files";
@@ -131,8 +140,9 @@ public class ArtInventoryTransactionGUI {
         mainPanel.add(createOrderListPanel(), "ListOrders");
 
         // Add exit screen panel
-        JTextArea exitText = new JTextArea("Thank you for using the Art Inventory & Transaction Manager.\n\nGoodbye!!!");
-        exitText.setFont(new Font("Trattatello", Font.PLAIN, 36));
+        JTextPane exitText = new JTextPane();
+        exitText.setText("\n\nThank you for using the \nArt Inventory & Transaction Manager.\n\nGoodbye!!!");
+        exitText.setFont(new Font("Trattatello", Font.PLAIN, 40));
         exitText.setForeground(Color.BLACK);
         exitText.setEditable(false);
         exitText.setFocusable(false);
@@ -140,6 +150,12 @@ public class ArtInventoryTransactionGUI {
         exitText.setBorder(BorderFactory.createEmptyBorder(40, 40, 40, 40));
         exitText.setAlignmentX(Component.CENTER_ALIGNMENT);
         exitText.setHighlighter(null); // Remove caret highlight if needed
+
+        // Center the text using styled document
+        StyledDocument doc = exitText.getStyledDocument();
+        SimpleAttributeSet center = new SimpleAttributeSet();
+        StyleConstants.setAlignment(center, StyleConstants.ALIGN_CENTER);
+        doc.setParagraphAttributes(0, doc.getLength(), center, false);
 
         JPanel exitPanel = new JPanel();
         exitPanel.setLayout(new BoxLayout(exitPanel, BoxLayout.Y_AXIS));
@@ -1555,7 +1571,5 @@ public class ArtInventoryTransactionGUI {
         // Display the results in the transaction text area
         transactionTextArea.setText(sb.toString());
     } // End loadTransactions method
-
-
 
 } // End ArtInventoryTransactionGUI class
