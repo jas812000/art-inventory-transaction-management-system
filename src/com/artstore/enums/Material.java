@@ -42,4 +42,5 @@ public enum Material {
     public String getMaterialName() {
         return materialName;
     } // End getMaterialName method
+
 } // End Material Enum

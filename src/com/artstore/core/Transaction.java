@@ -14,8 +14,6 @@ import java.time.format.DateTimeFormatter;
 // Import Pattern utility to safely handle special characters in regular expressions
 import java.util.regex.Pattern;
 
-
-
 // Import custom exception
 import com.artstore.exceptions.InvalidTransactionException;
 
@@ -26,7 +24,6 @@ import com.artstore.exceptions.InvalidTransactionException;
 public class Transaction {
 
     // Attributes
-    // Transaction details
     private final String transactionId;
     private final Customer customer;
     private final List<Art> artItems;
@@ -121,43 +118,61 @@ public class Transaction {
      */
     @Override
     public String toString() {
+
         StringBuilder sb = new StringBuilder();
 
+        // Prefix with label to identify as a Transaction record
         sb.append("Transaction").append("|");
+
+        // Append transaction ID
         sb.append(transactionId).append("|");
+
+        // Serialize customer using their toString format
         sb.append(customer.toString()).append("|");
+
+        // Append transaction date if present
         sb.append(transactionDate != null ? transactionDate.toString() : "").append("|");
+
+        // Append number of art items in the transaction
         sb.append(artItems.size());
 
+        // Append each art item using its own toString
         for (Art art : artItems) {
             sb.append("|").append(art.toString());
-        }
-
+        } // End for loop
         return sb.toString();
     } // End toString method
 
     /**
-     * Parses a CSV-formatted string and reconstructs a Transaction.
-     * Format: Transaction,ID,CustomerString,Date (optional),ArtCount,ArtString1,...,ArtStringN
+     * Parses a pipe-delimited string and reconstructs a Transaction object.
+     * Format: Transaction|ID|CustomerString|Date|ArtCount|ArtString1|...|ArtStringN
      */
     public static Transaction fromString(String data) {
-        String[] parts = data.split(Pattern.quote("|"), -1); // Use '|' as a custom delimiter to avoid comma conflicts
 
+        // Use '|' as a custom delimiter to avoid comma conflicts
+        String[] parts = data.split(Pattern.quote("|"), -1);
+
+        // Extract core transaction data
         String transactionId = parts[1];
         Customer customer = Customer.fromString(parts[2]);
         String dateStr = parts[3];
         int artCount = Integer.parseInt(parts[4]);
 
+        // Reconstruct the list of Art objects
         List<Art> artList = new ArrayList<>();
         for (int i = 0; i < artCount; i++) {
             artList.add(Art.fromString(parts[5 + i]));
         } // End for loop
 
+        // Create the transaction instance
         Transaction transaction = new Transaction(transactionId, customer, artList);
+
+        // If a date exists, parse and apply it along with recalculating price
         if (!dateStr.isBlank()) {
             transaction.transactionDate = LocalDate.parse(dateStr, DateTimeFormatter.ISO_LOCAL_DATE);
             transaction.transactionPrice = transaction.calculateTransactionPrice();
         } // End if statement
         return transaction;
     } // End fromString method
+
 } // End Transaction class

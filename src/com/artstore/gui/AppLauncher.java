@@ -15,10 +15,14 @@ package com.artstore.gui;
  * @since         2025-03-24
  */
 
+/**
+ * Entry point for launching the Art Inventory & Transaction Manager application.
+ * This class initializes the main GUI on the Swing event-dispatching thread.
+ */
 public class AppLauncher {
     public static void main(String[] args) {
-
+        // Schedule the GUI to be created and shown, ensuring thread safety
         javax.swing.SwingUtilities.invokeLater(ArtInventoryTransactionGUI::new);
-
     } // End main method
-} // End com.artstore.gui.AppLauncher class
+
+} // End AppLauncher class

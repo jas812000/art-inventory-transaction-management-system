@@ -25,9 +25,11 @@ package com.artstore.gui;
 import javax.swing.*;
 import java.awt.*;
 
-// This custom panel extends JPanel to create the main home screen.
-// It displays a background image, welcome message, and attribution label.
-// The background image is rendered by overriding paintComponent().
+/**
+ * This custom panel extends JPanel to create the main home screen.
+ * It displays a background image, welcome message, and attribution label.
+ * The background image is rendered by overriding paintComponent().
+ */
 public class HomePanel extends JPanel {
 
     // Path to image resource relative to the root of the project
@@ -69,10 +71,11 @@ public class HomePanel extends JPanel {
         } // End try-catch statements
     } // End constructor
 
-
-    // Helper method to create and return a styled JLabel for the welcome message
-    // The label includes centered, multi-line HTML text with a semi-transparent background,
-    // Trattatello font styling, and padding for visual separation from edges
+    /**
+     * Helper method to create and return a styled JLabel for the welcome message
+     * The label includes centered, multi-line HTML text with a semi-transparent background,
+     * Trattatello font styling, and padding for visual separation from edges
+     */
     private static JLabel getJLabel() {
         JLabel welcomeLabel = new JLabel(
                 "<html><div style='text-align: center;'>"
@@ -87,7 +90,6 @@ public class HomePanel extends JPanel {
         welcomeLabel.setBorder(BorderFactory.createEmptyBorder(20, 15, 20, 15));
         return welcomeLabel;
     } // getJLabel method
-
 
     /**
      * Overrides the paintComponent method to render the background image.
@@ -104,7 +106,7 @@ public class HomePanel extends JPanel {
         if (backgroundImage != null) {
             g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
         } // End if statement
-
     } // End paintComponent method
+
 } // End HomePanel class
 

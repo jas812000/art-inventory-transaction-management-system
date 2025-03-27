@@ -14,7 +14,6 @@ public enum Category {
     // Holds the name of the category, immutable for each enum constant
     private final String categoryName;
 
-
     // Constructor to accept the string value
     Category(String categoryName) {
         this.categoryName = categoryName;
@@ -24,6 +23,7 @@ public enum Category {
     public String getCategoryName() {
         return categoryName;
     } // End getCategoryName method
+
 } // End Category Enum
 
 

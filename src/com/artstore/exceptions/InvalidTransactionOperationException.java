@@ -17,4 +17,5 @@ public class InvalidTransactionOperationException extends RuntimeException {
     public InvalidTransactionOperationException(String operation, String reason) {
         super("THIS OPERATION " + operation + " WAS ATTEMPTED AND IT FAILED DUE TO "+ reason + ".");
     } // End constructor
+
 } // End InvalidTransactionOperationException class

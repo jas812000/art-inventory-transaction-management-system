@@ -55,6 +55,7 @@ public class Sculpture extends Art {
         this.sculptureWeight = sculptureWeight;
     } // End constructor
 
+
     // Getters
     public Material getMaterial() {
         return material;
@@ -64,6 +65,7 @@ public class Sculpture extends Art {
         return sculptureWeight;
     } // End getSculptureWeight method
 
+
     /**
      * Returns the type of this art piece.
      */
@@ -71,6 +73,7 @@ public class Sculpture extends Art {
     public String getType() {
         return "Sculpture";
     } // End getType method
+
 
     /**
      * Converts the Sculpture object into a CSV-formatted string.
@@ -90,6 +93,7 @@ public class Sculpture extends Art {
                 String.valueOf(sculptureWeight)
         );
     } // End toString method
+
 
     /**
      * Creates a Sculpture object from a CSV-formatted string.
@@ -112,6 +116,7 @@ public class Sculpture extends Art {
         );
     } // End fromString method
 
+
     /**
      * Calculates the sculpture's price using a weight-based surcharge.
      * Surcharge = sculptureWeight * 0.35
@@ -121,6 +126,7 @@ public class Sculpture extends Art {
         double weightSurcharge = sculptureWeight * 0.35;
         return getArtPrice() + weightSurcharge;
     } // End calculateArtPrice method
+
 
     /**
      * Returns the total price including base shipping cost.

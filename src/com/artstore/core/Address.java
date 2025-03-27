@@ -11,10 +11,10 @@ import com.artstore.exceptions.InvalidTransactionException;
 public class Address {
 
     // Address fields
-    private String mailingAddress;
-    private String city;
-    private String state;
-    private int zipCode;
+    private final String mailingAddress;
+    private final String city;
+    private final String state;
+    private final int zipCode;
 
     /**
      * Constructs an Address object with all required fields.
@@ -59,29 +59,6 @@ public class Address {
     public int getZipCode() {
         return zipCode;
     } // End getZipCode method
-
-    ///Setters
-    // Sets the mailing address
-    public void setMailingAddress(String address) {
-        this.mailingAddress = address;
-    } // End setMailingAddress method
-
-    // Sets the city
-    public void setCity(String city) {
-        this.city = city;
-    } // End setCity method
-
-    // Sets the state
-    public void setState(String state) {
-        validateStateCode(state);
-        this.state = state;
-
-    } // End setState method
-
-    // Sets the ZIP code
-    public void setZipCode(int zipCode) {
-        this.zipCode = zipCode;
-    } // End setZipCode method
 
     /**
      * Serializes the Address into a comma-separated string.
@@ -150,4 +127,5 @@ public class Address {
             throw new InvalidTransactionException("Address Validation", "ZIP Code must be a 5-digit number.");
         } // End if statement
     } // End validateZipCode method
+
 } // End Address class

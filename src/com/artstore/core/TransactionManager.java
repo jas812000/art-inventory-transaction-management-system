@@ -13,6 +13,7 @@ import java.io.*;
 // Import domain and exception classes
 import com.artstore.exceptions.InvalidTransactionOperationException;
 
+// Static import of TRANSACTION_DIRECTORY for convenient file path reference
 import static com.artstore.gui.ArtInventoryTransactionGUI.TRANSACTION_DIRECTORY;
 
 /**
@@ -105,8 +106,14 @@ public class TransactionManager {
             String filePath = TRANSACTION_DIRECTORY + "/transactions.txt";
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+
+            // Iterate over each transaction in the map
             for (Transaction t : transactions.values()) {
+
+                // Write the transaction as a string to the file
                 writer.write(t.toString());
+
+                // Write a new line after each transaction
                 writer.newLine();
             } // End for loop
         } catch (IOException e) {
@@ -124,8 +131,14 @@ public class TransactionManager {
 
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String line;
+
+            // Read each line from the file
             while ((line = reader.readLine()) != null) {
+
+                // Convert the line to a Transaction object
                 Transaction transaction = Transaction.fromString(line);
+
+                // Store the transaction in the map using its ID as the key
                 transactions.put(transaction.getTransactionId(), transaction);
             } // End while loop
         } catch (IOException e) {
@@ -141,7 +154,8 @@ public class TransactionManager {
     public List<Transaction> getAllTransactions() {
         return new ArrayList<>(transactions.values());
     } // End getAllTransactions method
-}
+
+} // End TransactionManager class
 
 
 

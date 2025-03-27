@@ -14,6 +14,7 @@ import java.util.List;
  */
 public class Customer {
 
+    // Absolute path to the customer data file, constructed using the current working directory
     private static final String CUSTOMER_FILE_PATH =
             System.getProperty("user.dir") + "/src/com/data/Customer_Files/customers.txt";
 
@@ -149,7 +150,6 @@ public class Customer {
         return new Customer(firstName, lastName, address, phone, email);
     } // End fromString method
 
-
     /**
      * Validates that a string field is not null or blank.
      *
@@ -194,7 +194,6 @@ public class Customer {
         } // End try-catch statements
     } // End saveToFile method
 
-
     /**
      * Loads all customers from the customer file.
      *
@@ -214,6 +213,5 @@ public class Customer {
 
         return customers;
     } // End loadAllFromFile method
-
 
 } // End Customer class

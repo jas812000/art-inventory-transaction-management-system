@@ -53,6 +53,7 @@ public class Drawing extends Art {
         this.category = category;
     }  // End constructor
 
+
     // Getters for drawing-specific properties
     public Style getStyle() {
         return style;
@@ -66,6 +67,7 @@ public class Drawing extends Art {
         return category;
     }  // End getCategory method
 
+
     /**
      * Returns the type of this art piece.
      * Used to distinguish between different subclasses of Art.
@@ -74,6 +76,7 @@ public class Drawing extends Art {
     public String getType() {
         return "Drawing";
     }  // End getType method
+
 
     /**
      * Converts the Drawing object into a CSV-formatted string.
@@ -94,6 +97,7 @@ public class Drawing extends Art {
                 category.name()
         );
     } // End toString method
+
 
     /**
      * Creates a Drawing object from a CSV-formatted string.
@@ -117,6 +121,7 @@ public class Drawing extends Art {
         );
     }  // End fromString method
 
+
     /**
      * Calculates the drawing price.
      * For drawings, there is no additional surcharge — just the base price is returned.
@@ -127,6 +132,7 @@ public class Drawing extends Art {
         return getArtPrice();
     } // End calculateArtPrice method
 
+
     /**
      * Returns the total price including base shipping cost.
      */
@@ -134,4 +140,5 @@ public class Drawing extends Art {
     public double getTotalPrice() {
         return calculateArtPrice() + BASE_SHIPPING_COST;
     } // End getTotalPrice method
+
 } // End Drawing class

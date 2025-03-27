@@ -21,6 +21,7 @@ public enum EditionType {
     public String getEditionTypeName() {
         return editionTypeName;
     } // End getEditionTypeName method
+
 } // End EditionType Enum
 
 

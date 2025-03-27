@@ -51,6 +51,7 @@ public class Print extends Art {
         this.category = category;
     } // End constructor
 
+
     // Getters
     public EditionType getEditionType() {
         return editionType;
@@ -60,6 +61,7 @@ public class Print extends Art {
         return category;
     } // End getCategory method
 
+
     /**
      * Returns the type of this art piece.
      */
@@ -67,6 +69,7 @@ public class Print extends Art {
     public String getType() {
         return "Print";
     } // End getType method
+
 
     /**
      * Converts the Print object into a CSV-formatted string.
@@ -86,6 +89,7 @@ public class Print extends Art {
                 category.name()
         );
     } // End toString method
+
 
     /**
      * Creates a Print object from a CSV-formatted string.
@@ -108,6 +112,7 @@ public class Print extends Art {
         );
     } // End fromString method
 
+
     /**
      * Calculates the art price for a print.
      * No surcharges — returns base price.
@@ -116,6 +121,7 @@ public class Print extends Art {
     public double calculateArtPrice() {
         return getArtPrice();
     } // End calculateArtPrice method
+
 
     /**
      * Returns the total price including base shipping.

@@ -10,6 +10,7 @@ import java.util.*;
 // Import utility classes file handling
 import java.io.*;
 
+// Absolute path to the inventory directory
 import static com.artstore.gui.ArtInventoryTransactionGUI.INVENTORY_DIRECTORY;
 
 /**
@@ -63,10 +64,13 @@ public class ArtInventoryManager {
         String filePath = INVENTORY_DIRECTORY + "/inventory.txt";
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+
+            // Write each art object to the file on a new line
             for (Art art : inventory.values()) {
                 writer.write(art.toString());
+                // Ensure each entry is on its own line
                 writer.newLine();
-            }
+            } // End for loop
         } catch (IOException e) {
             System.err.println("Failed to save inventory: " + e.getMessage());
         }  // End try-catch statements
@@ -81,13 +85,13 @@ public class ArtInventoryManager {
 
         String filePath = INVENTORY_DIRECTORY + "/inventory.txt";
 
-
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String line;
+            // Read and parse each line into an Art object
             while ((line = reader.readLine()) != null) {
                 Art art = Art.fromString(line);
                 inventory.put(art.getArtIdentification(), art);
-            }
+            } // End while loop
         } catch (IOException e) {
             System.err.println("Failed to load inventory: " + e.getMessage());
         } // End try-catch statements
