@@ -23,6 +23,9 @@ package com.artstore.gui;
  * @since         2025-03-24
  */
 import javax.swing.*;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 import java.awt.*;
 
 /**
@@ -48,7 +51,7 @@ public class HomePanel extends JPanel {
         setOpaque(false);
 
         // Welcome message label (centered)
-        JLabel welcomeLabel = getJLabel();
+        JPanel welcomePanel = getWelcomePanel();
 
         // Attribution label for image source (bottom)
         JLabel attribution = new JLabel(
@@ -60,7 +63,7 @@ public class HomePanel extends JPanel {
         attribution.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         // Add components to the panel
-        add(welcomeLabel, BorderLayout.CENTER);
+        add(welcomePanel, BorderLayout.CENTER);
         add(attribution, BorderLayout.SOUTH);
 
         // Load the background image from the given path
@@ -72,24 +75,46 @@ public class HomePanel extends JPanel {
     } // End constructor
 
     /**
-     * Helper method to create and return a styled JLabel for the welcome message
-     * The label includes centered, multi-line HTML text with a semi-transparent background,
-     * Trattatello font styling, and padding for visual separation from edges
+     * Creates and returns a styled welcome panel with a translucent background
+     * and centered multiline text using a JTextPane.
+     *
+     * @return A JPanel containing the welcome message, styled and centered
      */
-    private static JLabel getJLabel() {
-        JLabel welcomeLabel = new JLabel(
-                "<html><div style='text-align: center;'>"
-                        + "<div style='background-color: rgba(255,255,255,0.8); padding: 10px;'>"
-                        + "Welcome to the Art Inventory & Transaction Manager.<br/>Please select a menu option."
-                        + "</div></div></html>",
-                JLabel.CENTER
-        );
-        welcomeLabel.setFont(new Font("Trattatello", Font.PLAIN, 30));
-        welcomeLabel.setForeground(Color.BLACK);
+    private static JPanel getWelcomePanel() {
+        // Create a JTextPane for multiline welcome text
+        JTextPane welcomeText = new JTextPane();
+        welcomeText.setText("Welcome to the Art Inventory & Transaction Manager.\nPlease select a menu option.");
+        welcomeText.setFont(new Font("Trattatello", Font.PLAIN, 40));
+        welcomeText.setForeground(Color.BLACK);
+        welcomeText.setEditable(false);
+        welcomeText.setFocusable(false);
+        welcomeText.setOpaque(false);
+        welcomeText.setBorder(BorderFactory.createEmptyBorder(20, 25, 20, 25));
 
-        welcomeLabel.setBorder(BorderFactory.createEmptyBorder(20, 15, 20, 15));
-        return welcomeLabel;
-    } // getJLabel method
+        // Set text alignment to center
+        StyledDocument doc = welcomeText.getStyledDocument();
+        SimpleAttributeSet center = new SimpleAttributeSet();
+        StyleConstants.setAlignment(center, StyleConstants.ALIGN_CENTER);
+        doc.setParagraphAttributes(0, doc.getLength(), center, false);
+
+        // Set preferred width/height
+        welcomeText.setPreferredSize(new Dimension(800, 250));
+        welcomeText.setMaximumSize(new Dimension(800, 250));
+
+        // Panel with translucent white background behind the text
+        JPanel backgroundPanel = new JPanel();
+        backgroundPanel.setLayout(new BoxLayout(backgroundPanel, BoxLayout.Y_AXIS));
+        backgroundPanel.setBackground(new Color(255, 255, 255, 200)); // White with alpha (semi-transparent)
+        backgroundPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        backgroundPanel.add(welcomeText);
+
+        // Outer wrapper panel to center the content
+        JPanel outerPanel = new JPanel(new GridBagLayout()); // Centers content
+        outerPanel.setOpaque(false); // Let parent background show through
+        outerPanel.add(backgroundPanel);
+
+        return outerPanel;
+    } // End getWelcomePanel method
 
     /**
      * Overrides the paintComponent method to render the background image.

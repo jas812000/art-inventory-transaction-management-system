@@ -131,15 +131,20 @@ public class ArtInventoryTransactionGUI {
         mainPanel.add(createOrderListPanel(), "ListOrders");
 
         // Add exit screen panel
-        JPanel exitPanel = new JPanel(new BorderLayout());
-        JLabel exitLabel = new JLabel(
-                "<html><div style='text-align: center;'>"
-                        + "Thank you for using the Art Inventory & Transaction Manager.<br/><br/>Goodbye!!!"
-                        + "</div></html>", JLabel.CENTER);
-        exitLabel.setFont(new Font("Trattatello", Font.PLAIN, 36));
-        exitLabel.setForeground(Color.BLACK);
-        exitLabel.setBorder(BorderFactory.createEmptyBorder(40, 40, 40, 40));
-        exitPanel.add(exitLabel, BorderLayout.CENTER);
+        JTextArea exitText = new JTextArea("Thank you for using the Art Inventory & Transaction Manager.\n\nGoodbye!!!");
+        exitText.setFont(new Font("Trattatello", Font.PLAIN, 36));
+        exitText.setForeground(Color.BLACK);
+        exitText.setEditable(false);
+        exitText.setFocusable(false);
+        exitText.setOpaque(false);
+        exitText.setBorder(BorderFactory.createEmptyBorder(40, 40, 40, 40));
+        exitText.setAlignmentX(Component.CENTER_ALIGNMENT);
+        exitText.setHighlighter(null); // Remove caret highlight if needed
+
+        JPanel exitPanel = new JPanel();
+        exitPanel.setLayout(new BoxLayout(exitPanel, BoxLayout.Y_AXIS));
+        exitPanel.add(exitText);
+
         mainPanel.add(exitPanel, "ExitScreen");
 
         // Create and set up the main application window

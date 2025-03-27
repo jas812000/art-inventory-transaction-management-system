@@ -5,13 +5,9 @@ package com.artstore.gui;
 import java.io.File;
 
 /**
- *
- *
- *
- *
+ * Utility class for managing application data directories.
  */
 public class DirectoryManager {
-
     /**
      * Creates the necessary application data directories if they don't already exist.
      *
@@ -20,8 +16,13 @@ public class DirectoryManager {
      * @param transactionDir Path for transaction data storage
      */
     public static void initializeDirectories(String customerDir, String inventoryDir, String transactionDir) {
+        // Create the customer directory if it doesn't exist
         createIfMissing(customerDir);
+
+        // Create the inventory directory if it doesn't exist
         createIfMissing(inventoryDir);
+
+        // Create the transaction directory if it doesn't exist
         createIfMissing(transactionDir);
     } // End initializeDirectories method
 
