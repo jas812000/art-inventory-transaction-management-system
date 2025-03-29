@@ -21,6 +21,7 @@ public abstract class Art {
     private final String artTitle;
     private final String artDescription;
     private final String artAuthor;
+    private boolean isReserved = false;
     protected static final double BASE_SHIPPING_COST = 10.99;
 
     /**
@@ -99,6 +100,32 @@ public abstract class Art {
     public String getAuthor(){
         return artAuthor;
     } // End getAuthor method
+
+    /**
+     * Checks if the art piece is currently reserved (i.e., part of a pending or completed transaction).
+     *
+     * @return true if the art is reserved, false otherwise.
+     */
+    public boolean isReserved() {
+        return isReserved;
+    } // End isReserved method
+
+    /**
+     * Marks the art piece as reserved.
+     * This should be called when the art is added to a transaction.
+     */
+    public void reserve() {
+        this.isReserved = true;
+    } // End reserve method
+
+    /**
+     * Unmarks the art piece as reserved.
+     * This should be called when a transaction is canceled or removed,
+     * making the art available for other transactions.
+     */
+    public void unreserve() {
+        this.isReserved = false;
+    } // End unreserve method
 
     /// Abstract methods to be implemented by subclasses
     //Returns the type of the art object (e.g., Painting, Drawing).

@@ -14,7 +14,7 @@ public class Address {
     private final String mailingAddress;
     private final String city;
     private final String state;
-    private final int zipCode;
+    private final String zipCode;
 
     /**
      * Constructs an Address object with all required fields.
@@ -24,7 +24,7 @@ public class Address {
      * @param state The state name or abbreviation
      * @param zipCode A valid U.S. ZIP code
      */
-    public Address(String mailingAddress, String city, String state, int zipCode) {
+    public Address(String mailingAddress, String city, String state, String zipCode) {
 
         // Validate input fields to ensure the address is complete and correctly formatted
         validateNotBlank(mailingAddress, "Mailing Address");
@@ -56,7 +56,7 @@ public class Address {
     } // End getState method
 
     // Gets the ZIP code
-    public int getZipCode() {
+    public String getZipCode() {
         return zipCode;
     } // End getZipCode method
 
@@ -85,7 +85,7 @@ public class Address {
         String mailingAddress = parts[0];
         String city = parts[1];
         String state = parts[2];
-        int zip = Integer.parseInt(parts[3]);
+        String zip = parts[3];
 
         // Return constructed Address object
         return new Address(mailingAddress, city, state, zip);
@@ -122,10 +122,12 @@ public class Address {
      *
      * @param zipCode the zip code to validate
      */
-    private void validateZipCode(int zipCode) {
-        if (zipCode < 10000 || zipCode > 99999) {
+    private void validateZipCode(String zipCode) {
+        String zipStr = String.valueOf(zipCode);
+        if (zipCode == null || !zipCode.matches("\\d{5}")) {
             throw new InvalidTransactionException("Address Validation", "ZIP Code must be a 5-digit number.");
         } // End if statement
     } // End validateZipCode method
+
 
 } // End Address class

@@ -15,7 +15,7 @@ public class InvalidArtOperationException extends RuntimeException {
      * @param reason    The reason the operation could not be completed.
      */
     public InvalidArtOperationException(String operation, String reason) {
-        super("THIS OPERATION " + operation + " WAS ATTEMPTED AND IT FAILED DUE TO "+ reason + ".");
+        super(operation + " was attempted and failed due to the following: "+ reason);
     } // End constructor
 
 } // End InvalidArtOperationException class

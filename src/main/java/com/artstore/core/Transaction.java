@@ -109,6 +109,7 @@ public class Transaction {
         if (!isCompleted()) {
             this.transactionPrice = calculateTransactionPrice();
             this.transactionDate = LocalDate.now();
+
         } // End if statement
     }  // End completeTransaction method
 

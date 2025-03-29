@@ -2,11 +2,16 @@
 package com.artstore.core;
 
 // Import core classes and collections
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
 import java.time.LocalDate;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.io.*;
 
@@ -22,6 +27,8 @@ import static com.artstore.gui.ArtInventoryTransactionGUI.TRANSACTION_DIRECTORY;
  * Supports adding, removing, retrieving, and searching transactions.
  */
 public class TransactionManager {
+
+    private static final Logger logger = Logger.getLogger(TransactionManager.class.getName());
 
     // Stores all transactions, keyed by their unique transaction ID
     private final Map<String, Transaction> transactions;
@@ -40,6 +47,7 @@ public class TransactionManager {
      */
     public void addTransaction(Transaction transaction) {
         transactions.put(transaction.getTransactionId(), transaction);
+        saveTransactionsToFile();
     } // End addTransaction method
 
     /**
@@ -104,21 +112,28 @@ public class TransactionManager {
      */
     public void saveTransactionsToFile() {
 
-            String filePath = TRANSACTION_DIRECTORY + "/transactions.txt";
+        Path directory = Paths.get(ArtInventoryTransactionGUI.TRANSACTION_DIRECTORY);
+        Path filePath = directory.resolve("transactions.txt");
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+        try {
 
-            // Iterate over each transaction in the map
-            for (Transaction t : transactions.values()) {
+            if (!Files.exists(directory)) {
+                Files.createDirectories(directory); // Ensures directory exists, prevents silent failure
+            } // End if statement
 
-                // Write the transaction as a string to the file
-                writer.write(t.toString());
+            try (BufferedWriter writer = Files.newBufferedWriter(filePath)) {
+                for (Transaction t : transactions.values()) {
+                    writer.write(t.toString());
+                    writer.newLine();
+                } // End for loop
+            } // End try statement
 
-                // Write a new line after each transaction
-                writer.newLine();
-            } // End for loop
+            System.out.println("Transactions saved successfully to: " + filePath.toAbsolutePath());
+
         } catch (IOException e) {
-            throw new InvalidTransactionOperationException("Save Transactions", "Unable to write to file.");
+            logger.log(Level.SEVERE, "Failed to save transactions to: " + filePath, e);
+            throw new InvalidTransactionOperationException("Save Transactions",
+                    "Unable to write to file: " + e.getMessage());
         } // End try-catch statements
     } // End saveTransactionsToFile method
 
@@ -127,31 +142,26 @@ public class TransactionManager {
      *
      */
     public void loadTransactionsFromFile() {
+        Path filePath = Paths.get(ArtInventoryTransactionGUI.TRANSACTION_DIRECTORY, "transactions.txt");
 
-        //String filePath = TRANSACTION_DIRECTORY + "/transactions.txt";
-        File file = new File(ArtInventoryTransactionGUI.TRANSACTION_DIRECTORY + "/transactions.txt");
-
-        if (!file.exists()) {
+        if (!Files.exists(filePath)) {
             System.out.println("No transaction file found. Starting with an empty transaction list.");
-            transactions.clear();  // Ensure it's empty
+            transactions.clear();
             return;
-        }// End if statement
+        } // End if statement
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+        try (BufferedReader reader = Files.newBufferedReader(filePath)) {
             String line;
-
-            // Read each line from the file
             while ((line = reader.readLine()) != null) {
-
-                // Convert the line to a Transaction object
                 Transaction transaction = Transaction.fromString(line);
-
-                // Store the transaction in the map using its ID as the key
                 transactions.put(transaction.getTransactionId(), transaction);
             } // End while loop
+
+            System.out.println("Transactions loaded from: " + filePath.toAbsolutePath());
+
         } catch (IOException e) {
-            System.err.println("Warning: Unable to read transactions from file. Starting with an empty list.");
-            transactions.clear();  // Start fresh
+            logger.log(Level.SEVERE, "Failed to load transactions from: " + filePath.toAbsolutePath(), e);
+            transactions.clear();
         } // End try-catch statements
     } // End loadTransactionsFromFile method
 

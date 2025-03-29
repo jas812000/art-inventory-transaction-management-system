@@ -15,7 +15,7 @@ public class InvalidTransactionException extends RuntimeException {
      * @param reason    The reason the transaction was considered invalid.
      */
     public InvalidTransactionException(String operation, String reason) {
-        super("THIS OPERATION " + operation + " WAS ATTEMPTED AND IT FAILED DUE TO "+ reason + ".");
+        super(operation + " was attempted and failed due to the following: "+ reason);
     } // End constructor
 
 } // End InvalidTransactionException class

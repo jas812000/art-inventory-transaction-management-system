@@ -52,7 +52,11 @@ public class Customer {
         this.email = email;
     } // End constructor
 
-    // Getters
+    /// Getters
+    public static File getCustomerFile() {
+        return new File(CUSTOMER_FILE_PATH);
+    } // End getCustomerFile method
+
     public String getFirstName() {
         return firstName;
     } // End getFirstName method
@@ -73,7 +77,7 @@ public class Customer {
         return email;
     } // End getEmail method
 
-    // Setters with validation
+    /// Setters
     public void setFirstName(String firstName) {
         validateNotBlank(firstName, "First Name");
         this.firstName = firstName;
@@ -139,7 +143,7 @@ public class Customer {
         String mailingAddress = parts[2];
         String city = parts[3];
         String state = parts[4];
-        int zip = Integer.parseInt(parts[5]);
+        String zip = parts[5];
 
         // Parse contact info
         String phone = parts[6];
@@ -186,7 +190,16 @@ public class Customer {
      * Saves this customer to the default customer file.
      */
     public void saveToFile() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(CUSTOMER_FILE_PATH, true))) {
+
+        File file = new File(CUSTOMER_FILE_PATH);
+
+        // Ensure the parent directory exists
+        File parentDir = file.getParentFile();
+        if (!parentDir.exists()) {
+            parentDir.mkdirs();  // Create the directory if it doesn't exist
+        } // End if statement
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, true))) {
             writer.write(this.toString());  // CSV format
             writer.newLine();
         } catch (IOException e) {
