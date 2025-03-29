@@ -19,9 +19,6 @@ import java.io.*;
 import com.artstore.exceptions.InvalidTransactionOperationException;
 import com.artstore.gui.ArtInventoryTransactionGUI;
 
-// Static import of TRANSACTION_DIRECTORY for convenient file path reference
-import static com.artstore.gui.ArtInventoryTransactionGUI.TRANSACTION_DIRECTORY;
-
 /**
  * Manages all transaction records in memory.
  * Supports adding, removing, retrieving, and searching transactions.
