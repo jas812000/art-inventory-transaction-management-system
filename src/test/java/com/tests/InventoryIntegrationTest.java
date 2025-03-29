@@ -1,10 +1,11 @@
 package com.tests;
 
-import com.artstore.art.Art;
-import com.artstore.art.Print;
+import com.artstore.model.Art;
+import com.artstore.model.Print;
 import com.artstore.core.ArtInventoryManager;
-import com.artstore.enums.Category;
-import com.artstore.enums.EditionType;
+import com.artstore.model.enums.Category;
+import com.artstore.model.enums.EditionType;
+import com.artstore.model.enums.ItemStatus;
 import org.junit.jupiter.api.*;
 import java.io.File;
 import java.util.List;
@@ -29,8 +30,10 @@ class InventoryIntegrationTest {
 
     @AfterEach
     void cleanUp() {
-        // Optional: Clear the test file after each run to avoid side effects
-        new File(TEST_INVENTORY_FILE).delete();
+        File file = new File(TEST_INVENTORY_FILE);
+        if (file.exists() && !file.delete()) {
+            throw new IllegalStateException("Failed to delete test inventory file: " + file.getAbsolutePath());
+        }
     }
 
     // -- testSaveAndLoadInventory --
@@ -38,16 +41,14 @@ class InventoryIntegrationTest {
     void testSaveAndLoadInventory() {
         System.out.println("\tRunning test: testSaveAndLoadInventory - Verifies inventory is saved to file and accurately reloaded");
 
-        // Create a Print to add
-        Art art = new Print("1112223334", 120.00, 2022, "Sunset Print", "A vibrant piece",
-                "C. Creator", EditionType.CANVAS, Category.LANDSCAPE);
+        Art art = new Print("1112223334", 120.00, 2022, "Sunset Print",
+                "A vibrant piece", "C. Creator", ItemStatus.AVAILABLE,
+                EditionType.CANVAS, Category.LANDSCAPE);
 
-        // Add to inventory
         inventoryManager.addArt(art);
         inventoryManager.saveInventoryToFile();
         System.out.println("\t\tPassed: Inventory saved to file");
 
-        // Create a new manager and load from file
         ArtInventoryManager loadedManager = new ArtInventoryManager();
         loadedManager.loadInventoryFromFile();
         System.out.println("\t\tPassed: Inventory loaded from file");
@@ -57,11 +58,31 @@ class InventoryIntegrationTest {
         assertEquals(1, loadedArt.size(), "Exactly one art piece should be loaded");
         System.out.println("\t\tPassed: Correct number of art pieces loaded");
 
-        assertEquals("1112223334", loadedArt.get(0).getArtIdentification(), "Loaded art ID should match");
+        assertEquals("1112223334", loadedArt.getFirst().getArtIdentification(), "Loaded art ID should match");
         System.out.println("\t\tPassed: Art ID matches");
 
-        assertEquals("Sunset Print", loadedArt.get(0).getTitle(), "Loaded title should match");
+        assertEquals("Sunset Print", loadedArt.getFirst().getTitle(), "Loaded title should match");
         System.out.println("\t\tPassed: Art title matches");
+    }
+
+    // -- testAddAndRemoveArtFromInventory --
+    @Test
+    void testAddAndRemoveArtFromInventory() {
+        System.out.println("\tRunning test: testAddAndRemoveArtFromInventory - Verifies art can be added and removed from inventory");
+
+        Art art = new Print("1112223334", 120.00, 2023, "Sunset Print",
+                "A vibrant piece", "C. Creator", ItemStatus.AVAILABLE, EditionType.CANVAS,
+                Category.LANDSCAPE);
+        inventoryManager.addArt(art);
+
+        List<Art> artList = inventoryManager.getAllArt();
+        assertEquals(1, artList.size(), "Art should be added successfully");
+        System.out.println("\t\tPassed: Art added successfully");
+
+        inventoryManager.removeArt(art.getArtIdentification());
+        artList = inventoryManager.getAllArt();
+        assertEquals(0, artList.size(), "Art should be removed successfully");
+        System.out.println("\t\tPassed: Art removed successfully");
     }
 
     @AfterAll

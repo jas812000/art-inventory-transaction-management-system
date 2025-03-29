@@ -1,17 +1,21 @@
 package com.tests;
 
-import com.artstore.art.Art;
-import com.artstore.art.Print;
-import com.artstore.core.Address;
-import com.artstore.core.Customer;
-import com.artstore.core.Transaction;
+import com.artstore.core.ArtInventoryManager;
+import com.artstore.model.Art;
+import com.artstore.model.Print;
+import com.artstore.model.Address;
+import com.artstore.model.Customer;
+import com.artstore.model.Transaction;
 import com.artstore.core.TransactionManager;
-import com.artstore.enums.Category;
-import com.artstore.enums.EditionType;
+import com.artstore.model.enums.Category;
+import com.artstore.model.enums.EditionType;
+import com.artstore.model.enums.ItemStatus;
+import com.artstore.model.enums.TransactionStatus;
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.time.LocalDate;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 class TransactionManagerTest {
@@ -19,69 +23,71 @@ class TransactionManagerTest {
     private TransactionManager manager;
 
     static {
-        System.out.println("=== TransactionManagerTest: Tests functionality for managing, querying, " +
-                "and removing transactions ===");
+        System.out.println("=== TransactionManagerTest: Tests functionality for managing, querying, and " +
+                "removing transactions ===");
     }
 
     @BeforeEach
     void setup() {
-        manager = new TransactionManager();
+        ArtInventoryManager inventoryManager = new ArtInventoryManager();
+        Path transactionFilePath = Paths.get("src/test/java/data/Transaction_Files/transactions.txt");
+
+        manager = new TransactionManager(inventoryManager, transactionFilePath);
         Customer customer = new Customer("Jane", "Doe",
                 new Address("123 A St", "City", "CA", "90210"),
                 "1234567890", "jane@domain.com");
 
         Art artItem = new Print("1234567890", 200.0, 2022,
                 "Artwork", "A description", "Artist",
-                EditionType.CANVAS, Category.GENRE);
+                ItemStatus.AVAILABLE, EditionType.CANVAS, Category.GENRE);
 
-        Transaction transaction = new Transaction("TX-001", customer, List.of(artItem));
-        transaction.completeTransaction();
+        Transaction transaction = new Transaction("TXN-0001", customer, List.of(artItem));
         manager.addTransaction(transaction);
     }
 
-    // -- testAddAndRetrieveTransaction --
+    // --- testAddAndGetTransaction ---
     @Test
-    void testAddAndRetrieveTransaction() {
-        System.out.println("\tRunning test: testAddAndRetrieveTransaction - Verifies " +
-                "transaction can be retrieved by its ID");
+    void testAddAndGetTransaction() {
+        System.out.println("\tRunning test: testAddAndGetTransaction - Verifies transaction can be added and retrieved");
 
-        Transaction retrieved = manager.getTransactionByIdentification("TX-001");
-        assertNotNull(retrieved);
+        List<Transaction> result = manager.getTransactions("TXN-0001", null, null, null, null);
+        assertFalse(result.isEmpty(), "Transaction should be retrievable");
+
+        Transaction retrieved = result.getFirst();
+        assertNotNull(retrieved, "Retrieved transaction should not be null");
         System.out.println("\t\tPassed: Transaction retrieved successfully");
 
-        assertEquals("TX-001", retrieved.getTransactionId());
+        assertEquals("TXN-0001", retrieved.getTransactionId());
         System.out.println("\t\tPassed: Transaction ID matches");
     }
 
-    // -- testGetTransactionsByEmail --
+    // --- testTransactionCompletion ---
     @Test
-    void testGetTransactionsByEmail() {
-        System.out.println("\tRunning test: testGetTransactionsByEmail - Ensures " +
-                "transactions can be found by customer email");
+    void testTransactionCompletion() {
+        System.out.println("\tRunning test: testTransactionCompletion - Verifies transaction completion logic");
 
-        List<Transaction> transactions = manager.getTransactionsByCustomerEmail("jane@domain.com");
-        assertEquals(1, transactions.size());
-        System.out.println("\t\tPassed: Transaction retrieved by customer email");
+        Transaction transaction = manager.getTransactions("TXN-0001", null, null, null, null).getFirst();
+        assertNotNull(transaction, "Transaction should exist before marking completed");
+
+        transaction.completeTransaction();
+
+        assertEquals(TransactionStatus.COMPLETED, transaction.getStatus(), "Transaction should be marked as completed");
+        assertNotNull(transaction.getTransactionDate(), "Transaction date should be set");
+
+        System.out.println("\t\tPassed: Transaction marked as completed");
     }
 
-    // -- testGetTransactionsByDate --
-    @Test
-    void testGetTransactionsByDate() {
-        System.out.println("\tRunning test: testGetTransactionsByDate - Confirms transactions can be retrieved by their transaction date");
-
-        List<Transaction> transactions = manager.getTransactionsByDate(LocalDate.now());
-        assertEquals(1, transactions.size());
-        System.out.println("\t\tPassed: Transaction retrieved by transaction date");
-    }
-
-    // -- testRemoveTransaction --
+    // --- testRemoveTransaction ---
     @Test
     void testRemoveTransaction() {
-        System.out.println("\tRunning test: testRemoveTransaction - Verifies a transaction can be removed from the manager");
+        System.out.println("\tRunning test: testRemoveTransaction - Verifies transaction can be removed");
 
-        manager.removeTransaction("TX-001");
-        assertNull(manager.getTransactionByIdentification("TX-001"));
-        System.out.println("\t\tPassed: Transaction successfully removed");
+        manager.removeTransaction("TXN-0001");
+
+        List<Transaction> result = manager.getTransactions("TXN-0001", null, null, null, null);
+        assertTrue(result.isEmpty(), "Transaction list should be empty after removal");
+
+        System.out.println("\t\tPassed: Transaction removed successfully");
     }
 
     @AfterAll

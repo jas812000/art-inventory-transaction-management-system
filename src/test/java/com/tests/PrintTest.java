@@ -1,9 +1,10 @@
 package com.tests;
 
-import com.artstore.art.Print;
-import com.artstore.enums.Category;
-import com.artstore.enums.EditionType;
+import com.artstore.model.Print;
+import com.artstore.model.enums.Category;
+import com.artstore.model.enums.EditionType;
 import com.artstore.exceptions.InvalidArtOperationException;
+import com.artstore.model.enums.ItemStatus;
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -18,7 +19,8 @@ class PrintTest {
     void testValidPrintCreation() {
         System.out.println("\tRunning test: testValidPrintCreation - Confirms Print is created with correct type and total price");
 
-        Print print = new Print("1112223333", 150.0, 2023, "Serenity", "A soft piece", "Author",
+        Print print = new Print("1112223333", 150.0, 2023, "Serenity",
+                "A soft piece", "Author", ItemStatus.AVAILABLE,
                 EditionType.CANVAS, Category.LANDSCAPE);
 
         assertEquals("Print", print.getType());
@@ -33,7 +35,8 @@ class PrintTest {
     void testToStringAndFromStringRoundTrip() {
         System.out.println("\tRunning test: testToStringAndFromStringRoundTrip - Verifies Print can be serialized and deserialized accurately");
 
-        Print original = new Print("1112223333", 150.0, 2023, "Serenity", "A soft piece", "Author",
+        Print original = new Print("1112223333", 150.0, 2023, "Serenity",
+                "A soft piece", "Author", ItemStatus.AVAILABLE,
                 EditionType.CANVAS, Category.LANDSCAPE);
         String csv = original.toString();
         Print reconstructed = Print.fromString(csv);
@@ -51,7 +54,8 @@ class PrintTest {
         System.out.println("\tRunning test: testNullEditionTypeThrowsException - Ensures null EditionType triggers validation error");
 
         Exception ex = assertThrows(InvalidArtOperationException.class, () ->
-                new Print("1112223333", 150.0, 2023, "Serenity", "desc", "Author", null, Category.LANDSCAPE));
+                new Print("1112223333", 150.0, 2023, "Serenity", "desc",
+                        "Author", ItemStatus.AVAILABLE, null, Category.LANDSCAPE));
         System.out.println("\t\tPassed: Exception thrown for null EditionType");
 
         assertTrue(ex.getMessage().contains("Edition Type"));

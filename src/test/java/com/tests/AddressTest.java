@@ -1,6 +1,6 @@
 package com.tests;
 
-import com.artstore.core.Address;
+import com.artstore.model.Address;
 import com.artstore.exceptions.InvalidTransactionException;
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -8,15 +8,13 @@ import static org.junit.jupiter.api.Assertions.*;
 class AddressTest {
 
     static {
-        System.out.println("=== AddressTest: Validates creation, validation, and serialization " +
-                "of Address objects ===");
+        System.out.println("=== AddressTest: Validates creation, validation, and serialization of Address objects ===");
     }
 
     // -- testValidAddressCreation --
     @Test
     void testValidAddressCreation() {
-        System.out.println("\tRunning test: testValidAddressCreation - Verifies successful " +
-                "creation of a valid Address object");
+        System.out.println("\tRunning test: testValidAddressCreation - Verifies successful creation of a valid Address object");
 
         Address address = new Address("456 Maple St", "Springfield", "IL", "62704");
 
@@ -36,8 +34,7 @@ class AddressTest {
     // -- testInvalidStateThrowsException --
     @Test
     void testInvalidStateThrowsException() {
-        System.out.println("\tRunning test: testInvalidStateThrowsException - Ensures an exception " +
-                "is thrown when state format is invalid");
+        System.out.println("\tRunning test: testInvalidStateThrowsException - Ensures an exception is thrown when state format is invalid");
 
         Exception ex = assertThrows(InvalidTransactionException.class, () ->
                 new Address("456 Maple", "City", "Illinois", "62704"));
@@ -50,8 +47,7 @@ class AddressTest {
     // -- testInvalidZipThrowsException --
     @Test
     void testInvalidZipThrowsException() {
-        System.out.println("\tRunning test: testInvalidZipThrowsException - Ensures an exception is thrown " +
-                "for invalid ZIP code");
+        System.out.println("\tRunning test: testInvalidZipThrowsException - Ensures an exception is thrown for invalid ZIP code");
 
         Exception ex = assertThrows(InvalidTransactionException.class, () ->
                 new Address("456 Maple", "City", "CA", "123")); // Too short
@@ -64,8 +60,7 @@ class AddressTest {
     // -- testToStringAndFromStringRoundTrip --
     @Test
     void testToStringAndFromStringRoundTrip() {
-        System.out.println("\tRunning test: testToStringAndFromStringRoundTrip - Validates that an " +
-                "Address can be serialized and parsed back without data loss");
+        System.out.println("\tRunning test: testToStringAndFromStringRoundTrip - Validates that an Address can be serialized and parsed back without data loss");
 
         Address original = new Address("789 Elm", "Oakville", "TX", "76543");
         String serialized = original.toString();

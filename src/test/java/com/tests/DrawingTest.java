@@ -1,9 +1,10 @@
 package com.tests;
 
-import com.artstore.art.Drawing;
-import com.artstore.enums.Category;
-import com.artstore.enums.Style;
-import com.artstore.enums.Technique;
+import com.artstore.model.Drawing;
+import com.artstore.model.enums.Category;
+import com.artstore.model.enums.ItemStatus;
+import com.artstore.model.enums.Style;
+import com.artstore.model.enums.Technique;
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -18,7 +19,8 @@ class DrawingTest {
     void testDrawingPriceIsBaseOnly() {
         System.out.println("\tRunning test: testDrawingPriceIsBaseOnly - Confirms Drawing price is base price plus standard shipping");
 
-        Drawing drawing = new Drawing("4445556667", 80.0, 2022, "Sketchy", "charcoal portrait", "D. Draw",
+        Drawing drawing = new Drawing("4445556667", 80.0, 2022, "Sketchy",
+                "charcoal portrait", "D. Draw", ItemStatus.AVAILABLE,
                 Style.SKETCH_ART, Technique.CHARCOAL, Category.PORTRAIT);
 
         assertEquals(80.0, drawing.calculateArtPrice());
@@ -33,7 +35,8 @@ class DrawingTest {
     void testToStringAndFromStringRoundTrip() {
         System.out.println("\tRunning test: testToStringAndFromStringRoundTrip - Verifies Drawing can be serialized and deserialized without data loss");
 
-        Drawing original = new Drawing("4445556667", 80.0, 2022, "Sketchy", "charcoal portrait", "D. Draw",
+        Drawing original = new Drawing("4445556667", 80.0, 2022, "Sketchy",
+                "charcoal portrait", "D. Draw", ItemStatus.AVAILABLE,
                 Style.SKETCH_ART, Technique.CHARCOAL, Category.PORTRAIT);
         String csv = original.toString();
         Drawing loaded = Drawing.fromString(csv);
