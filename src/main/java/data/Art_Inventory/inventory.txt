@@ -1,0 +1,38 @@
+Drawing,0000000034,Doodle Mind,Aaron Pope,2020,Abstract faces,110.0,STREET_ART,MARKER,GENRE
+Sculpture,0000000012,Rising Flame,Andre Cole,2020,Fire-themed shape,390.0,GLASS,180.0
+Painting,0000000033,Digital Mind,Amy Brooks,2023,Glitch-style tech head,500.0,20,20,POP_ART,MIXED_MEDIA,PORTRAIT
+Print,0000000011,Solstice Circle,Evan Patel,2022,Tribal sun print,85.0,PHOTO,HISTORY
+Drawing,0000000014,Still in Silence,Omar Reyes,2021,Quiet room w/ shadows,180.0,SURREALISM,GRAPHITE,STILL_LIFE
+Sculpture,0000000036,Watcher,Eli Cooper,2018,Tall watchtower,380.0,WOOD,295.0
+Painting,0000000013,Faces of Time,Nina Clarke,2021,Portraits through the ages,450.0,24,18,CUBISM,OIL,PORTRAIT
+Print,0000000035,Urban Veins,Jen Ortega,2020,City as organism,100.0,PAPER,GENRE
+Drawing,0000000038,Horse in Motion,Fiona Dale,2016,Detailed galloping horse,155.0,REALISM,GRAPHITE,HISTORY
+Sculpture,0000000016,Balance,Emma Zhou,2021,Stacked shapes,310.0,WOOD,260.0
+Painting,0000000037,Vibrant Echo,Ian Wu,2021,Intense color abstraction,210.0,14,14,ABSTRACT,ACRYLIC,STILL_LIFE
+Print,0000000015,Mirror Mask,V. Lopez,2019,Double portrait,120.0,PAPER,PORTRAIT
+Drawing,0000000018,The Nest,Claire Park,2017,Detailed bird nest,130.0,REALISM,COLORED_PENCIL,GENRE
+Painting,0000000017,Field of Echoes,Mark Jensen,2017,Golden fields in motion,225.0,10,10,EXPRESSIONISM,OIL,LANDSCAPE
+Print,0000000039,Dream Capsule,Amira Khan,2021,Abstract dreamscape,125.0,CANVAS,PORTRAIT
+Print,0000000019,Neon Alley,J. Ford,2020,Night street scene,110.0,PHOTO,GENRE
+Sculpture,0000000040,Drifter,Layla Morse,2021,Abstract sea form,420.0,GLASS,230.0
+Painting,0000000021,Morning in Kyoto,Suki Tanaka,2016,Cherry blossoms blooming,275.0,16,12,MINIMALISM,ACRYLIC,GENRE
+Sculpture,0000000020,The Silence,Jordan West,2022,Abstract face,450.0,CERAMIC,200.0
+Print,0000000023,Serenity Stream,Kara Chen,2017,River in fall,90.0,CANVAS,LANDSCAPE
+Painting,0000000025,Family at Sea,Zara Cruz,2022,A family enjoying the shore,320.0,18,14,REALISM,OIL,HISTORY
+Print,0000000003,Coral Fade,M. Sanchez,2018,Ocean hues print,80.0,CANVAS,LANDSCAPE
+Drawing,0000000002,Skyline Sketch,Rachel Lee,2019,A loose sketch of NYC,120.0,MINIMALISM,CHARCOAL,LANDSCAPE
+Sculpture,0000000024,Earth Spine,Zoe Bennett,2017,Nature-inspired arc,370.0,STONE,280.0
+Painting,0000000005,Silent Storm,Ava Moore,2020,Dark clouds & sea,310.0,20,15,REALISM,OIL,GENRE
+Print,0000000027,Breakfast Study,D. Torres,2016,Flatlay still life,75.0,PAPER,STILL_LIFE
+Drawing,0000000026,Daydream,Lily Nguyen,2022,Girl in clouds sketch,160.0,FANTASY_ART,PASTEL,PORTRAIT
+Sculpture,0000000004,Infinity Loop,Brian White,2018,Twisting modern form,400.0,METAL,220.0
+Painting,0000000029,Distant Forest,John Black,2015,Misty forest in dusk,180.0,9,7,IMPRESSIONISM,WATERCOLOR,LANDSCAPE
+Print,0000000007,Bloom,Tara James,2021,Floral line art,95.0,PAPER,STILL_LIFE
+Drawing,0000000006,Girl & Guitar,Leo Nash,2020,Music-inspired portrait,150.0,IMPRESSIONISM,PASTEL,PORTRAIT
+Sculpture,0000000028,Clay Memory,Neal Watts,2016,Figurine in motion,290.0,CLAY,240.0
+Painting,0000000009,Fractured Light,Leo Rivera,2019,Abstract glass fragments,190.0,8,9,ABSTRACT,WATERCOLOR,STILL_LIFE
+Sculpture,0000000008,Blooming Rock,Ivy Lee,2019,Flower from stone,275.0,STONE,340.0
+Drawing,0000000030,Lunar Study,Isaac Bloom,2019,Moon phases in shadow,95.0,SYMBOLISM,CHARCOAL,STILL_LIFE
+Drawing,0000000010,Clockwork,Nadia Stone,2018,Steampunk gear drawing,180.0,ABSTRACT,INK,GENRE
+Sculpture,0000000032,Spiral Dream,Dana Kline,2023,Geometric spiral,410.0,METAL,320.0
+Print,0000000031,Guardian,Max Yu,2023,Warrior figure,130.0,PHOTO,HISTORY
