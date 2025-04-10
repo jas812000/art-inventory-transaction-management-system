@@ -1,0 +1,1 @@
+Transaction|TXN-9999|Eva,Brush,404 Canvas Way,Brushville,TX,75001,5551234567,eva@studio.com|2025-04-10|COMPLETED|1|Print,9998887776,Shadow Lines,E. Ink,2023,Minimalist piece,85.0,PAPER,STILL_LIFE,RESERVED

@@ -1,0 +1,13 @@
+John,Smith,123 Maple St,Springfield,IL,62704,2175551234,john.smith@email.com
+Elijah,Kim,99 Maple Lane,Boston,MA,02118,6175556060,elijah.kim@email.com
+David,Lee,456 Pine Road,Seattle,WA,98101,2065556789,david.lee@email.com
+Emma,Carter,101 Ocean Blvd,Miami,FL,33101,3055550101,emma.carter@email.com
+Olivia,Taylor,79 Cedar Ln,Austin,TX,73301,5125551122,olivia.taylor@email.com
+Mia,Thompson,812 Crescent Avenue,Nashville,TN,37212,6155557171,mia.thompson@email.com
+Ava,Patel,4307 Bayview Dr,San Diego,CA,92101,8585558844,ava.patel@email.com
+Robert,Brown,789 Pine Ave,Seattle,WA,98101,2065559012,robert.brown@email.com
+Sophia,Williams,321 Birch Blvd,Denver,CO,80203,3035553344,sophia.williams@email.com
+Luna,Painter,101 Ocean Ave,Seaville,FL,33445,3216549870,luna@artmail.com
+Alice,Johnson,456 Oak Rd,Austin,TX,73301,5125555678,alice.johnson@email.com
+Noah,Bennett,25 Garden Street,Portland,OR,97201,5035552323,noah.bennett@email.com
+Sarah,Martinez,123 Elm St,San Diego,CA,92101,6195552345,sarah.martinez@email.com
