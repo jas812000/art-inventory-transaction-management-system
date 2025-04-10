@@ -1,5 +1,6 @@
 package com.tests;
 
+import com.config.EnvironmentConfig;
 import com.artstore.core.ArtInventoryManager;
 import com.artstore.model.*;
 import com.artstore.core.TransactionManager;
@@ -17,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TransactionIntegrationTest {
 
     static {
+        System.setProperty("runtime.mode", "test");
         System.out.println("=== TransactionIntegrationTest: Tests creation, completion, and management " +
                 "of transactions ===");
     }
@@ -59,7 +61,8 @@ public class TransactionIntegrationTest {
                 "added to and retrieved from the manager");
 
         ArtInventoryManager inventoryManager = new ArtInventoryManager();
-        Path transactionFilePath = Paths.get("src/test/java/data/Transaction_Files/transactions.txt");
+        //Path transactionFilePath = Paths.get("src/test/java/data/Test_Transaction_Files/transactions.txt");
+        Path transactionFilePath = Paths.get(EnvironmentConfig.getTransactionDirectory(), "transactions.txt");
 
         TransactionManager manager = new TransactionManager(inventoryManager, transactionFilePath);
 
@@ -97,7 +100,8 @@ public class TransactionIntegrationTest {
                 "added and managed correctly");
 
         ArtInventoryManager inventoryManager = new ArtInventoryManager();
-        Path transactionFilePath = Paths.get("src/test/java/data/Transaction_Files/transactions.txt");
+        //Path transactionFilePath = Paths.get("src/test/java/data/Test_Transaction_Files/transactions.txt");
+        Path transactionFilePath = Paths.get(EnvironmentConfig.getTransactionDirectory(), "transactions.txt");
 
         TransactionManager manager = new TransactionManager(inventoryManager, transactionFilePath);
 

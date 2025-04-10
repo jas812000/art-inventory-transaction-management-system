@@ -32,4 +32,9 @@ import org.junit.platform.suite.api.Suite;
         // Exception handling and integration tests
         ExceptionIntegrationTest.class
 })
-public class FullTestSuite {}
+public class FullTestSuite {
+    static {
+        //Set test mode
+        System.setProperty("runtime.mode", "test");
+    }
+}

@@ -1,5 +1,6 @@
 package com.tests;
 
+import com.config.EnvironmentConfig;
 import com.artstore.model.Art;
 import com.artstore.model.Print;
 import com.artstore.core.ArtInventoryManager;
@@ -8,20 +9,23 @@ import com.artstore.model.enums.EditionType;
 import com.artstore.model.enums.ItemStatus;
 import org.junit.jupiter.api.*;
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class InventoryIntegrationTest {
 
-    private static final String TEST_INVENTORY_FILE =
-            System.getProperty("user.dir") + "/src/test/java/data/Art_Inventory/inventory.txt";
-
-    private ArtInventoryManager inventoryManager;
-
     static {
+        System.setProperty("runtime.mode", "test");
         System.out.println("=== InventoryIntegrationTest: Tests file-based saving and loading of the art inventory system ===");
     }
+
+    private static final Path TEST_INVENTORY_FILE =
+            Paths.get(EnvironmentConfig.getInventoryDirectory(), "inventory.txt");
+
+    private ArtInventoryManager inventoryManager;
 
     @BeforeEach
     void setUp() {
@@ -30,7 +34,9 @@ class InventoryIntegrationTest {
 
     @AfterEach
     void cleanUp() {
-        File file = new File(TEST_INVENTORY_FILE);
+        System.setProperty("runtime.mode", "test");
+        //File file = new File(TEST_INVENTORY_FILE);
+        File file = TEST_INVENTORY_FILE.toFile();
         if (file.exists() && !file.delete()) {
             throw new IllegalStateException("Failed to delete test inventory file: " + file.getAbsolutePath());
         }

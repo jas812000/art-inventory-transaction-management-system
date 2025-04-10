@@ -1,37 +1,60 @@
 package com.tests;
 
+import com.config.EnvironmentConfig;
 import com.artstore.core.*;
 import com.artstore.model.Address;
 import com.artstore.model.Customer;
 import org.junit.jupiter.api.*;
 
 import java.io.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class CustomerIntegrationTest {
 
-    private static final String CUSTOMER_FILE =
-            System.getProperty("user.dir") + "/src/test/java/data/Customer_Files/customers.txt";
-
     static {
+        System.setProperty("runtime.mode", "test");
         System.out.println("=== CustomerIntegrationTest: Tests saving and loading Customer data from file system ===");
     }
+
+    private static final Path CUSTOMER_FILE =
+            Paths.get(EnvironmentConfig.getCustomerDirectory(), "customers.txt");
 
     private CustomerManager customerManager;
 
     @BeforeEach
     void setUp() {
-        customerManager = new CustomerManager("src/test/java/data/Customer_Files/customers.txt");
-        File file = new File(CUSTOMER_FILE);
-        if (!file.getParentFile().exists()) {
-            if (!file.getParentFile().mkdirs()) {
-                throw new IllegalStateException("Failed to create directories for: " + file.getParent());
+        customerManager = new CustomerManager(CUSTOMER_FILE.toString());
+
+        File directory = CUSTOMER_FILE.getParent().toFile();
+        if (!directory.exists()) {
+            if (!directory.mkdirs()) {
+                throw new IllegalStateException("Failed to create customer directory: " + directory.getAbsolutePath());
             }
         }
-        if (file.exists() && !file.delete()) {
-            throw new IllegalStateException("Failed to delete existing file: " + file.getAbsolutePath());
+
+        // Prevent test from deleting wrong directory
+        if (!directory.getAbsolutePath().contains("/test/")) {
+            throw new IllegalStateException("Aborting! Not a test directory: " + directory.getAbsolutePath());
+        }
+
+        // Clean test directory
+        if (directory.exists()) {
+            File[] files = directory.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    if (!f.delete()) {
+                        throw new IllegalStateException("Failed to delete file: " + f.getAbsolutePath());
+                    }
+                }
+            }
+        } else {
+            if (!directory.mkdirs()) {
+                throw new IllegalStateException("Failed to create test directory: " + directory.getAbsolutePath());
+            }
         }
     }
 
@@ -70,10 +93,31 @@ public class CustomerIntegrationTest {
 
     @AfterEach
     void tearDown() {
-        File customerFile = new File(CUSTOMER_FILE);
-        if (customerFile.exists() && !customerFile.delete()) {
-            System.err.println("Failed to delete customer file after test.");
-        }
-    }
+        File directory = CUSTOMER_FILE.getParent().toFile();
 
+        // Prevent test from deleting wrong directory
+        if (!directory.getAbsolutePath().contains("/test/")) {
+            throw new IllegalStateException("Aborting! Not a test directory: " + directory.getAbsolutePath());
+        }
+
+        // Clean test directory
+        if (directory.exists()) {
+            File[] files = directory.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    if (!f.delete()) {
+                        throw new IllegalStateException("Failed to delete file: " + f.getAbsolutePath());
+                    }
+                }
+            }
+        } else {
+            if (!directory.mkdirs()) {
+                throw new IllegalStateException("Failed to create test directory: " + directory.getAbsolutePath());
+            }
+        }
+
+
+
+
+    }
 }

@@ -1,5 +1,6 @@
 package com.tests;
 
+import com.config.EnvironmentConfig;
 import com.artstore.core.ArtInventoryManager;
 import com.artstore.model.Art;
 import com.artstore.model.Print;
@@ -23,14 +24,17 @@ class TransactionManagerTest {
     private TransactionManager manager;
 
     static {
+        System.setProperty("runtime.mode", "test");
         System.out.println("=== TransactionManagerTest: Tests functionality for managing, querying, and " +
                 "removing transactions ===");
     }
 
     @BeforeEach
     void setup() {
+        System.setProperty("runtime.mode", "test");
         ArtInventoryManager inventoryManager = new ArtInventoryManager();
-        Path transactionFilePath = Paths.get("src/test/java/data/Transaction_Files/transactions.txt");
+        Path transactionFilePath = Paths.get(EnvironmentConfig.getTransactionDirectory(), "transactions.txt");
+
 
         manager = new TransactionManager(inventoryManager, transactionFilePath);
         Customer customer = new Customer("Jane", "Doe",

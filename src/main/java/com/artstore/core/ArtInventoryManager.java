@@ -76,15 +76,24 @@ public class ArtInventoryManager {
     public void saveInventoryToFile() {
 
         String filePath = INVENTORY_DIRECTORY + "/inventory.txt";
+        Path file = Paths.get(filePath);
+        Path directoryPath = file.getParent(); // Get the directory path
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+        try {
+            // Ensure the directory exists
+            if (!Files.exists(directoryPath)) {
+                Files.createDirectories(directoryPath);
+                System.out.println("Directory created for saving inventory: " + directoryPath.toAbsolutePath());
+            }
 
-            // Write each art object to the file on a new line
-            for (Art art : inventory.values()) {
-                writer.write(art.toString());
-                writer.newLine(); // Ensure each entry is on its own line
-            } // End for loop
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
 
+                // Write each art object to the file on a new line
+                for (Art art : inventory.values()) {
+                    writer.write(art.toString());
+                    writer.newLine(); // Ensure each entry is on its own line
+                } // End for loop
+            }
         } catch (IOException e) {
             System.err.println("Failed to save inventory: " + e.getMessage());
         } // End try-catch statements

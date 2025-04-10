@@ -15,6 +15,7 @@ import com.artstore.core.TransactionManager;
 // Import GUI panels for the application interface
 import com.artstore.gui.panel.*;
 import com.artstore.utilities.DirectoryManager;
+import com.config.EnvironmentConfig;
 
 
 /**
@@ -24,17 +25,23 @@ import com.artstore.utilities.DirectoryManager;
 public class ArtInventoryTransactionGUI {
 
     // Application-wide directory constants
-    public static final String CUSTOMER_DIRECTORY =
-            System.getProperty("user.dir") + "/src/main/java/data/Customer_Files";
+   // public static final String CUSTOMER_DIRECTORY =
+           // System.getProperty("user.dir") + "/src/main/java/data/Customer_Files";
 
-    public static final String INVENTORY_DIRECTORY =
-            System.getProperty("user.dir") + "/src/main/java/data/Art_Inventory_Files";
+    //public static final String INVENTORY_DIRECTORY =
+           // System.getProperty("user.dir") + "/src/main/java/data/Art_Inventory_Files";
 
-    public static final String TRANSACTION_DIRECTORY =
-            System.getProperty("user.dir") + "/src/main/java/data/Art_Transaction_Files";
+    //public static final String TRANSACTION_DIRECTORY =
+           // System.getProperty("user.dir") + "/src/main/java/data/Art_Transaction_Files";
 
-    public static final String COUNTER_FILE =
-            System.getProperty("user.dir") + "/src/main/java/data/Transaction_Counter_Files/transaction_counter.txt";
+    //public static final String COUNTER_FILE =
+           // System.getProperty("user.dir") + "/src/main/java/data/Transaction_Counter_Files/transaction_counter.txt";
+
+
+    public static final String CUSTOMER_DIRECTORY = EnvironmentConfig.getCustomerDirectory();
+    public static final String INVENTORY_DIRECTORY = EnvironmentConfig.getInventoryDirectory();
+    public static final String TRANSACTION_DIRECTORY = EnvironmentConfig.getTransactionDirectory();
+    public static final String COUNTER_FILE = EnvironmentConfig.getCounterFilePath();
 
     /**
      * Constructs the GUI and initializes all major components and layout.

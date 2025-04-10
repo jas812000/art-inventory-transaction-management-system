@@ -1,6 +1,6 @@
-
 package com.tests;
 
+import com.config.EnvironmentConfig;
 import com.artstore.model.Art;
 import com.artstore.model.Print;
 import com.artstore.core.ArtInventoryManager;
@@ -23,14 +23,16 @@ class ArtInventoryManagerTest {
     private ArtInventoryManager inventory;
 
     static {
-        System.setProperty("INVENTORY_DIRECTORY", System.getProperty("user.dir") + "/src/test/java/com/test_data_files");
+        System.setProperty("runtime.mode", "test");
         System.out.println("=== ArtInventoryManagerTest: Tests core functionality of adding, retrieving, and removing art pieces from the inventory ===");
     }
 
     @BeforeEach
     void setup() throws IOException {
+        System.setProperty("runtime.mode", "test");
         // Clean test directory before each test
-        Path testInventoryDir = Paths.get(System.getProperty("user.dir"), "src", "test", "java", "com", "test_data_files");
+        //Path testInventoryDir = Paths.get(System.getProperty("user.dir"), "src", "test", "java", "com", "test_data_files");
+        Path testInventoryDir = Paths.get(EnvironmentConfig.getInventoryDirectory());
         if (Files.exists(testInventoryDir)) {
             Files.walk(testInventoryDir)
                     .filter(Files::isRegularFile)
@@ -84,10 +86,13 @@ class ArtInventoryManagerTest {
     // -- testSaveAndLoadInventory --
     @Test
     void testSaveAndLoadInventory() throws IOException {
+        System.setProperty("runtime.mode", "test");
         System.out.println("\tRunning test: testSaveAndLoadInventory - Verifies inventory is saved to file and accurately reloaded");
 
         // CLEAN the file before running this test
-        Path file = Paths.get(System.getProperty("user.dir"), "src", "test", "java", "com", "test_data_files", "inventory.txt");
+        //Path file = Paths.get(System.getProperty("user.dir"), "src", "test", "java", "com", "test_data_files", "inventory.txt");
+        Path file = Paths.get(EnvironmentConfig.getInventoryDirectory(), "inventory.txt");
+
         Files.deleteIfExists(file);
 
         // Use fresh manager

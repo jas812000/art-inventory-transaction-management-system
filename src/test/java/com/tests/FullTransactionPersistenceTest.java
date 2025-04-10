@@ -1,5 +1,6 @@
 package com.tests;
 
+import com.config.EnvironmentConfig;
 import com.artstore.core.ArtInventoryManager;
 import com.artstore.core.TransactionManager;
 import com.artstore.model.*;
@@ -16,16 +17,17 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class FullTransactionPersistenceTest {
 
-    private static final String TRANSACTION_FILE =
-            System.getProperty("user.dir") + "/src/test/java/data/Art_Transactions/transactions.txt";
-
     static {
+        System.setProperty("runtime.mode", "test");
         System.out.println("=== FullTransactionPersistenceTest: Tests complete save/load cycle for a transaction involving customer and art ===");
     }
 
+    private static final Path TRANSACTION_FILE =
+            Paths.get(EnvironmentConfig.getTransactionDirectory(), "transactions.txt");
+
     @BeforeEach
     void resetFile() {
-        File file = new File(TRANSACTION_FILE);
+        File file = TRANSACTION_FILE.toFile();
         if (file.exists() && !file.delete()) {
             throw new IllegalStateException("Could not delete transaction file before test: " + file.getAbsolutePath());
         }
@@ -38,7 +40,8 @@ class FullTransactionPersistenceTest {
                 " recovery of a completed transaction");
 
         ArtInventoryManager inventoryManager = new ArtInventoryManager();
-        Path transactionFilePath = Paths.get("src/test/java/data/Transaction_Files/transactions.txt");
+        //Path transactionFilePath = Paths.get("src/test/java/data/Test_Transaction_Files/transactions.txt");
+        Path transactionFilePath = TRANSACTION_FILE;
 
         Address address = new Address("404 Canvas Way", "Brushville", "TX", "75001");
         Customer customer = new Customer("Eva", "Brush", address, "5551234567",
@@ -94,8 +97,8 @@ class FullTransactionPersistenceTest {
                 "persistence and recovery of a completed transaction with multiple art items");
 
         ArtInventoryManager inventoryManager = new ArtInventoryManager();
-        Path transactionFilePath = Paths.get("src/test/java/data/Transaction_Files/transactions.txt");
-
+        //Path transactionFilePath = Paths.get("src/test/java/data/Test_Transaction_Files/transactions.txt");
+        Path transactionFilePath = TRANSACTION_FILE;
 
         Address address = new Address("404 Canvas Way", "Brushville", "TX", "75001");
         Customer customer = new Customer("Eva", "Brush", address, "5551234567",
