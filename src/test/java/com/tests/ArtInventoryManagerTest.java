@@ -59,7 +59,7 @@ class ArtInventoryManagerTest {
         assertEquals(1, allArt.size(), "Inventory should contain exactly one item");
         System.out.println("\t\tPassed: Art inventory contains 1 item after addition");
 
-        assertEquals("Print Art", allArt.getFirst().getTitle(), "Art title should match expected value");
+        assertEquals("Print Art", allArt.get(0).getTitle(), "Art title should match expected value");
         System.out.println("\t\tPassed: Correct art title retrieved");
     }
 
@@ -112,10 +112,10 @@ class ArtInventoryManagerTest {
         assertEquals(1, loadedArt.size(), "Exactly one art piece should be loaded");
         System.out.println("\t\tPassed: Correct number of art pieces loaded");
 
-        assertEquals("1112223334", loadedArt.getFirst().getArtIdentification(), "Loaded art ID should match");
+        assertEquals("1112223334", loadedArt.get(0).getArtIdentification(), "Loaded art ID should match");
         System.out.println("\t\tPassed: Art ID matches");
 
-        assertEquals("Sunset Print", loadedArt.getFirst().getTitle(), "Loaded title should match");
+        assertEquals("Sunset Print", loadedArt.get(0).getTitle(), "Loaded title should match");
         System.out.println("\t\tPassed: Art title matches");
     }
 

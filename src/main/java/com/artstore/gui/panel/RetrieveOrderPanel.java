@@ -7,6 +7,7 @@ import com.artstore.exceptions.InvalidArtOperationException;
 import com.artstore.exceptions.InvalidTransactionException;
 import com.artstore.exceptions.InvalidTransactionOperationException;
 import com.artstore.model.Transaction;
+import com.artstore.model.Art;
 import com.artstore.utilities.TransactionFormatter;
 
 // Import GUI components (Swing for GUI elements, AWT for layout management)
@@ -179,19 +180,15 @@ public class RetrieveOrderPanel extends JPanel {
 
             // --- Sort ---
             String selectedSort = Optional.ofNullable((String) sortBox.getSelectedItem()).orElse("");
-            switch (selectedSort) {
-                case "Transaction Date" -> filtered.sort(Comparator.comparing(
-                        Transaction::getTransactionDate, Comparator.nullsLast(Comparator.naturalOrder())));
-                case "Title" -> filtered.sort(Comparator.comparing(t ->
-                        t.getArtItems().getFirst().getTitle(), String.CASE_INSENSITIVE_ORDER));
-                case "Author" -> filtered.sort(Comparator.comparing(t ->
-                        t.getArtItems().getFirst().getAuthor(), String.CASE_INSENSITIVE_ORDER));
-                case "Year" -> filtered.sort(Comparator.comparingInt(t ->
-                        t.getArtItems().getFirst().getYearCreated()));
-                case "Type" -> filtered.sort(Comparator.comparing(t ->
-                        t.getArtItems().getFirst().getType(), String.CASE_INSENSITIVE_ORDER));
-                case "Status" -> filtered.sort(Comparator.comparing(Transaction::getStatus));
-            } // End switch statements
+	    switch (selectedSort) {
+    		case "Transaction Date" -> filtered.sort(Comparator.comparing(Transaction::getTransactionDate, Comparator.nullsLast(Comparator.naturalOrder())));
+    		case "Title" -> filtered.sort(Comparator.comparing(t -> Optional.ofNullable(firstArtOrNull(t)).map(Art::getTitle).orElse(""), String.CASE_INSENSITIVE_ORDER));
+    		case "Author" -> filtered.sort(Comparator.comparing(t -> Optional.ofNullable(firstArtOrNull(t)).map(Art::getAuthor).orElse(""), String.CASE_INSENSITIVE_ORDER));
+    		case "Year" -> filtered.sort(Comparator.comparingInt(t -> Optional.ofNullable(firstArtOrNull(t)).map(Art::getYearCreated).orElse(0)));
+    		case "Type" -> filtered.sort(Comparator.comparing(t -> Optional.ofNullable(firstArtOrNull(t)).map(Art::getType).orElse(""), String.CASE_INSENSITIVE_ORDER));
+    		case "Status" -> filtered.sort(Comparator.comparing(Transaction::getStatus));
+    		default -> { }
+	    } // End switch statements
 
             // --- Display Results ---
             StringBuilder sb = new StringBuilder();
@@ -270,4 +267,11 @@ public class RetrieveOrderPanel extends JPanel {
             } // End toggleFields method
         }; // End DocumentListener
     } // End createFieldListener method
+
+
+    private static Art firstArtOrNull(Transaction t) {
+    	if (t == null || t.getArtItems() == null || t.getArtItems().isEmpty()) return null;
+    	return t.getArtItems().get(0);
+    }
+
 } // End RetrieveOrderPanel class

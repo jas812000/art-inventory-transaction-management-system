@@ -40,31 +40,29 @@ public class ArtFormatter {
         // --- Type-Specific Information ---
         // Depending on the type of Art (Painting, Drawing, Print, or Sculpture),
         // additional specific fields are added
-        switch (art) {
-            case Painting p -> {
-                sb.append("Height: ").append(p.getHeight()).append("\n"); // Height for Painting
-                sb.append("Width: ").append(p.getWidth()).append("\n"); // Width for Painting
-                sb.append("Style: ").append(p.getStyle()).append("\n"); // Style for Painting
-                sb.append("Technique: ").append(p.getTechnique()).append("\n"); // Technique for Painting
-                sb.append("Category: ").append(p.getCategory()).append("\n"); // Category for Painting
-            }
-            case Drawing d -> {
-                sb.append("Style: ").append(d.getStyle()).append("\n"); // Style for Drawing
-                sb.append("Technique: ").append(d.getTechnique()).append("\n"); // Technique for Drawing
-                sb.append("Category: ").append(d.getCategory()).append("\n"); // Category for Drawing
-            }
-            case Print pr -> {
-                sb.append("Edition Type: ").append(pr.getEditionType()).append("\n"); // Edition Type for Print
-                sb.append("Category: ").append(pr.getCategory()).append("\n"); // Category for Print
-            }
-            case Sculpture s -> {
-                sb.append("Material: ").append(s.getMaterial()).append("\n"); // Material for Sculpture
-                sb.append("Weight: ").append(s.getSculptureWeight()).append(" lbs\n"); // Weight for Sculpture
-            }
-            default -> {
-                // Default case handles unknown art types
-            }
-        } // End switch statement
+        if (art instanceof Painting) {
+    	    Painting p = (Painting) art;
+            sb.append("Height: ").append(p.getHeight()).append("\n");
+    	    sb.append("Width: ").append(p.getWidth()).append("\n");
+    	    sb.append("Style: ").append(p.getStyle()).append("\n");
+    	    sb.append("Technique: ").append(p.getTechnique()).append("\n");
+    	    sb.append("Category: ").append(p.getCategory()).append("\n");
+	} else if (art instanceof Drawing) {
+    	    Drawing d = (Drawing) art;
+    	    sb.append("Style: ").append(d.getStyle()).append("\n");
+    	    sb.append("Technique: ").append(d.getTechnique()).append("\n");
+    	    sb.append("Category: ").append(d.getCategory()).append("\n");
+	} else if (art instanceof Print) {
+     	    Print pr = (Print) art;
+    	    sb.append("Edition Type: ").append(pr.getEditionType()).append("\n");
+    	    sb.append("Category: ").append(pr.getCategory()).append("\n");
+	} else if (art instanceof Sculpture) {
+    	    Sculpture s = (Sculpture) art;
+    	    sb.append("Material: ").append(s.getMaterial()).append("\n");
+    	    sb.append("Weight: ").append(s.getSculptureWeight()).append(" lbs\n");
+	} else {
+    	    System.err.println("Warning: Unknown Art subtype: " + art.getClass().getName());
+	}// End if-else statements
 
         // --- Price ---
         sb.append("Price: $").append(MONEY_FORMAT.format(art.getArtPrice())).append("\n"); // Format the price with currency symbol

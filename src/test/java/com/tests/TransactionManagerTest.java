@@ -57,7 +57,7 @@ class TransactionManagerTest {
         List<Transaction> result = manager.getTransactions("TXN-0001", null, null, null, null);
         assertFalse(result.isEmpty(), "Transaction should be retrievable");
 
-        Transaction retrieved = result.getFirst();
+        Transaction retrieved = result.get(0);
         assertNotNull(retrieved, "Retrieved transaction should not be null");
         System.out.println("\t\tPassed: Transaction retrieved successfully");
 
@@ -70,7 +70,7 @@ class TransactionManagerTest {
     void testTransactionCompletion() {
         System.out.println("\tRunning test: testTransactionCompletion - Verifies transaction completion logic");
 
-        Transaction transaction = manager.getTransactions("TXN-0001", null, null, null, null).getFirst();
+        Transaction transaction = manager.getTransactions("TXN-0001", null, null, null, null).get(0);
         assertNotNull(transaction, "Transaction should exist before marking completed");
 
         transaction.completeTransaction();

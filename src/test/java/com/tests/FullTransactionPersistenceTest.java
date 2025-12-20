@@ -66,7 +66,7 @@ class FullTransactionPersistenceTest {
         List<Transaction> result = loadedManager.getTransactions("TXN-9999", null,
                 null, null, null);
         assertFalse(result.isEmpty());
-        Transaction loaded = result.getFirst();
+        Transaction loaded = result.get(0);
 
         assertNotNull(loaded);
         System.out.println("\t\tPassed: Loaded transaction is not null");
@@ -86,7 +86,7 @@ class FullTransactionPersistenceTest {
         assertEquals(LocalDate.now(), loaded.getTransactionDate());
         System.out.println("\t\tPassed: Transaction date matches current date");
 
-        assertTrue(loaded.getArtItems().getFirst().getTitle().contains("Shadow Lines"));
+        assertTrue(loaded.getArtItems().get(0).getTitle().contains("Shadow Lines"));
         System.out.println("\t\tPassed: Art title matches expected value");
     }
 
@@ -127,7 +127,7 @@ class FullTransactionPersistenceTest {
         List<Transaction> result = loadedManager.getTransactions("TXN-10000", null,
                 null, null, null);
         assertFalse(result.isEmpty());
-        Transaction loaded = result.getFirst();
+        Transaction loaded = result.get(0);
 
         assertNotNull(loaded);
         System.out.println("\t\tPassed: Loaded transaction is not null");

@@ -76,7 +76,7 @@ public class CustomerIntegrationTest {
         assertEquals(1, loaded.size(), "One customer should be loaded");
         System.out.println("\t\tPassed: One customer successfully loaded from file");
 
-        Customer loadedCustomer = loaded.getFirst();
+        Customer loadedCustomer = loaded.get(0);
 
         assertEquals("Luna", loadedCustomer.getFirstName());
         System.out.println("\t\tPassed: First name matches");
