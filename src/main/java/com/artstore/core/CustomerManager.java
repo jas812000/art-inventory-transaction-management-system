@@ -28,7 +28,7 @@ public class CustomerManager {
      * This will load customers from the main data directory.
      */
     public CustomerManager() {
-        this(System.getProperty("user.dir") + "/src/main/java/data/Customer_Files/customers.txt");
+	this(java.nio.file.Paths.get(com.config.EnvironmentConfig.getCustomerDirectory(), "customers.txt").toString());
     } // End default constructor
 
     /**
