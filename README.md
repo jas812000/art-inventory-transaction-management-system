@@ -58,14 +58,6 @@ These classes encapsulate domain logic and persistence behavior and are **decoup
 Sample data is included in the repository for demo purposes:
 ```
 src/main/resources/data/
-                    ├── Customer_Files/customers.txt
-                    ├── Art_Inventory_Files/inventory.txt
-                    ├── Art_Transaction_Files/transactions.txt
-                    └── Transaction_Counter_Files/transaction_counter.txt
-```
-or
-```
-src/main/resources/data/
 ├── Customer_Files/customers.txt
 ├── Art_Inventory_Files/inventory.txt
 ├── Art_Transaction_Files/transactions.txt
@@ -74,7 +66,7 @@ src/main/resources/data/
 
 ---
 
-### Runtime Data (Writable)
+## Runtime Data (Writable)
 At runtime, the application writes data **outside the repository**:
 
 ```
@@ -88,7 +80,7 @@ On first application run:
 
 ---
 
-### Configuration
+## Configuration
 - Default runtime location: `~/.artstore/data`
 - Override with environment variable:
 ```bash
@@ -98,26 +90,26 @@ export ARTSTORE_DATA_DIR=/path/to/custom/data
 ---
 
 
-### Build & Test
-## Prerequisites
+## Build & Test
+### Prerequisites
 - Java 21+
 - Maven 3.8+
 
 
-## Run Tests
+### Run Tests
 ```bash
 mvn clean test
 ```
 
-## Build
+### Build
 ```bash
 mvn clean package
 ```
 
 ---
 
-### Run (GUI)
-## Recommended (Maven)
+## Run (GUI)
+### Recommended (Maven)
 
 Runs the application using the configured entry point:
 ```bash
@@ -136,7 +128,7 @@ The GUI launches and loads persisted data automatically.
 
 ---
 
-### Testing Strategy
+## Testing Strategy
 - Unit tests validate domain models and manager logic
 - Integration tests verify file persistence and reload behavior
 - Tests use isolated temporary directories to prevent data leakage
@@ -144,7 +136,7 @@ The GUI launches and loads persisted data automatically.
 
 ---
 
-### Tools & Technologies
+## Tools & Technologies
 
 -**Language**: Java 21
 -**Build Tool**: Maven
@@ -155,7 +147,7 @@ The GUI launches and loads persisted data automatically.
 
 ---
 
-### Purpose
+## Purpose
 
 This project serves as a backend engineering case study demonstrating:
 - Object-oriented design and inheritance
