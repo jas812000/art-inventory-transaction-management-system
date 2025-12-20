@@ -138,12 +138,12 @@ The GUI launches and loads persisted data automatically.
 
 ## Tools & Technologies
 
--**Language**: Java 21
--**Build Tool**: Maven
--**Testing**: JUnit 5
--**GUI**: Java Swing
--**Persistence**: Structured text files
--**Packaging**: Maven Shade Plugin
+- **Language**: Java 21
+- **Build Tool**: Maven
+- **Testing**: JUnit 5
+- **GUI**: Java Swing
+- **Persistence**: Structured text files
+- **Packaging**: Maven Shade Plugin
 
 ---
 
