@@ -3,24 +3,20 @@ package com.artstore.core;
 
 // Import core collection classes
 import com.artstore.model.Art;
-
-// Import utility classes for data structures
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-
-// Import utility classes for file handling
 import java.io.*;
 
-// Absolute path to the inventory directory
-import static com.artstore.gui.ArtInventoryTransactionGUI.INVENTORY_DIRECTORY;
 
 /**
  * Manages an in-memory inventory of Art objects.
  * Provides functionality to add, remove, list, and persist artworks.
  */
 public class ArtInventoryManager {
+
+    private static final String INVENTORY_DIRECTORY = com.config.EnvironmentConfig.getInventoryDirectory();
 
     // Holds all art pieces indexed by their unique ID
     private final Map<String, Art> inventory;
