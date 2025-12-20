@@ -144,6 +144,14 @@ mvn clean package
 ---
 
 ## Run (GUI)
+**Recommended (one command)**
+Runs the application using Maven with the configured entry point:
+```bash
+mvn -q exec:java
+```
+
+**Alternative (manual classpath)**
+You can also launch the GUI directly from compiled classes:
 ```bash
 java -cp target/classes com.artstore.gui.AppLauncher
 ```
