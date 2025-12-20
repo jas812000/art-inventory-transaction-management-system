@@ -24,20 +24,6 @@ import com.config.EnvironmentConfig;
  */
 public class ArtInventoryTransactionGUI {
 
-    // Application-wide directory constants
-   // public static final String CUSTOMER_DIRECTORY =
-           // System.getProperty("user.dir") + "/src/main/java/data/Customer_Files";
-
-    //public static final String INVENTORY_DIRECTORY =
-           // System.getProperty("user.dir") + "/src/main/java/data/Art_Inventory_Files";
-
-    //public static final String TRANSACTION_DIRECTORY =
-           // System.getProperty("user.dir") + "/src/main/java/data/Art_Transaction_Files";
-
-    //public static final String COUNTER_FILE =
-           // System.getProperty("user.dir") + "/src/main/java/data/Transaction_Counter_Files/transaction_counter.txt";
-
-
     public static final String CUSTOMER_DIRECTORY = EnvironmentConfig.getCustomerDirectory();
     public static final String INVENTORY_DIRECTORY = EnvironmentConfig.getInventoryDirectory();
     public static final String TRANSACTION_DIRECTORY = EnvironmentConfig.getTransactionDirectory();

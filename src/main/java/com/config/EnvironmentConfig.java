@@ -1,5 +1,7 @@
 package com.config;
 
+import java.io.InputStream;
+import java.nio.file.StandardCopyOption;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,7 +37,8 @@ public class EnvironmentConfig {
                 : Paths.get(System.getProperty("user.home"), ".artstore", "data");
 
         ensureDirectoryExists(root);
-        return root;
+        initializeSampleDataIfEmpty(root);
+    	return root;
     }
 
     private static void ensureDirectoryExists(Path dir) {
@@ -71,6 +74,43 @@ public class EnvironmentConfig {
 
         ensureDirectoryExists(dir);
         return dir.toString();
+    }
+
+    private static void copyResourceIfMissing(String resourcePath, Path destFile) {
+    	try {
+            if (Files.exists(destFile)) return;
+
+            Files.createDirectories(destFile.getParent());
+
+            String normalized = resourcePath.startsWith("/") ? resourcePath.substring(1) : resourcePath;
+            InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(normalized);
+            if (in == null) {
+            	return; // sample data not bundled; app still runs
+            }
+
+            try (in) {
+            	Files.copy(in, destFile, StandardCopyOption.REPLACE_EXISTING);
+            }
+    	} catch (IOException e) {
+            throw new RuntimeException("Failed copying sample data resource " + resourcePath + " to " + destFile, e);
+    	}
+    }
+
+    private static void initializeSampleDataIfEmpty(Path runtimeRoot) {
+    	// Only seed if the expected files don't exist yet (never overwrite user data)
+    	Path customers = runtimeRoot.resolve("Customer_Files").resolve("customers.txt");
+    	Path inventory = runtimeRoot.resolve("Art_Inventory_Files").resolve("inventory.txt");
+    	Path transactions = runtimeRoot.resolve("Art_Transaction_Files").resolve("transactions.txt");
+    	Path counter = runtimeRoot.resolve("Transaction_Counter_Files").resolve("transaction_counter.txt");
+
+    	boolean alreadyInitialized = Files.exists(customers) || Files.exists(inventory) || Files.exists(transactions) || Files.exists(counter);
+
+    	if (alreadyInitialized) return;
+
+    	copyResourceIfMissing("/data/Customer_Files/customers.txt", customers);
+    	copyResourceIfMissing("/data/Art_Inventory_Files/inventory.txt", inventory);
+    	copyResourceIfMissing("/data/Art_Transaction_Files/transactions.txt", transactions);
+    	copyResourceIfMissing("/data/Transaction_Counter_Files/transaction_counter.txt", counter);
     }
 
     public static String getCounterFilePath() {
