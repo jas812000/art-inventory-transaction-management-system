@@ -19,9 +19,15 @@ public class EnvironmentConfig {
     }
 
     private static Path getAppDataRoot() {
-        if (RUNTIME_MODE == RuntimeMode.TEST) {
-            return Paths.get(System.getProperty("user.dir"), "src", "test", "resources", "test_data");
-        }
+	if (RUNTIME_MODE == RuntimeMode.TEST) {
+    	    String testOverride = System.getProperty("test.data.dir");
+    	    if (testOverride != null && !testOverride.isBlank()) {
+        	Path root = Paths.get(testOverride);
+        	ensureDirectoryExists(root);
+        	return root;
+    	    }
+    	    return Paths.get(System.getProperty("user.dir"), "src", "test", "resources", "test_data");
+	}
 
         String override = System.getenv("ARTSTORE_DATA_DIR");
         Path root = (override != null && !override.isBlank())

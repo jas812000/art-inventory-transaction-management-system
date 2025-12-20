@@ -6,10 +6,14 @@ import com.artstore.core.TransactionManager;
 import com.artstore.model.*;
 import com.artstore.model.enums.*;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.Files;
+import java.io.IOException;
+import java.util.stream.Stream;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -17,17 +21,28 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class FullTransactionPersistenceTest {
 
-    static {
-        System.setProperty("runtime.mode", "test");
-        System.out.println("=== FullTransactionPersistenceTest: Tests complete save/load cycle for a transaction involving customer and art ===");
-    }
+    @TempDir
+    static Path tempDir;
 
-    private static final Path TRANSACTION_FILE =
-            Paths.get(EnvironmentConfig.getTransactionDirectory(), "transactions.txt");
+    private static Path transactionFile;
+
+    @BeforeAll
+    static void setupTempDataDir() throws IOException {
+    	System.setProperty("runtime.mode", "test");
+    	System.setProperty("test.data.dir", tempDir.toString());
+
+    	// Copy seed test_data into tempDir so tests can write without mutating repo fixtures
+    	Path seedRoot = Paths.get(System.getProperty("user.dir"), "src", "test", "resources", "test_data");
+    	copyDirectory(seedRoot, tempDir);
+
+    	transactionFile = Paths.get(EnvironmentConfig.getTransactionDirectory(), "transactions.txt");
+
+    	System.out.println("=== FullTransactionPersistenceTest using temp test.data.dir: " + tempDir + " ===");
+    }
 
     @BeforeEach
     void resetFile() {
-        File file = TRANSACTION_FILE.toFile();
+        File file = transactionFile.toFile();
         if (file.exists() && !file.delete()) {
             throw new IllegalStateException("Could not delete transaction file before test: " + file.getAbsolutePath());
         }
@@ -41,7 +56,7 @@ class FullTransactionPersistenceTest {
 
         ArtInventoryManager inventoryManager = new ArtInventoryManager();
         //Path transactionFilePath = Paths.get("src/test/java/data/Test_Transaction_Files/transactions.txt");
-        Path transactionFilePath = TRANSACTION_FILE;
+        Path transactionFilePath = transactionFile;
 
         Address address = new Address("404 Canvas Way", "Brushville", "TX", "75001");
         Customer customer = new Customer("Eva", "Brush", address, "5551234567",
@@ -98,7 +113,7 @@ class FullTransactionPersistenceTest {
 
         ArtInventoryManager inventoryManager = new ArtInventoryManager();
         //Path transactionFilePath = Paths.get("src/test/java/data/Test_Transaction_Files/transactions.txt");
-        Path transactionFilePath = TRANSACTION_FILE;
+        Path transactionFilePath = transactionFile;
 
         Address address = new Address("404 Canvas Way", "Brushville", "TX", "75001");
         Customer customer = new Customer("Eva", "Brush", address, "5551234567",
@@ -157,5 +172,23 @@ class FullTransactionPersistenceTest {
     @AfterAll
     static void tearDown() {
         System.out.println("=== Finished FullTransactionPersistenceTest ===\n");
+    }
+
+    private static void copyDirectory(Path source, Path target) throws IOException {
+    	try (Stream<Path> stream = Files.walk(source)) {
+            stream.forEach(src -> {
+            	try {
+                    Path dest = target.resolve(source.relativize(src).toString());
+                    if (Files.isDirectory(src)) {
+                    	Files.createDirectories(dest);
+                    } else {
+                    	Files.createDirectories(dest.getParent());
+                    	Files.copy(src, dest, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                    }
+            	} catch (IOException e) {
+                    throw new RuntimeException("Failed copying " + src, e);
+            	}
+            });
+    	}
     }
 }

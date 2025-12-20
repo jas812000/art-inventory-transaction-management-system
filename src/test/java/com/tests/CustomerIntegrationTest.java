@@ -10,36 +10,53 @@ import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import org.junit.jupiter.api.io.TempDir;
+import java.nio.file.Files;
+import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class CustomerIntegrationTest {
 
-    static {
-        System.setProperty("runtime.mode", "test");
-        System.out.println("=== CustomerIntegrationTest: Tests saving and loading Customer data from file system ===");
-    }
+    @TempDir
+    Path tempDir;
 
-    private static final Path CUSTOMER_FILE =
-            Paths.get(EnvironmentConfig.getCustomerDirectory(), "customers.txt");
-
+    private Path customerFile;
     private CustomerManager customerManager;
 
     @BeforeEach
-    void setUp() {
-        customerManager = new CustomerManager(CUSTOMER_FILE.toString());
+    void setUp() throws IOException {
 
-        File directory = CUSTOMER_FILE.getParent().toFile();
+     	System.setProperty("runtime.mode", "test");
+	System.setProperty("test.data.dir", tempDir.toString());
+
+	Path customerDir = tempDir.resolve("Customer_Files");
+	Files.createDirectories(customerDir);
+
+	customerFile = customerDir.resolve("customers.txt");
+
+        customerManager = new CustomerManager(customerFile.toString());
+
+        File directory = customerFile.getParent().toFile();
         if (!directory.exists()) {
             if (!directory.mkdirs()) {
                 throw new IllegalStateException("Failed to create customer directory: " + directory.getAbsolutePath());
             }
         }
 
-        // Prevent test from deleting wrong directory
-        if (!directory.getAbsolutePath().contains("/test/")) {
-            throw new IllegalStateException("Aborting! Not a test directory: " + directory.getAbsolutePath());
-        }
+    	// Prevent test from deleting the wrong directory.
+    	// Allow either the repo fixture root OR an explicit temp test root via -Dtest.data.dir.
+    	String overrideRoot = System.getProperty("test.data.dir");
+    	Path allowedRoot = (overrideRoot != null && !overrideRoot.isBlank())
+            	? Paths.get(overrideRoot)
+            	: Paths.get(System.getProperty("user.dir"), "src", "test", "resources", "test_data");
+
+    	Path dirPath = customerFile.getParent().toAbsolutePath().normalize();
+    	Path rootPath = allowedRoot.toAbsolutePath().normalize();
+
+    	if (!dirPath.startsWith(rootPath)) {
+    	    throw new IllegalStateException("Aborting! Not an allowed test directory: " + dirPath);
+    	}
 
         // Clean test directory
         if (directory.exists()) {
@@ -91,14 +108,29 @@ public class CustomerIntegrationTest {
         System.out.println("\t\tPassed: Phone number formatted and matches");
     }
 
+    private static void copyFileIfExists(Path src, Path dest) throws IOException {
+    	if (Files.exists(src)) {
+            Files.createDirectories(dest.getParent());
+            Files.copy(src, dest, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+    	}
+    }
+
     @AfterEach
     void tearDown() {
-        File directory = CUSTOMER_FILE.getParent().toFile();
+        File directory = customerFile.getParent().toFile();
 
         // Prevent test from deleting wrong directory
-        if (!directory.getAbsolutePath().contains("/test/")) {
-            throw new IllegalStateException("Aborting! Not a test directory: " + directory.getAbsolutePath());
-        }
+	String overrideRoot = System.getProperty("test.data.dir");
+	String allowedRoot = (overrideRoot != null && !overrideRoot.isBlank())
+        	? overrideRoot
+        	: System.getProperty("user.dir") + "/src/test/resources/test_data";
+
+	String dirPath = directory.getAbsolutePath().replace("\\", "/");
+	String allowed = allowedRoot.replace("\\", "/");
+
+	if (!dirPath.startsWith(allowed)) {
+    	    throw new IllegalStateException("Aborting! Not an allowed test directory: " + directory.getAbsolutePath());
+	}
 
         // Clean test directory
         if (directory.exists()) {
@@ -115,9 +147,5 @@ public class CustomerIntegrationTest {
                 throw new IllegalStateException("Failed to create test directory: " + directory.getAbsolutePath());
             }
         }
-
-
-
-
     }
 }
