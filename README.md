@@ -1,140 +1,113 @@
 # Art Inventory & Transaction Management System
 
 ## Overview
-The Art Inventory & Transaction Management System is a modular Java application 
-designed to manage an art gallery’s inventory, customers, and purchase transactions 
-across multiple art types, including paintings, drawings, prints, and sculptures.
+The Art Inventory & Transaction Management System is a Java application designed to manage an art store’s inventory, customers, and sales 
+transactions.
 
-The project focuses on backend-style domain modeling, validation, persistence, and 
-automated testing, with a Swing-based GUI used as a thin interaction layer. All 
-data is persisted using a structured file-based storage model rather than a 
-database, allowing the system to simulate real backend responsibilities while 
-remaining portable and easy to test.
+The project emphasizes **backend engineering principles**—domain modeling, persistence, validation, configuration management, and 
+automated testing—while providing a lightweight Swing-based GUI to exercise the system end-to-end.
+
+Data is persisted using a **file-based storage model** (no database), with a clear separation between:
+- bundled **sample data** (for demos), and
+- **runtime data** written outside the repository.
 
 ---
 
 ## Features
-- Automatic loading of inventory, customers, and transactions at application 
-startup
-- Inventory management for multiple art types using inheritance-based 
-specialization
-- Customer creation, retrieval, and validation
-- Transaction workflows with lifecycle enforcement (pending → completed)
-- Type-specific pricing and shipping cost calculations
-- Structured file-based persistence with deterministic loading
-- Centralized manager/service layer coordinating domain logic
-- Defensive validation and domain-specific exception handling
-- Comprehensive JUnit 5 test coverage, including persistence integration tests
+- Manage an inventory of artwork across multiple art types:
+  - Painting, Drawing, Print, Sculpture
+- Customer management with validation and persistence
+- Transaction workflows:
+  - create, retrieve, complete, and remove transactions
+- Controlled state transitions for inventory and transactions
+- File-based persistence with deterministic loading
+- Automatic initialization of runtime data on first run
+- Fully automated JUnit 5 test suite (unit + integration tests)
 
 ---
 
 ## Architecture Overview
 The system follows a layered, object-oriented architecture:
 
-### Manager / Service Layer
-Central controllers coordinating inventory management, customer operations, 
-transaction workflows, validation, and persistence.
-
+### Core / Service Layer
 - `ArtInventoryManager`
 - `CustomerManager`
 - `TransactionManager`
 
+These classes encapsulate domain logic and persistence behavior and are **decoupled from the GUI**.
+
 ### Domain Model
-Encapsulates core business entities and rules:
+- Abstract base classes with concrete specializations
+- Strong typing via enums (status, category, style, material, etc.)
+- Controlled state transitions to preserve data consistency
 
-- `Art` (abstract base class)
-- Concrete art types:
-  - `Painting`
-  - `Drawing`
-  - `Print`
-  - `Sculpture`
-- `Customer`, `Address`
-- `Transaction`
+### Persistence Strategy
+- Plain text files (one directory per domain concern)
+- Deterministic load/save behavior
+- Explicit validation and error handling during parsing
 
-### Persistence Layer
-Structured text-file persistence used to simulate backend storage responsibilities:
-
-- Inventory records
-- Customer records
-- Transaction records
-- Transaction ID counter
-
-### Validation & Error Handling
-- Explicit validation of identifiers and user input
-- Controlled state transitions for art availability and transactions
-- Domain-specific exceptions for invalid operations
-- Defensive handling of malformed or invalid persisted data
+### GUI Layer
+- Java Swing GUI used only as a driver for backend functionality
+- No persistence logic inside GUI components
 
 ---
 
-## Data Persistence Model
-One directory represents application data storage.
+## Data & Persistence Model
 
-Separate files are used for:
-- Inventory
-- Customers
-- Transactions
-- Transaction counter
-
-Records use structured, deterministic text formats to ensure:
-- Predictable loading
-- Easy debugging
-- Full testability without external dependencies
-
-This approach simulates backend persistence while keeping storage logic explicit 
-and portable.
-
----
-
-## State Management
-
-## Art Item Lifecycle
-Art items follow a controlled availability lifecycle:
-
+### Sample Data (Bundled)
+Sample data is included in the repository for demo purposes:
 ```
-AVAILABLE → RESERVED → SOLD
+src/main/resources/data/
+                    ├── Customer_Files/customers.txt
+                    ├── Art_Inventory_Files/inventory.txt
+                    ├── Art_Transaction_Files/transactions.txt
+                    └── Transaction_Counter_Files/transaction_counter.txt
+```
+or
+```
+src/main/resources/data/
+├── Customer_Files/customers.txt
+├── Art_Inventory_Files/inventory.txt
+├── Art_Transaction_Files/transactions.txt
+└── Transaction_Counter_Files/transaction_counter.txt
 ```
 
-Invalid transitions (e.g., selling unavailable art) are explicitly blocked to 
-preserve system consistency.
-
 ---
 
-## Transaction Lifecycle
-Transactions follow a guarded workflow:
+### Runtime Data (Writable)
+At runtime, the application writes data **outside the repository**:
 
 ```
-PENDING → COMPLETED
+~/.artstore/data/
 ```
 
-Once completed, transactions become immutable.
+
+On first application run:
+- If the runtime directory is empty
+- Sample data is automatically copied from the bundled resources
 
 ---
 
-## Error Handling Strategy
-The system enforces correctness through defensive programming practices:
-
-- Validation of IDs, numeric fields, and required attributes
-- Prevention of invalid state transitions
-- Explicit exception handling for illegal operations
-- Graceful handling of file I/O errors
-
-Failures in individual records do not compromise overall application stability.
+### Configuration
+- Default runtime location: `~/.artstore/data`
+- Override with environment variable:
+```bash
+export ARTSTORE_DATA_DIR=/path/to/custom/data
+```
 
 ---
 
-## Build & Test
 
+### Build & Test
 ## Prerequisites
-- Java 17+ (recommended)
-- Maven 3.9+
+- Java 21+
+- Maven 3.8+
+
 
 ## Run Tests
 ```bash
 mvn clean test
 ```
-
----
 
 ## Build
 ```bash
@@ -143,44 +116,55 @@ mvn clean package
 
 ---
 
-## Run (GUI)
-**Recommended (one command)**
-Runs the application using Maven with the configured entry point:
+### Run (GUI)
+## Recommended (Maven)
+
+Runs the application using the configured entry point:
 ```bash
 mvn -q exec:java
 ```
 
-**Alternative (manual classpath)**
-You can also launch the GUI directly from compiled classes:
+### Runnable JAR
+
+Build and run the shaded JAR:
 ```bash
-java -cp target/classes com.artstore.gui.AppLauncher
+mvn clean package
+java -jar target/art-inventory.jar
 ```
 
-The application automatically loads persisted data at startup.
+The GUI launches and loads persisted data automatically.
 
 ---
 
-## Tools & Technologies
-- **Language**: Java
-- **Build Tool**: Maven
-- **Testing**: JUnit 5
-- **UI**: Java Swing
-- **Persistence**: Structured text files
-- **Design**: Object-oriented modeling with inheritance
-- **Testing Techniques**: Unit tests and filesystem-based integration tests
+### Testing Strategy
+- Unit tests validate domain models and manager logic
+- Integration tests verify file persistence and reload behavior
+- Tests use isolated temporary directories to prevent data leakage
+- All tests pass on a clean checkout
 
 ---
 
-## Purpose
+### Tools & Technologies
+
+-**Language**: Java 21
+-**Build Tool**: Maven
+-**Testing**: JUnit 5
+-**GUI**: Java Swing
+-**Persistence**: Structured text files
+-**Packaging**: Maven Shade Plugin
+
+---
+
+### Purpose
 
 This project serves as a backend engineering case study demonstrating:
-- Object-oriented system design
-- Inheritance-based domain modeling
-- Deterministic persistence strategies
+- Object-oriented design and inheritance
+- Clean separation of concerns
+- File-based persistence strategies
+- Environment-aware configuration
 - Defensive input validation
-- Controlled state transitions
-- Automated testing and regression prevention
-- Translation of backend design principles into a working Java application
+- Automated testing and regression safety
+- Transitioning from prototype paths to production-ready structure
 
 ---
 
