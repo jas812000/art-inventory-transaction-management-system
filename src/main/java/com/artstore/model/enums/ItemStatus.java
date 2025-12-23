@@ -1,33 +1,35 @@
-// This file is part of the ArtInventoryTransaction application, specifically the enums package.
+/*
+ * This file belongs to the ArtInventoryTransaction application.
+ * It defines availability states for inventory items.
+ */
 package com.artstore.model.enums;
 
 /**
- * Enum representing edition types for prints (e.g., canvas, paper, or photo).
+ * Represents the availability status of an artwork.
  */
 public enum ItemStatus {
+
     RESERVED("reserved"),
     AVAILABLE("available"),
     SOLD("sold");
 
-    // Holds the name of the edition type, immutable for each enum constant.
     private final String itemStatusName;
 
     /**
-     * Constructs an EditionType enum constant with a given name.
+     * Creates an item status with a display-friendly name.
      *
-     * @param itemStatusName The string representation of the item's status
+     * @param itemStatusName readable status name
      */
     ItemStatus(String itemStatusName) {
         this.itemStatusName = itemStatusName;
-    } // End constructor
+    }
 
     /**
-     * Getter method to retrieve the edition type name.
+     * Returns the display name of the item status.
      *
-     * @return The name of the edition type
+     * @return item status name
      */
     public String getItemStatusName() {
         return itemStatusName;
-    } // End getEditionTypeName method
-
-} // End EditionType enum
+    }
+}

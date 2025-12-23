@@ -1,21 +1,27 @@
-// This file is part of the ArtInventoryTransaction application, specifically the exceptions package.
+
+/*
+ * This file belongs to the ArtInventoryTransaction application.
+ * It defines a runtime exception used to signal invalid transaction data.
+ */
 package com.artstore.exceptions;
 
 /**
- * Exception thrown when a transaction itself is deemed invalid due to improper or missing data.
- * This may be used when a transaction cannot be created or processed due to issues such as
- * null values, inconsistent pricing, or invalid customer information.
+ * Indicates that a transaction is invalid and cannot be created or processed.
+ * <p>
+ * This exception is typically thrown during validation when required fields are
+ * missing, customer information is invalid, or transaction data is inconsistent
+ * (for example, incorrect totals or pricing).
+ * </p>
  */
 public class InvalidTransactionException extends RuntimeException {
+
     /**
-     * Constructs a new InvalidTransactionException with a detailed message
-     * including the operation attempted and the reason it failed.
+     * Constructs an {@code InvalidTransactionException} describing an invalid transaction.
      *
-     * @param operation The name or description of the transaction-related operation.
-     * @param reason    The reason the transaction was considered invalid.
+     * @param operation a short, human-readable description of the attempted operation
+     * @param reason    an explanation describing why the transaction is invalid
      */
     public InvalidTransactionException(String operation, String reason) {
-        super(operation + " was attempted and failed due to the following: "+ reason);
-    } // End constructor
-
-} // End InvalidTransactionException class
+        super(operation + " was attempted and failed due to the following: " + reason);
+    }
+}

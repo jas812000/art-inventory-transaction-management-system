@@ -1,38 +1,40 @@
-// This file is part of the ArtInventoryTransaction application, specifically the enums package.
+/*
+ * This file belongs to the ArtInventoryTransaction application.
+ * It defines categories used to classify artwork.
+ */
 package com.artstore.model.enums;
 
 /**
- * Enum representing art categories for paintings, drawings, and prints (e.g., history, portrait, genre, landscape, still life).
+ * Represents high-level categories for artwork classification.
  */
 public enum Category {
+
     HISTORY("HISTORY"),
     PORTRAIT("PORTRAIT"),
     GENRE("GENRE"),
     LANDSCAPE("LANDSCAPE"),
     STILL_LIFE("STILL LIFE");
 
-    // Holds the name of the category, immutable for each enum constant
     private final String categoryName;
 
     /**
-     * Constructs a Category enum constant with a given name.
+     * Creates a category with a display-friendly name.
      *
-     * @param categoryName The string representation of the category
+     * @param categoryName readable category name
      */
     Category(String categoryName) {
         this.categoryName = categoryName;
-    } // End constructor
+    }
 
     /**
-     * Getter method to retrieve the category name.
+     * Returns the display name of the category.
      *
-     * @return The name of the category
+     * @return category name
      */
     public String getCategoryName() {
         return categoryName;
-    } // End getCategoryName method
-
-} // End Category enum
+    }
+}
 
 
 

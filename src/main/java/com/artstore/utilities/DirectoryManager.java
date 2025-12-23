@@ -1,42 +1,65 @@
 // This file is part of the ArtInventoryTransaction application, specifically the utilities package.
 package com.artstore.utilities;
 
-// Import utility classes for handling data and file I/O
 import java.io.File;
 
 /**
- * Utility class for managing application data directories.
+ * Utility class responsible for creating and managing
+ * application-level data directories.
+ * <p>
+ * This class ensures that required storage locations for customers,
+ * inventory, and transactions exist before file persistence is attempted.
+ * </p>
+ *
+ * <p>
+ * This class performs filesystem setup only and does not read or write data files.
+ * </p>
  */
-public class DirectoryManager {
+public final class DirectoryManager {
+
+    // Prevent instantiation of utility class
+    private DirectoryManager() {}
+
     /**
-     * Creates the necessary application data directories if they don't already exist.
+     * Ensures that all required application data directories exist.
+     * <p>
+     * If a directory does not exist, it will be created (including any
+     * necessary parent directories).
+     * </p>
      *
-     * @param customerDir    Path for customer data storage
-     * @param inventoryDir   Path for inventory data storage
-     * @param transactionDir Path for transaction data storage
+     * @param customerDir    directory path for customer data storage
+     * @param inventoryDir   directory path for inventory data storage
+     * @param transactionDir directory path for transaction data storage
      */
-    public static void initializeDirectories(String customerDir, String inventoryDir, String transactionDir) {
-        // Create the customer directory if it doesn't exist
+    public static void initializeDirectories(
+            String customerDir,
+            String inventoryDir,
+            String transactionDir
+    ) {
         createIfMissing(customerDir);
-
-        // Create the inventory directory if it doesn't exist
         createIfMissing(inventoryDir);
-
-        // Create the transaction directory if it doesn't exist
         createIfMissing(transactionDir);
-    } // End initializeDirectories method
+    }
 
     /**
-     * Helper method to create a directory if it does not exist.
+     * Creates the directory at the specified path if it does not already exist.
+     * <p>
+     * If directory creation fails, a warning is logged to standard error,
+     * allowing the application to continue running while highlighting
+     * a potential persistence issue.
+     * </p>
      *
-     * @param path The directory path
+     * @param path directory path to create
      */
     private static void createIfMissing(String path) {
         File dir = new File(path);
+
         if (!dir.exists()) {
             if (!dir.mkdirs()) {
-                System.err.println("Warning: Failed to create directory: " + path);
-            } // End if statement
-        }  // End if statement
-    }  // End createIfMissing method
-} // End DirectoryManager class
+                System.err.println(
+                        "Warning: Unable to create directory: " + dir.getAbsolutePath()
+                );
+            }
+        }
+    }
+}

@@ -1,10 +1,14 @@
-// This file is part of the ArtInventoryTransaction application, specifically the enums package.
+/*
+ * This file belongs to the ArtInventoryTransaction application.
+ * It defines materials used primarily in sculpture and mixed media.
+ */
 package com.artstore.model.enums;
 
 /**
- * Enum representing materials used in sculptures (e.g., stone, metal, ceramic, wood, glass, etc.).
+ * Represents materials used in sculpture and three-dimensional artwork.
  */
 public enum Material {
+
     STONE("STONE"),
     METAL("METAL"),
     WOOD("WOOD"),
@@ -30,25 +34,23 @@ public enum Material {
     THREE_D_PRINTED_MATERIALS("3D PRINTED MATERIALS"),
     BIODEGRADABLE_MATERIALS("BIODEGRADABLE MATERIALS");
 
-    // Holds the name of the material type, immutable for each enum constant.
     private final String materialName;
 
     /**
-     * Constructs a material enum constant with the provided name.
+     * Creates a material with a display-friendly name.
      *
-     * @param materialName Name of the material
+     * @param materialName readable name of the material
      */
     Material(String materialName) {
         this.materialName = materialName;
-    } // End constructor
+    }
 
     /**
-     * Getter method to retrieve the material name.
+     * Returns the display name of the material.
      *
-     * @return Material name as a string
+     * @return material name
      */
     public String getMaterialName() {
         return materialName;
-    } // End getMaterialName method
-
-} // End Material enum
+    }
+}

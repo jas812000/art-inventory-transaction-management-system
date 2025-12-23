@@ -1,21 +1,26 @@
-// This file is part of the ArtInventoryTransaction application, specifically the exceptions package.
+/*
+ * This file belongs to the ArtInventoryTransaction application.
+ * It defines a runtime exception used to signal invalid art-related operations.
+ */
 package com.artstore.exceptions;
 
 /**
- * Exception thrown when an operation involving an Art object fails due to invalid input or logic.
- * Typical use cases include invalid art ID length, invalid pricing, future creation dates,
- * or exceeding description length constraints.
+ * Indicates that an art-related operation could not be completed.
+ * <p>
+ * This exception is typically thrown when input data or state is invalid, such as
+ * malformed art identifiers, invalid pricing values, future creation dates,
+ * or violations of length and format constraints on artwork fields.
+ * </p>
  */
 public class InvalidArtOperationException extends RuntimeException {
+
     /**
-     * Constructs a new InvalidArtOperationException with a detailed message
-     * including the operation attempted and the reason it failed.
+     * Constructs an {@code InvalidArtOperationException} describing a failed art-related operation.
      *
-     * @param operation The name or description of the art-related operation.
-     * @param reason    The reason the operation could not be completed.
+     * @param operation a short, human-readable description of the attempted operation
+     * @param reason    an explanation describing why the operation failed
      */
     public InvalidArtOperationException(String operation, String reason) {
-        super(operation + " was attempted and failed due to the following: "+ reason);
-    } // End constructor
-
-} // End InvalidArtOperationException class
+        super(operation + " was attempted and failed due to the following: " + reason);
+    }
+}

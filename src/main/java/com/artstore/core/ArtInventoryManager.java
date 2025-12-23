@@ -1,141 +1,186 @@
-// This file is part of the ArtInventoryTransaction application, specifically the core package.
+/*
+ * This file belongs to the ArtInventoryTransaction application.
+ * It provides core inventory functionality for managing in-memory Art objects,
+ * including CRUD operations and file-based persistence.
+ */
 package com.artstore.core;
 
-// Import core collection classes
 import com.artstore.model.Art;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
-import java.io.*;
-
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
- * Manages an in-memory inventory of Art objects.
- * Provides functionality to add, remove, list, and persist artworks.
+ * Manages an in-memory inventory of {@link Art} objects keyed by art identification.
+ * <p>
+ * This class supports adding, removing, retrieving, and listing artworks,
+ * as well as persisting inventory data to disk and restoring it on startup.
+ * </p>
  */
 public class ArtInventoryManager {
 
-    private static final String INVENTORY_DIRECTORY = com.config.EnvironmentConfig.getInventoryDirectory();
+    /**
+     * Base directory used for inventory file storage.
+     * The value is resolved from the application environment configuration.
+     */
+    private static final String INVENTORY_DIRECTORY =
+            com.config.EnvironmentConfig.getInventoryDirectory();
 
-    // Holds all art pieces indexed by their unique ID
+    /**
+     * Internal map storing all artworks indexed by their unique identification.
+     */
     private final Map<String, Art> inventory;
 
     /**
-     * Constructs an empty inventory.
+     * Constructs a new {@code ArtInventoryManager} with an empty inventory.
      */
     public ArtInventoryManager() {
-        inventory = new HashMap<>();
-    } // End ArtInventoryManager constructor
+        this.inventory = new HashMap<>();
+    }
 
     /**
-     * Adds an Art object to the inventory.
+     * Adds an artwork to the inventory.
+     * <p>
+     * If an artwork with the same identification already exists,
+     * it will be replaced.
+     * </p>
      *
-     * @param art the artwork to add
+     * @param art the artwork to add; must not be {@code null}
      */
     public void addArt(Art art) {
         inventory.put(art.getArtIdentification(), art);
-    } // End addArt method
+    }
 
     /**
-     * Removes an artwork from the inventory by ID.
+     * Removes an artwork from the inventory using its identification.
      *
-     * @param artIdentification the 10-digit art ID
+     * @param artIdentification the unique art identification
      */
     public void removeArt(String artIdentification) {
         inventory.remove(artIdentification);
-    } // End removeArt method
+    }
 
     /**
-     * Returns a list of all Art objects in the inventory.
+     * Returns a snapshot list of all artworks currently stored in the inventory.
      *
-     * @return list of artworks
+     * @return a list containing all artworks
      */
     public List<Art> getAllArt() {
         return new ArrayList<>(inventory.values());
-    } // End getAllArt method
+    }
 
     /**
-     * Retrieves an Art object by its unique ID.
+     * Retrieves an artwork by its identification.
      *
-     * @param artIdentification the ID of the art
-     * @return the Art object if found, or null otherwise
+     * @param artIdentification the unique art identification
+     * @return the matching artwork if found; otherwise {@code null}
      */
     public Art getArtById(String artIdentification) {
         return inventory.get(artIdentification);
-    } // End getArtById method
+    }
 
     /**
-     * Saves the inventory to a text file.
-     * Each line in the file represents an Art object in its string form.
+     * Persists the current inventory to disk.
+     * <p>
+     * Each artwork is written to a separate line using
+     * {@link Art#toString()} and stored in
+     * {@code <inventoryDirectory>/inventory.txt}.
+     * </p>
+     * <p>
+     * The inventory directory is created if it does not already exist.
+     * </p>
      */
     public void saveInventoryToFile() {
-
         String filePath = INVENTORY_DIRECTORY + "/inventory.txt";
         Path file = Paths.get(filePath);
-        Path directoryPath = file.getParent(); // Get the directory path
+        Path directoryPath = file.getParent();
 
         try {
-            // Ensure the directory exists
             if (!Files.exists(directoryPath)) {
                 Files.createDirectories(directoryPath);
-                System.out.println("Directory created for saving inventory: " + directoryPath.toAbsolutePath());
+                System.out.println(
+                        "Directory created for saving inventory: "
+                                + directoryPath.toAbsolutePath()
+                );
             }
 
             try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
-
-                // Write each art object to the file on a new line
                 for (Art art : inventory.values()) {
                     writer.write(art.toString());
-                    writer.newLine(); // Ensure each entry is on its own line
-                } // End for loop
+                    writer.newLine();
+                }
             }
         } catch (IOException e) {
             System.err.println("Failed to save inventory: " + e.getMessage());
-        } // End try-catch statements
-    } // End saveInventoryToFile method
+        }
+    }
 
     /**
-     * Loads the inventory from a text file.
-     * Each line in the file should represent an Art object in its string form.
+     * Loads inventory data from disk into memory.
+     * <p>
+     * Each non-blank line in the inventory file is parsed using
+     * {@link Art#fromString(String)} and stored using the artwork's
+     * identification as the key.
+     * </p>
+     * <p>
+     * If the inventory file does not exist, the inventory is cleared
+     * and remains empty.
+     * </p>
      */
     public void loadInventoryFromFile() {
-
         String filePath = INVENTORY_DIRECTORY + "/inventory.txt";
         Path file = Paths.get(filePath);
-        Path directoryPath = file.getParent(); // Get the directory path
+        Path directoryPath = file.getParent();
 
-        // Ensure the directory exists before attempting to load the file
         if (!Files.exists(directoryPath)) {
             try {
-                Files.createDirectories(directoryPath); // Create the directory if it doesn't exist
-                System.out.println("Directory created: " + directoryPath.toAbsolutePath());
+                Files.createDirectories(directoryPath);
+                System.out.println(
+                        "Directory created: " + directoryPath.toAbsolutePath()
+                );
             } catch (IOException e) {
-                System.err.println("Failed to create directory: " + directoryPath.toAbsolutePath());
-            } // End try-catch statements
-        } // End if statement
+                System.err.println(
+                        "Failed to create directory: "
+                                + directoryPath.toAbsolutePath()
+                );
+            }
+        }
 
-        // Check if the file exists
         if (!Files.exists(file)) {
-            System.out.println("No inventory file found. Starting with an empty inventory.");
+            System.out.println(
+                    "No inventory file found. Starting with an empty inventory."
+            );
             inventory.clear();
             return;
-        } // End if statement
+        }
 
-        // Try reading the file
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String line;
+
             while ((line = reader.readLine()) != null) {
-                if (line.isBlank()) continue;
+                if (line.isBlank()) {
+                    continue;
+                }
+
                 Art art = Art.fromString(line);
                 inventory.put(art.getArtIdentification(), art);
-            } // End while loop
+            }
 
             System.out.println("Inventory loaded successfully from: " + filePath);
-
         } catch (IOException e) {
-            System.err.println("Failed to load inventory from file: " + e.getMessage());
-        } // End try-catch statements
-    } // End loadInventoryFromFile method
-
-} // End ArtInventoryManager class
+            System.err.println(
+                    "Failed to load inventory from file: " + e.getMessage()
+            );
+        }
+    }
+}

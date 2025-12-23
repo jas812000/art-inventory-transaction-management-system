@@ -1,35 +1,47 @@
-// This file is part of the ArtInventoryTransaction application, specifically the GUI package.
+/*
+ * This file is part of the ArtInventoryTransaction application.
+ * It provides a utility for creating and configuring the main application JFrame.
+ */
 package com.artstore.gui;
 
-// Imports for GUI components
 import javax.swing.*;
-
-// Imports for layout and styling
 import java.awt.*;
 
 /**
- * Responsible for setting up the main application window and layout.
+ * Builds and configures the primary application window.
+ * <p>
+ * The main frame uses a {@link BorderLayout} with:
+ * <ul>
+ *   <li>A header label in {@link BorderLayout#NORTH}</li>
+ *   <li>A navigation menu panel in {@link BorderLayout#WEST}</li>
+ *   <li>The primary screen container (CardLayout panel) in {@link BorderLayout#CENTER}</li>
+ * </ul>
+ * </p>
  */
 public class MainFrameInitializer {
 
+    /**
+     * Creates and returns the main application frame configured with header, menu, and content panels.
+     *
+     * @param mainPanel the central panel containing application screens (typically managed by CardLayout)
+     * @param menuPanel the navigation menu panel displayed on the left
+     * @return configured {@link JFrame} ready to be displayed
+     */
     public static JFrame createMainFrame(JPanel mainPanel, JPanel menuPanel) {
-        // Initialize the main frame
         JFrame frame = new JFrame("Art Inventory & Transaction Manager");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(1200, 900);
         frame.setResizable(true);
 
-        // Create and add the header label
         JLabel headerLabel = new JLabel("Art Inventory & Transaction Manager", JLabel.CENTER);
         headerLabel.setFont(new Font("Papyrus", Font.BOLD, 42));
         headerLabel.setBorder(BorderFactory.createEmptyBorder(10, 7, 10, 7));
-        frame.getContentPane().add(headerLabel, BorderLayout.NORTH);
 
-        // Add the menu panel (left side) and the main content panel (center)
+        frame.getContentPane().setLayout(new BorderLayout());
+        frame.getContentPane().add(headerLabel, BorderLayout.NORTH);
         frame.getContentPane().add(menuPanel, BorderLayout.WEST);
         frame.getContentPane().add(mainPanel, BorderLayout.CENTER);
 
         return frame;
-    } // End createMainFrame method
-
-} // End MainFrameInitializer class
+    }
+}

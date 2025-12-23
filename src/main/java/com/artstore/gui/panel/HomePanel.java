@@ -1,40 +1,53 @@
-// This file is part of the ArtInventoryTransaction application, specifically the GUI panel package.
+/*
+ * This file belongs to the ArtInventoryTransaction application.
+ * It defines the home screen panel for the GUI.
+ */
 package com.artstore.gui.panel;
 
-// Import GUI components (Swing for GUI elements, AWT for layout management)
 import javax.swing.*;
-import java.awt.*;
-
-// Import text components for styled text (e.g., handling styled documents)
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
+import java.awt.*;
 
 /**
- * Panel displaying the home screen of the Art Inventory & Transaction Manager.
- * Shows a welcome message with a styled background image.
+ * Displays the home screen of the Art Inventory &amp; Transaction Manager.
+ * <p>
+ * The panel shows a centered welcome message over a stretched background image and includes
+ * an attribution label at the bottom.
+ * </p>
  */
 public class HomePanel extends JPanel {
 
-    // Path to the background image relative to the project directory
+    /**
+     * Path to the background image used by this panel.
+     */
     private static final String IMAGE_PATH =
             System.getProperty("user.dir") + "/src/main/java/images/graffiti-abstract.jpg";
 
-    // Image object for the background
+    /**
+     * Background image rendered behind the welcome message.
+     */
     private Image backgroundImage;
 
     /**
-     * Constructs the HomePanel with a welcome message and background.
+     * Constructs a {@code HomePanel} with a welcome message and a background image.
      */
     public HomePanel() {
-        // Use border layout to position components
+        /*
+         * Configure the container layout and transparency so the background image can show through.
+         */
         setLayout(new BorderLayout());
-        setOpaque(false); // Allow background image to be visible
+        setOpaque(false);
 
-        // Add the welcome message panel
+        /*
+         * Build and attach the main welcome content.
+         */
         JPanel welcomePanel = createWelcomePanel();
 
-        // Attribution for background image source
+        /*
+         * Attribution displayed below the welcome message.
+         */
         JLabel attribution = new JLabel(
                 "Background image: AI-generated stock photo by Vecteezy (vecteezy.com)",
                 JLabel.CENTER
@@ -43,26 +56,28 @@ public class HomePanel extends JPanel {
         attribution.setForeground(Color.LIGHT_GRAY);
         attribution.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Add components to the panel
         add(welcomePanel, BorderLayout.CENTER);
         add(attribution, BorderLayout.SOUTH);
 
-        // Load the background image
+        /*
+         * Load the background image. If the image cannot be loaded, the panel will render without it.
+         */
         try {
             backgroundImage = new ImageIcon(IMAGE_PATH).getImage();
         } catch (Exception e) {
             System.err.println("Background image could not be loaded.");
-        } // End try-catch
-
-    } // End HomePanel constructor
+        }
+    }
 
     /**
-     * Creates and returns the welcome message panel with styled text.
+     * Creates the centered welcome message panel with a translucent background for readability.
      *
-     * @return JPanel containing the welcome text
+     * @return a panel containing the welcome message content
      */
     private JPanel createWelcomePanel() {
-        // Multiline welcome text using JTextPane
+        /*
+         * Create the welcome message.
+         */
         JTextPane welcomeText = new JTextPane();
         welcomeText.setText("Welcome to the Art Inventory & Transaction Manager.\nPlease select a menu option.");
         welcomeText.setFont(new Font("Trattatello", Font.PLAIN, 40));
@@ -72,38 +87,47 @@ public class HomePanel extends JPanel {
         welcomeText.setOpaque(false);
         welcomeText.setBorder(BorderFactory.createEmptyBorder(20, 25, 20, 25));
 
-        // Center text alignment
+        /*
+         * Center-align the text within the text pane.
+         */
         StyledDocument doc = welcomeText.getStyledDocument();
         SimpleAttributeSet center = new SimpleAttributeSet();
         StyleConstants.setAlignment(center, StyleConstants.ALIGN_CENTER);
         doc.setParagraphAttributes(0, doc.getLength(), center, false);
 
-        // Panel with translucent background behind text
+        /*
+         * Add a translucent backing panel behind the text to improve contrast.
+         */
         JPanel backgroundPanel = new JPanel();
         backgroundPanel.setLayout(new BoxLayout(backgroundPanel, BoxLayout.Y_AXIS));
-        backgroundPanel.setBackground(new Color(255, 255, 255, 200)); // Semi-transparent white
+        backgroundPanel.setBackground(new Color(255, 255, 255, 200));
         backgroundPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         backgroundPanel.add(welcomeText);
 
-        // Outer wrapper panel to center the content
+        /*
+         * Center the content within the overall panel.
+         */
         JPanel outerPanel = new JPanel(new GridBagLayout());
         outerPanel.setOpaque(false);
         outerPanel.add(backgroundPanel);
 
         return outerPanel;
-    } // End createWelcomePanel method
+    }
 
     /**
-     * Draws the background image stretched to the panel size.
+     * Paints the background image stretched to fill the panel.
      *
-     * @param g Graphics context used for painting
+     * @param g graphics context used for rendering
      */
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+
+        /*
+         * Draw the background image if it was successfully loaded.
+         */
         if (backgroundImage != null) {
             g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
-        } // End if
-    } // End paintComponent method
-
-} // End HomePanel class
+        }
+    }
+}

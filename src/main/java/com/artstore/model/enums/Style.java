@@ -1,10 +1,14 @@
-// This file is part of the ArtInventoryTransaction application, specifically the enums package.
+/*
+ * This file belongs to the ArtInventoryTransaction application.
+ * It defines artistic styles used for artwork classification.
+ */
 package com.artstore.model.enums;
 
 /**
- * Enum representing styles used in painting and drawing (e.g., abstract, surrealism, impressionism, realism, etc.).
+ * Represents artistic styles applied to artwork.
  */
 public enum Style {
+
     ABSTRACT("ABSTRACT"),
     SURREALISM("SURREALISM"),
     IMPRESSIONISM("IMPRESSIONISM"),
@@ -49,25 +53,23 @@ public enum Style {
     CROSSHATCHING("CROSSHATCHING"),
     SCIENTIFIC_ILLUSTRATION("SCIENTIFIC ILLUSTRATION");
 
-    // Holds the name of the style, immutable for each enum constant.
     private final String styleName;
 
     /**
-     * Constructs a style enum constant with the provided name.
+     * Creates a style with a display-friendly name.
      *
-     * @param styleName Name of the style
+     * @param styleName readable name of the style
      */
     Style(String styleName) {
         this.styleName = styleName;
-    } // End constructor
+    }
 
     /**
-     * Getter method to retrieve the style name.
+     * Returns the display name of the style.
      *
-     * @return Style name as a string
+     * @return style name
      */
     public String getStyleName() {
         return styleName;
-    } // End getStyleName method
-
-} // End Style enum
+    }
+}

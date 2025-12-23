@@ -1,194 +1,306 @@
-// This file is part of the ArtInventoryTransaction application, specifically the core package.
+/*
+ * This file belongs to the ArtInventoryTransaction application.
+ * It manages in-memory transaction records and persists them to disk using CSV files,
+ * while coordinating art item status changes with the inventory manager.
+ */
 package com.artstore.core;
 
-// Import core classes and collections
+import com.artstore.exceptions.InvalidTransactionOperationException;
+import com.artstore.model.*;
+import com.artstore.model.enums.ItemStatus;
+import com.artstore.model.enums.TransactionStatus;
+import com.artstore.utilities.CsvUtil;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.List;
 import java.time.LocalDate;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import java.io.*;
-
-// Import domain and exception classes
-import com.artstore.exceptions.InvalidTransactionOperationException;
-import com.artstore.model.Art;
-import com.artstore.model.Transaction;
-import com.artstore.model.enums.ItemStatus;
-import com.artstore.model.enums.TransactionStatus;
 
 /**
- * Manages all transaction records in memory.
- * Supports adding, removing, retrieving, and searching transactions.
+ * Manages transaction records in memory and persists them to disk.
+ * <p>
+ * Persistence uses two CSV files:
+ * <ul>
+ *   <li><b>transactions.csv</b> – transaction headers (customer + metadata)</li>
+ *   <li><b>transaction_items.csv</b> – snapshot of art items per transaction</li>
+ * </ul>
  */
 public class TransactionManager {
 
-    // Logger instance for error reporting and logging
-    private static final Logger logger = Logger.getLogger(TransactionManager.class.getName());
+    private static final Logger logger =
+            Logger.getLogger(TransactionManager.class.getName());
 
-    // Stores all transactions, keyed by their unique transaction ID
-    private final Map<String, Transaction> transactions;
+    /**
+     * In-memory store of transactions keyed by transaction ID.
+     */
+    private final Map<String, Transaction> transactions = new HashMap<>();
 
-    // Reference to the ArtInventoryManager (injected)
+    /**
+     * Inventory manager used for item status synchronization.
+     */
     private final ArtInventoryManager inventoryManager;
 
-    // File path for storing transaction records
-    private final Path transactionFilePath;
-
     /**
-     * Constructs the TransactionManager.
-     *
-     * @param inventoryManager the inventory manager
-     * @param transactionFilePath the path where transactions will be saved/loaded
+     * CSV file containing transaction headers.
      */
-    public TransactionManager(ArtInventoryManager inventoryManager, Path transactionFilePath) {
-        this.transactions = new HashMap<>();
-        this.inventoryManager = inventoryManager;
-        this.transactionFilePath = transactionFilePath;
-    } // End constructor
+    private final Path transactionsCsvPath;
 
     /**
-     * Adds a new transaction and reserves its associated art.
+     * CSV file containing transaction line items.
+     */
+    private final Path transactionItemsCsvPath;
+
+    /**
+     * Constructs a TransactionManager.
      *
-     * @param transaction the transaction to add
+     * @param inventoryManager inventory manager for status coordination
+     * @param baseDirectory    directory where CSV files are stored
+     */
+    public TransactionManager(ArtInventoryManager inventoryManager, Path baseDirectory) {
+        this.inventoryManager = inventoryManager;
+        this.transactionsCsvPath = baseDirectory.resolve("transactions.csv");
+        this.transactionItemsCsvPath = baseDirectory.resolve("transaction_items.csv");
+    }
+
+    /**
+     * Adds a new transaction, reserves associated art items, and persists data.
+     *
+     * @param transaction transaction to add
      */
     public void addTransaction(Transaction transaction) {
         transactions.put(transaction.getTransactionId(), transaction);
         markArtAsReserved(transaction);
         saveTransactionsToFile();
-    } // End addTransaction method
+    }
 
     /**
-     * Removes a pending transaction and makes its art available again.
-     * Completed transactions are not affected.
+     * Removes a transaction by ID.
+     * <p>
+     * If the transaction was pending, reserved items are released.
+     *
+     * @param transactionId transaction identifier
      */
     public void removeTransaction(String transactionId) {
-        Transaction transaction = transactions.remove(transactionId);
-        if (transaction != null && transaction.isPending()) {
-            markArtAsUnReserved(transaction);
-        } // End if statement
+        Transaction txn = transactions.remove(transactionId);
+
+        if (txn != null && txn.isPending()) {
+            markArtAsUnReserved(txn);
+        }
+
         saveTransactionsToFile();
-    } // End removeTransaction method
+    }
 
     /**
-     * Marks a transaction as completed and removes its art from the inventory.
+     * Completes a transaction and removes sold items from inventory.
      *
-     * @param transaction the completed transaction
+     * @param transaction transaction to complete
      */
     public void completeTransaction(Transaction transaction) {
         for (Art art : transaction.getArtItems()) {
             art.setItemStatus(ItemStatus.SOLD);
             inventoryManager.removeArt(art.getArtIdentification());
-        } // End for loop
+        }
+
         transaction.completeTransaction();
         saveTransactionsToFile();
-    } // End completeTransaction method
+    }
 
     /**
-     * Synchronizes the inventory to match transaction states.
-     * Reserved if pending, Sold if completed.
+     * Synchronizes inventory item statuses based on transaction state.
+     * <p>
+     * Guards against redundant status writes.
+     * </p>
      */
     public void syncArtStatuses() {
         for (Transaction txn : transactions.values()) {
             for (Art artInTxn : txn.getArtItems()) {
-                Art matchingArt = inventoryManager.getArtById(artInTxn.getArtIdentification());
-                if (matchingArt != null) {
-                    if (txn.isPending()) {
-                        matchingArt.setItemStatus(ItemStatus.RESERVED);
-                    } else if (txn.isCompleted()) {
-                        matchingArt.setItemStatus(ItemStatus.SOLD);
-                    } // End if else statements
-                } // End if statement
-            } // End for loop
-        } // End for loop
-    } // End syncArtStatuses method
+                Art inventoryArt =
+                        inventoryManager.getArtById(artInTxn.getArtIdentification());
+
+                if (inventoryArt == null) continue;
+
+                if (txn.isPending() && !inventoryArt.isReserved()) {
+                    inventoryArt.setItemStatus(ItemStatus.RESERVED);
+                } else if (txn.isCompleted() && !inventoryArt.isSold()) {
+                    inventoryArt.setItemStatus(ItemStatus.SOLD);
+                }
+            }
+        }
+    }
 
     /**
-     * Marks all art in the transaction as RESERVED.
+     * Retrieves transactions matching optional filters.
      */
-    private void markArtAsReserved(Transaction transaction) {
-        for (Art art : transaction.getArtItems()) {
-            art.setItemStatus(ItemStatus.RESERVED);
-        } // End for loop
-    } // End markArtAsReserved method
-
-    /**
-     * Marks all art in the transaction as AVAILABLE if it was reserved.
-     */
-    private void markArtAsUnReserved(Transaction transaction) {
-        for (Art art : transaction.getArtItems()) {
-            art.setItemStatus(ItemStatus.AVAILABLE);
-        }  // End for loop
-    }  // End markArtAsUnReserved method
-
-    /**
-     * Retrieves transactions filtered by optional criteria.
-     *
-     * @param transactionId filter by transaction ID, or null to ignore
-     * @param customerEmail filter by customer email (case-insensitive), or null to ignore
-     * @param date filter by transaction date, or null to ignore
-     * @param artIdentification filter by contained art ID, or null to ignore
-     * @return list of transactions matching the filters
-     */
-    public List<Transaction> getTransactions(String transactionId, String customerEmail,
-                                             LocalDate date, String artIdentification, TransactionStatus status) {
+    public List<Transaction> getTransactions(
+            String transactionId,
+            String customerEmail,
+            LocalDate date,
+            String artIdentification,
+            TransactionStatus status
+    ) {
         return transactions.values().stream()
-                .filter(t -> transactionId == null || t.getTransactionId().equalsIgnoreCase(transactionId))
-                .filter(t -> customerEmail == null || t.getCustomer().getEmail().equalsIgnoreCase(customerEmail))
-                .filter(t -> date == null || date.equals(t.getTransactionDate()))
-                .filter(t -> artIdentification == null || t.getArtItems().stream()
-                        .anyMatch(art -> art.getArtIdentification().equals(artIdentification)))
+                .filter(t -> transactionId == null
+                        || t.getTransactionId().equalsIgnoreCase(transactionId))
+                .filter(t -> customerEmail == null
+                        || t.getCustomer().getEmail().equalsIgnoreCase(customerEmail))
+                .filter(t -> date == null
+                        || date.equals(t.getTransactionDate()))
+                .filter(t -> artIdentification == null
+                        || t.getArtItems().stream()
+                        .anyMatch(a -> a.getArtIdentification().equals(artIdentification)))
+                .filter(t -> status == null || t.getStatus() == status)
                 .collect(Collectors.toList());
-    } // End getTransactions method
+    }
 
     /**
-     * Saves all transactions to a file.
+     * Writes all transactions and their items to CSV files.
      */
     public void saveTransactionsToFile() {
         try {
-            if (!Files.exists(transactionFilePath.getParent())) {
-                Files.createDirectories(transactionFilePath.getParent());
-            } // End if statement
-            try (BufferedWriter writer = Files.newBufferedWriter(transactionFilePath)) {
+            Files.createDirectories(transactionsCsvPath.getParent());
+
+            /* ---------- transactions.csv ---------- */
+            try (BufferedWriter w = Files.newBufferedWriter(transactionsCsvPath)) {
+                w.write("transactionId,date,status,firstName,lastName,address,city,state,zip,phone,email,totalPrice");
+                w.newLine();
+
                 for (Transaction t : transactions.values()) {
-                    writer.write(t.toString());
-                    writer.newLine();
-                } // End for loop
-            } // End try statement
-            System.out.println("Transactions saved successfully to: " + transactionFilePath.toAbsolutePath());
+                    Customer c = t.getCustomer();
+                    Address a = c.getAddress();
+
+                    w.write(CsvUtil.join(List.of(
+                            t.getTransactionId(),
+                            t.getTransactionDate() == null ? "" : t.getTransactionDate().toString(),
+                            t.getStatus().name(),
+                            c.getFirstName(),
+                            c.getLastName(),
+                            a.mailingAddress(),
+                            a.city(),
+                            a.state(),
+                            a.zipCode(),
+                            c.getPhoneNumber(),
+                            c.getEmail(),
+                            String.valueOf(t.getTransactionPrice())
+                    )));
+                    w.newLine();
+                }
+            }
+
+            /* ---------- transaction_items.csv ---------- */
+            try (BufferedWriter w = Files.newBufferedWriter(transactionItemsCsvPath)) {
+                w.write("transactionId,artSnapshot");
+                w.newLine();
+
+                for (Transaction t : transactions.values()) {
+                    for (Art art : t.getArtItems()) {
+                        w.write(CsvUtil.join(List.of(
+                                t.getTransactionId(),
+                                art.toString()
+                        )));
+                        w.newLine();
+                    }
+                }
+            }
+
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Failed to save transactions", e);
             throw new InvalidTransactionOperationException("Save Transactions", e.getMessage());
-        } // End try-catch statements
-    } // End saveTransactionsToFile method
+        }
+    }
 
     /**
-     * Loads transactions from file into memory.
+     * Loads transactions from CSV files into memory.
      */
     public void loadTransactionsFromFile() {
-        if (!Files.exists(transactionFilePath)) {
-            System.out.println("No transaction file found. Starting fresh.");
-            transactions.clear();
-            return;
-        } // End if statement
+        transactions.clear();
 
-        try (BufferedReader reader = Files.newBufferedReader(transactionFilePath)) {
+        if (!Files.exists(transactionsCsvPath)) {
+            System.out.println("No transactions.csv found. Starting fresh.");
+            return;
+        }
+
+        /* ---------- Load transaction items ---------- */
+        Map<String, List<Art>> itemsByTxnId = new HashMap<>();
+
+        if (Files.exists(transactionItemsCsvPath)) {
+            try (BufferedReader r = Files.newBufferedReader(transactionItemsCsvPath)) {
+                r.readLine(); // skip header
+                String line;
+
+                while ((line = r.readLine()) != null) {
+                    if (line.isBlank()) continue;
+
+                    List<String> cols = CsvUtil.parseLine(line);
+                    if (cols.size() < 2) continue;
+
+                    String txnId = cols.get(0);
+                    Art art = Art.fromString(cols.get(1));
+
+                    itemsByTxnId
+                            .computeIfAbsent(txnId, k -> new ArrayList<>())
+                            .add(art);
+                }
+            } catch (IOException e) {
+                logger.log(Level.SEVERE, "Failed to load transaction items", e);
+            }
+        }
+
+        /* ---------- Load transaction headers ---------- */
+        try (BufferedReader r = Files.newBufferedReader(transactionsCsvPath)) {
+            r.readLine(); // skip header
             String line;
-            while ((line = reader.readLine()) != null) {
-                if (!line.isBlank()) {
-                    Transaction txn = Transaction.fromString(line);
-                    transactions.put(txn.getTransactionId(), txn);
-                } // End if statement
-            } // End while loop
-            System.out.println("Transactions loaded from: " + transactionFilePath.toAbsolutePath());
+
+            while ((line = r.readLine()) != null) {
+                if (line.isBlank()) continue;
+
+                List<String> cols = CsvUtil.parseLine(line);
+                if (cols.size() < 12) continue;
+
+                String txnId = cols.get(0);
+                LocalDate date =
+                        cols.get(1).isBlank() ? null : LocalDate.parse(cols.get(1));
+                TransactionStatus status =
+                        TransactionStatus.valueOf(cols.get(2));
+
+                Address address = new Address(
+                        cols.get(5), cols.get(6), cols.get(7), cols.get(8)
+                );
+
+                Customer customer = new Customer(
+                        cols.get(3), cols.get(4), address, cols.get(9), cols.get(10)
+                );
+
+                List<Art> items =
+                        itemsByTxnId.getOrDefault(txnId, List.of());
+
+                if (items.isEmpty()) continue;
+
+                Transaction txn = new Transaction(txnId, customer, items);
+                txn.restoreFromPersistence(date, status,
+                        Double.parseDouble(cols.get(11)));
+
+                transactions.put(txnId, txn);
+            }
+
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Failed to load transactions", e);
             transactions.clear();
-        } // End try-catch statements
-    } // End loadTransactionsFromFile method
+        }
+    }
 
-} // End TransactionManager class
+    /* ------------------------------------------------------------------ */
 
+    private void markArtAsReserved(Transaction t) {
+        t.getArtItems().forEach(a -> a.setItemStatus(ItemStatus.RESERVED));
+    }
+
+    private void markArtAsUnReserved(Transaction t) {
+        t.getArtItems().forEach(a -> a.setItemStatus(ItemStatus.AVAILABLE));
+    }
+}

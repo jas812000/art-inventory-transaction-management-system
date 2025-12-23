@@ -1,40 +1,52 @@
-// This file is part of the ArtInventoryTransaction application, specifically the GUI panel package.
+/*
+ * This file belongs to the ArtInventoryTransaction application.
+ * It defines a Swing panel for removing artwork from the inventory.
+ */
 package com.artstore.gui.panel;
 
-// Import core managers and models for art inventory and customer management
 import com.artstore.core.ArtInventoryManager;
+import com.artstore.gui.InventoryEventBroadcaster;
 import com.artstore.model.Art;
 import com.artstore.model.enums.ItemStatus;
 import com.artstore.utilities.ArtFormatter;
 import com.artstore.utilities.InventoryChangeListener;
 
-// Import GUI components (Swing for GUI elements, AWT for layout management)
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Panel allowing the user to remove existing art from the inventory.
- * Displays a dropdown list of available art pieces for selection and removal.
+ * Provides a user interface for removing existing artwork from the inventory.
+ * <p>
+ * The panel supports searching, sorting, viewing details, and confirming removal
+ * of available art pieces.
+ * </p>
  */
 public class RemoveArtPanel extends JPanel implements InventoryChangeListener {
 
+    /**
+     * Dropdown listing available artwork.
+     */
     private final JComboBox<Art> artDropdown;
-    private final ArtInventoryManager artInventoryManager;
 
     /**
-     * Constructs the RemoveArtPanel with art selection and removal controls.
-     *
-     * @param artInventoryManager ArtInventoryManager instance to access and modify inventory
+     * Refreshes the dropdown contents using current search/sort selections.
      */
+    private final Runnable refreshDropdown;
 
-    public RemoveArtPanel(ArtInventoryManager artInventoryManager) {
+    /**
+     * Constructs the panel and initializes all UI components and event handlers.
+     *
+     * @param artInventoryManager manager used to access and modify inventory
+     * @param broadcaster         broadcaster used to notify listeners when inventory changes
+     */
+    public RemoveArtPanel(ArtInventoryManager artInventoryManager,
+                          InventoryEventBroadcaster broadcaster) {
+        this.artDropdown = new JComboBox<>();
 
-        this.artInventoryManager = artInventoryManager;
-        artDropdown = new JComboBox<>();
-        populateDropdown();
+        broadcaster.registerListener(this);
 
         setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
@@ -42,7 +54,9 @@ public class RemoveArtPanel extends JPanel implements InventoryChangeListener {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
 
-        // --- Header ---
+        /*
+         * Header
+         */
         JLabel header = new JLabel("Remove Art from Inventory", JLabel.CENTER);
         header.setFont(new Font("Papyrus", Font.BOLD, 20));
         gbc.gridx = 0;
@@ -51,47 +65,47 @@ public class RemoveArtPanel extends JPanel implements InventoryChangeListener {
         gbc.anchor = GridBagConstraints.CENTER;
         add(header, gbc);
 
-        // --- Select Panel ---
+        /*
+         * Art selection panel
+         */
         JPanel selectPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         selectPanel.setBorder(BorderFactory.createTitledBorder("Select Art to Remove"));
 
-        JLabel selectLabel = new JLabel("Select Art:");
-        JComboBox<Art> artDropdown = new JComboBox<>();
         artDropdown.setPreferredSize(new Dimension(300, 25));
-        selectPanel.add(selectLabel);
+        selectPanel.add(new JLabel("Select Art:"));
         selectPanel.add(artDropdown);
 
         gbc.gridy++;
         gbc.gridwidth = 2;
         add(selectPanel, gbc);
 
-        // --- Sort Panel ---
+        /*
+         * Sort controls
+         */
         JPanel sortPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         sortPanel.setBorder(BorderFactory.createTitledBorder("Sort Options"));
 
-        JLabel sortLabel = new JLabel("Sort By:");
         JComboBox<String> sortBox = new JComboBox<>(new String[]{"", "Type", "Title", "Author", "Year"});
         sortBox.setFont(new Font("Papyrus", Font.PLAIN, 14));
-        sortPanel.add(sortLabel);
+
+        sortPanel.add(new JLabel("Sort By:"));
         sortPanel.add(sortBox);
 
         gbc.gridy++;
         gbc.gridwidth = 1;
         add(sortPanel, gbc);
 
-        // --- Search Panel ---
+        /*
+         * Search controls
+         */
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         searchPanel.setBorder(BorderFactory.createTitledBorder("Search Options"));
 
-        JLabel searchLabel = new JLabel("Search By:");
-        JComboBox<String> searchBox = new JComboBox<>(new String[]{"", "Art ID",
-                "Title", "Author", "Type", "Year"});
-        searchBox.setFont(new Font("Papyrus", Font.PLAIN, 14));
+        JComboBox<String> searchBox = new JComboBox<>(new String[]{"", "Art ID", "Title", "Author", "Type", "Year"});
         JTextField searchField = new JTextField(15);
         JButton searchButton = new JButton("Search");
-        searchButton.setFont(new Font("Papyrus", Font.BOLD, 14));
 
-        searchPanel.add(searchLabel);
+        searchPanel.add(new JLabel("Search By:"));
         searchPanel.add(searchBox);
         searchPanel.add(searchField);
         searchPanel.add(searchButton);
@@ -100,28 +114,31 @@ public class RemoveArtPanel extends JPanel implements InventoryChangeListener {
         gbc.gridy = 2;
         add(searchPanel, gbc);
 
-        // --- Art Details ---
+        /*
+         * Art details display
+         */
         JTextArea artDetailsArea = new JTextArea(10, 40);
         artDetailsArea.setEditable(false);
         artDetailsArea.setFont(new Font("Arial", Font.PLAIN, 16));
         artDetailsArea.setLineWrap(true);
         artDetailsArea.setWrapStyleWord(true);
         artDetailsArea.setBorder(BorderFactory.createTitledBorder("Art Details"));
-        JScrollPane detailsScroll = new JScrollPane(artDetailsArea);
 
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weighty = 1;
-        add(detailsScroll, gbc);
+        add(new JScrollPane(artDetailsArea), gbc);
 
-        // --- Remove Button ---
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        /*
+         * Remove button
+         */
         JButton removeButton = new JButton("Remove Selected Art");
         removeButton.setFont(new Font("Papyrus", Font.BOLD, 16));
         removeButton.setBackground(new Color(240, 220, 220));
-        removeButton.setPreferredSize(new Dimension(180, 40));
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.add(removeButton);
 
         gbc.gridy++;
@@ -129,15 +146,17 @@ public class RemoveArtPanel extends JPanel implements InventoryChangeListener {
         gbc.weighty = 0;
         add(buttonPanel, gbc);
 
-        // --- Return to Menu Button ---
+        /*
+         * Return to menu
+         */
         JButton returnButton = new JButton("Return to Menu");
         returnButton.setFont(new Font("Papyrus", Font.BOLD, 16));
         returnButton.addActionListener(e -> {
-            Container parent = this.getParent();
+            Container parent = getParent();
             if (parent != null && parent.getLayout() instanceof CardLayout layout) {
                 layout.first(parent);
-            } // End if statement
-        }); // returnButton ActionListener
+            }
+        });
 
         JPanel returnPanel = new JPanel();
         returnPanel.add(returnButton);
@@ -145,14 +164,15 @@ public class RemoveArtPanel extends JPanel implements InventoryChangeListener {
         gbc.gridy++;
         add(returnPanel, gbc);
 
-        // --- Populate Dropdown with Sort + Search ---
-        Runnable populateDropdown = () -> {
+        /*
+         * Populate dropdown with filtering and sorting.
+         */
+        this.refreshDropdown = () -> {
             Art previousSelection = (Art) artDropdown.getSelectedItem();
             artDropdown.removeAllItems();
             artDropdown.addItem(null);
 
-            List<Art> filtered = artInventoryManager.getAllArt()
-                    .stream()
+            List<Art> filtered = artInventoryManager.getAllArt().stream()
                     .filter(art -> art.getItemStatus() == ItemStatus.AVAILABLE)
                     .collect(Collectors.toList());
 
@@ -167,80 +187,76 @@ public class RemoveArtPanel extends JPanel implements InventoryChangeListener {
                     case "Type" -> !art.getType().equalsIgnoreCase(searchValue);
                     case "Year" -> !String.valueOf(art.getYearCreated()).equals(searchValue);
                     default -> false;
-                }); // End switch statements
-            } // End if statement
+                });
+            }
 
-            String selectedSortOption = (String) sortBox.getSelectedItem();
-
-            // Check if selectedSortOption is not null before proceeding with the switch
-            if (selectedSortOption != null) {
-                switch (selectedSortOption) {
+            String sortOption = (String) sortBox.getSelectedItem();
+            if (sortOption != null) {
+                switch (sortOption) {
                     case "Title" -> filtered.sort(Comparator.comparing(Art::getTitle));
                     case "Author" -> filtered.sort(Comparator.comparing(Art::getAuthor));
                     case "Year" -> filtered.sort(Comparator.comparingInt(Art::getYearCreated));
                     case "Type" -> filtered.sort(Comparator.comparing(Art::getType));
-                    case "" -> {
-                        // Leave unsorted
-                    } // End "" case
-                    default -> {
-                        filtered.sort(Comparator.comparing(Art::getTitle));
-                    } // End default case
-                } // End switch statement
-            } else {
-                // Optionally handle the case where the selectedSortOption is null
-                // For example, default sorting could be applied here.
-                filtered.sort(Comparator.comparing(Art::getTitle)); // Default sort (for example, by Title)
-            } // End if-else statements
+                    default -> { }
+                }
+            }
 
-            for (Art art : filtered) artDropdown.addItem(art);
+            for (Art art : filtered) {
+                artDropdown.addItem(art);
+            }
 
-            if (previousSelection != null) artDropdown.setSelectedItem(previousSelection);
-        }; // End populateDropdown runnable
+            if (previousSelection != null) {
+                artDropdown.setSelectedItem(previousSelection);
+            }
+        };
 
-        sortBox.addActionListener(e -> populateDropdown.run());
-        searchButton.addActionListener(e -> populateDropdown.run());
+        sortBox.addActionListener(e -> refreshDropdown.run());
+        searchButton.addActionListener(e -> refreshDropdown.run());
 
         artDropdown.addActionListener(e -> {
             Art selectedArt = (Art) artDropdown.getSelectedItem();
-            if (selectedArt != null) {
-                artDetailsArea.setText(ArtFormatter.format(selectedArt));
-            } else {
-                artDetailsArea.setText("");
-            }  // End if-else statements
-        }); // End artDropdown ActionListener
+            artDetailsArea.setText(selectedArt == null ? "" : ArtFormatter.format(selectedArt));
+        });
 
         removeButton.addActionListener(e -> {
             Art selectedArt = (Art) artDropdown.getSelectedItem();
+
             if (selectedArt == null) {
                 artDetailsArea.setText("No art selected.");
                 return;
-            }  // End if statement
-            int confirm = JOptionPane.showConfirmDialog(this,
+            }
+
+            if (selectedArt.isSold()) {
+                artDetailsArea.setText("Sold artwork cannot be removed.");
+                return;
+            }
+
+            int confirm = JOptionPane.showConfirmDialog(
+                    this,
                     "Are you sure you want to remove this art?",
-                    "Confirm Removal", JOptionPane.YES_NO_OPTION);
-            if (confirm == JOptionPane.YES_OPTION) {
-                artInventoryManager.removeArt(selectedArt.getArtIdentification());
-                artDropdown.removeItem(selectedArt);
-                artDetailsArea.setText("Art removed successfully.");
-            } // End if statement
-        }); // removeButton ActionListener
+                    "Confirm Removal",
+                    JOptionPane.YES_NO_OPTION
+            );
 
-        populateDropdown.run();
-    } // End RemoveArtPanel constructor
+            if (confirm != JOptionPane.YES_OPTION) {
+                return;
+            }
 
-    private void populateDropdown() {
-        artDropdown.removeAllItems();
-        artDropdown.addItem(null);
-        for (Art art : artInventoryManager.getAllArt()) {
-            if (art.getItemStatus() == ItemStatus.AVAILABLE) {
-                artDropdown.addItem(art);
-            }  // End if statement
-        } // End for loop
-    } // End populateDropdown method
+            artInventoryManager.removeArt(selectedArt.getArtIdentification());
+            broadcaster.notifyInventoryChanged();
+            artDetailsArea.setText("Art removed successfully.");
+        });
 
+        refreshDropdown.run();
+    }
+
+    /**
+     * Refreshes the art dropdown when inventory change events occur.
+     */
     @Override
     public void onInventoryChanged() {
-        populateDropdown();
-    }  // End onInventoryChanged method
+        refreshDropdown.run();
+    }
+}
 
-} // End RemoveArtPanel class
+

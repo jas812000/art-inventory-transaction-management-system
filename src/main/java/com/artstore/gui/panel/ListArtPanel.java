@@ -1,37 +1,47 @@
-// This file is part of the ArtInventoryTransaction application, specifically the GUI panel package.
+/*
+ * This file belongs to the ArtInventoryTransaction application.
+ * It defines a Swing panel used to display the current art inventory with sorting and filtering.
+ */
 package com.artstore.gui.panel;
 
-// Import core managers and models for art inventory and customer management
 import com.artstore.core.ArtInventoryManager;
 import com.artstore.model.Art;
-import com.artstore.model.enums.ItemStatus;
 import com.artstore.utilities.ArtFormatter;
 
-// Import GUI components (Swing for GUI elements, AWT for layout management)
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.util.List;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
- * Panel displaying all current art pieces in the inventory.
- * Allows sorting the list by various criteria.
+ * Displays the current art inventory in a scrollable text area.
+ * <p>
+ * The panel allows the user to filter by availability state (available or reserved)
+ * and sort the displayed artwork list by common attributes.
+ * </p>
  */
 public class ListArtPanel extends JPanel {
 
+    /**
+     * Constructs a {@code ListArtPanel} that lists inventory items with sorting and filtering controls.
+     *
+     * @param artInventoryManager manager used to read current inventory items
+     */
     public ListArtPanel(ArtInventoryManager artInventoryManager) {
-
         setLayout(new GridBagLayout());
+
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
 
-        // --- Header ---
+        /*
+         * Header
+         */
         JLabel header = new JLabel("Current Art Inventory", JLabel.CENTER);
         header.setFont(new Font("Papyrus", Font.BOLD, 20));
         gbc.gridx = 0;
@@ -40,7 +50,9 @@ public class ListArtPanel extends JPanel {
         gbc.anchor = GridBagConstraints.CENTER;
         add(header, gbc);
 
-        // --- Sort Panel ---
+        /*
+         * Sort and filter controls
+         */
         JPanel sortPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         sortPanel.setBorder(BorderFactory.createTitledBorder("Sort Options"));
 
@@ -61,7 +73,9 @@ public class ListArtPanel extends JPanel {
         gbc.anchor = GridBagConstraints.WEST;
         add(sortPanel, gbc);
 
-        // --- Display Area ---
+        /*
+         * Inventory display area
+         */
         JTextArea displayArea = new JTextArea(16, 50);
         displayArea.setEditable(false);
         displayArea.setFont(new Font("Arial", Font.PLAIN, 16));
@@ -76,11 +90,13 @@ public class ListArtPanel extends JPanel {
         gbc.weighty = 1;
         add(scrollPane, gbc);
 
-        // --- Return to Menu Button ---
+        /*
+         * Return to menu navigation
+         */
         JButton returnButton = new JButton("Return to Menu");
         returnButton.setFont(new Font("Papyrus", Font.BOLD, 16));
         returnButton.addActionListener(e -> {
-            Container parent = this.getParent();
+            Container parent = getParent();
             if (parent != null && parent.getLayout() instanceof CardLayout layout) {
                 layout.first(parent);
             }
@@ -94,28 +110,41 @@ public class ListArtPanel extends JPanel {
         gbc.weighty = 0;
         add(bottomPanel, gbc);
 
-        // --- Refresh and Sort Logic ---
+        /*
+         * Refresh logic: apply filter, apply sort, then render formatted output.
+         */
         Runnable refreshInventoryDisplay = () -> {
             StringBuilder sb = new StringBuilder();
             boolean filterForReserved = "Reserved Only".equals(statusFilterBox.getSelectedItem());
 
-            List<Art> filteredArt = artInventoryManager.getAllArt()
-                    .stream()
+            List<Art> filteredArt = artInventoryManager.getAllArt().stream()
+                    .filter(art -> !art.isSold())
                     .filter(art -> filterForReserved ? art.isReserved() : art.isAvailable())
                     .collect(Collectors.toList());
 
             String selectedSort = Optional.ofNullable((String) sortBox.getSelectedItem()).orElse("");
+
             switch (selectedSort) {
-                case "Art ID" -> filteredArt.sort(Comparator.comparing(art ->
-                        Optional.ofNullable(art.getArtIdentification()).orElse(""), String.CASE_INSENSITIVE_ORDER));
-                case "Title" -> filteredArt.sort(Comparator.comparing(art ->
-                        Optional.ofNullable(art.getTitle()).orElse(""), String.CASE_INSENSITIVE_ORDER));
-                case "Author" -> filteredArt.sort(Comparator.comparing(art ->
-                        Optional.ofNullable(art.getAuthor()).orElse(""), String.CASE_INSENSITIVE_ORDER));
+                case "Art ID" -> filteredArt.sort(Comparator.comparing(
+                        art -> Optional.ofNullable(art.getArtIdentification()).orElse(""),
+                        String.CASE_INSENSITIVE_ORDER
+                ));
+                case "Title" -> filteredArt.sort(Comparator.comparing(
+                        art -> Optional.ofNullable(art.getTitle()).orElse(""),
+                        String.CASE_INSENSITIVE_ORDER
+                ));
+                case "Author" -> filteredArt.sort(Comparator.comparing(
+                        art -> Optional.ofNullable(art.getAuthor()).orElse(""),
+                        String.CASE_INSENSITIVE_ORDER
+                ));
                 case "Year" -> filteredArt.sort(Comparator.comparingInt(Art::getYearCreated));
-                case "Type" -> filteredArt.sort(Comparator.comparing(art ->
-                        Optional.ofNullable(art.getType()).orElse(""), String.CASE_INSENSITIVE_ORDER));
-            } // End switch statements
+                case "Type" -> filteredArt.sort(Comparator.comparing(
+                        art -> Optional.ofNullable(art.getType()).orElse(""),
+                        String.CASE_INSENSITIVE_ORDER
+                ));
+                default -> {
+                }
+            }
 
             if (filteredArt.isEmpty()) {
                 sb.append("No matching art found.");
@@ -123,12 +152,15 @@ public class ListArtPanel extends JPanel {
                 for (Art art : filteredArt) {
                     sb.append(ArtFormatter.format(art));
                     sb.append("\n------------------------------------------------------------\n\n");
-                } // End for loop
-            } // End if-else statements
+                }
+            }
 
             displayArea.setText(sb.toString());
-        }; // End refreshInventoryDisplay
+        };
 
+        /*
+         * Refresh when the user changes sorting/filtering or when the panel becomes visible.
+         */
         sortBox.addActionListener(e -> refreshInventoryDisplay.run());
         statusFilterBox.addActionListener(e -> refreshInventoryDisplay.run());
 
@@ -138,7 +170,5 @@ public class ListArtPanel extends JPanel {
                 refreshInventoryDisplay.run();
             }
         });
-
-    } // End ListArtPanel constructor
-
-} // End ListArtPanel class
+    }
+}

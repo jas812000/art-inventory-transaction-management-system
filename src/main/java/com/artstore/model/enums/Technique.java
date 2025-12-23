@@ -1,10 +1,14 @@
-// This file is part of the ArtInventoryTransaction application, specifically the enums package.
+/*
+ * This file belongs to the ArtInventoryTransaction application.
+ * It defines artistic techniques used in artwork creation.
+ */
 package com.artstore.model.enums;
 
 /**
- * Enum representing techniques used in painting and drawing (e.g., oil, acrylic, watercolor, pencil, charcoal, etc.).
+ * Represents artistic techniques used in painting, drawing, and mixed media.
  */
 public enum Technique {
+
     OIL("OIL"),
     ACRYLIC("ACRYLIC"),
     WATERCOLOR("WATERCOLOR"),
@@ -48,25 +52,23 @@ public enum Technique {
     HATCHING("HATCHING"),
     BLENDING("BLENDING");
 
-    // Holds the name of the technique, immutable for each enum constant.
     private final String techniqueName;
 
     /**
-     * Constructs a technique enum constant with the provided name.
+     * Creates a technique with a display-friendly name.
      *
-     * @param techniqueName Name of the technique
+     * @param techniqueName readable name of the technique
      */
     Technique(String techniqueName) {
         this.techniqueName = techniqueName;
-    } // End constructor
+    }
 
     /**
-     * Getter method to retrieve the technique name.
+     * Returns the display name of the technique.
      *
-     * @return Technique name as a string
+     * @return technique name
      */
     public String getTechniqueName() {
         return techniqueName;
-    } // End getTechniqueName method
-
-} // End Technique enum
+    }
+}

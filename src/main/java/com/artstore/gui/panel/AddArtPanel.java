@@ -1,64 +1,82 @@
-// This file is part of the ArtInventoryTransaction application, specifically the GUI panel package.
+/*
+ * This file belongs to the ArtInventoryTransaction application.
+ * It defines a Swing panel used to add new artwork to the inventory.
+ */
 package com.artstore.gui.panel;
 
-// Import core managers and models for art inventory and customer management
 import com.artstore.core.ArtInventoryManager;
 import com.artstore.exceptions.InvalidArtOperationException;
 import com.artstore.model.*;
 import com.artstore.model.enums.*;
-import com.artstore.utilities.InventoryChangeListener;
+import com.artstore.gui.InventoryEventBroadcaster;
 
-// Import GUI components (Swing for GUI elements, AWT for layout management)
 import javax.swing.*;
 import java.awt.*;
 import java.time.Year;
 
 /**
- * Panel allowing the user to add new artwork to the inventory.
- * Supports different fields depending on the selected art type.
+ * Provides a user interface for adding new {@link Art} objects to the inventory.
+ * <p>
+ * The panel dynamically adjusts visible input fields based on the selected art type
+ * and performs validation before creating and persisting new artwork entries.
+ * </p>
  */
-public class AddArtPanel extends JPanel implements InventoryChangeListener {
-
-    // Declare input fields as instance variables
-    private final JTextField idField, titleField, authorField, descriptionField, yearField, priceField;
-    private final JTextField heightField, widthField, weightField;
-    private JComboBox<Material> materialBox;
-    private JComboBox<Style> styleBox;
-    private JComboBox<Technique> techniqueBox;
-    private JComboBox<Category> categoryBox;
-    private JComboBox<EditionType> editionTypeBox;
-
-    // Manages the inventory where art objects are stored and persisted
-    private final ArtInventoryManager artInventoryManager;
-
-    // Listener to notify other panels (e.g., RemoveArtPanel) when inventory changes occur
-    private final InventoryChangeListener listener;
+public class AddArtPanel extends JPanel {
 
     /**
-     * Utility method to create a combo box pre-populated with all enum values of the given type.
-     * Adds a null option as the first entry to allow for optional (unset) selection.
+     * Common input fields used across multiple art types.
+     */
+    private final JTextField idField;
+    private final JTextField titleField;
+    private final JTextField authorField;
+    private final JTextField descriptionField;
+    private final JTextField yearField;
+    private final JTextField priceField;
+
+    /**
+     * Dimension- and material-specific input fields.
+     */
+    private final JTextField heightField;
+    private final JTextField widthField;
+    private final JTextField weightField;
+
+    /**
+     * Drop-down selectors for enum-based attributes.
+     */
+    private final JComboBox<Material> materialBox;
+    private final JComboBox<Style> styleBox;
+    private final JComboBox<Technique> techniqueBox;
+    private final JComboBox<Category> categoryBox;
+    private final JComboBox<EditionType> editionTypeBox;
+
+    /**
+     * Creates a combo box populated with all enum constants of the given type.
+     * <p>
+     * A {@code null} option is added as the first entry to allow optional selection.
+     * </p>
      *
-     * @param enumClass The enum class whose constants will populate the combo box
-     * @param <E> The type of the enum
-     * @return A JComboBox containing all enum constants and an initial null entry
+     * @param enumClass enum class used to populate the combo box
+     * @param <E>       enum type
+     * @return a populated {@link JComboBox}
      */
     private <E extends Enum<E>> JComboBox<E> createEnumComboBox(Class<E> enumClass) {
         JComboBox<E> box = new JComboBox<>();
         box.addItem(null);
         for (E e : enumClass.getEnumConstants()) {
             box.addItem(e);
-        } // End for loop
+        }
         return box;
-    } // End createEnumComboBox method
+    }
 
     /**
-     * Constructs the AddArtPanel with all input fields and controls.
+     * Constructs the panel and initializes all input fields, layout, and event handlers.
      *
-     * @param artInventoryManager ArtInventoryManager instance to manage inventory operations
+     * @param artInventoryManager inventory manager used to store new artwork
+     * @param broadcaster         event broadcaster used to notify listeners when inventory changes
      */
-    public AddArtPanel(ArtInventoryManager artInventoryManager, InventoryChangeListener listener) {
-        this.artInventoryManager = artInventoryManager;
-        this.listener = listener;
+    public AddArtPanel(ArtInventoryManager artInventoryManager,
+                       InventoryEventBroadcaster broadcaster) {
+
         this.materialBox = createEnumComboBox(Material.class);
         this.styleBox = createEnumComboBox(Style.class);
         this.techniqueBox = createEnumComboBox(Technique.class);
@@ -71,7 +89,9 @@ public class AddArtPanel extends JPanel implements InventoryChangeListener {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
 
-        // --- Header ---
+        /*
+         * Header
+         */
         JLabel header = new JLabel("Add New Art to Inventory", JLabel.CENTER);
         header.setFont(new Font("Papyrus", Font.BOLD, 20));
         gbc.gridx = 0;
@@ -80,20 +100,24 @@ public class AddArtPanel extends JPanel implements InventoryChangeListener {
         gbc.anchor = GridBagConstraints.CENTER;
         add(header, gbc);
 
-        // --- Art Type Panel ---
+        /*
+         * Art type selection
+         */
         JPanel typePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         typePanel.setBorder(BorderFactory.createTitledBorder("Art Type"));
-        JLabel typeLabel = new JLabel("Select Art Type:");
+
         JComboBox<String> typeBox = new JComboBox<>(new String[]{"", "Painting", "Drawing", "Print", "Sculpture"});
         typeBox.setFont(new Font("Papyrus", Font.PLAIN, 14));
-        typePanel.add(typeLabel);
+
+        typePanel.add(new JLabel("Select Art Type:"));
         typePanel.add(typeBox);
 
         gbc.gridy++;
-        gbc.gridwidth = 2;
         add(typePanel, gbc);
 
-        // --- Basic Info Panel ---
+        /*
+         * Basic information fields
+         */
         JPanel fieldsPanel = new JPanel(new GridLayout(0, 2, 10, 10));
         fieldsPanel.setBorder(BorderFactory.createTitledBorder("Basic Info"));
 
@@ -120,34 +144,15 @@ public class AddArtPanel extends JPanel implements InventoryChangeListener {
         gbc.gridy++;
         add(fieldsPanel, gbc);
 
-        // --- Dynamic Attributes Panel ---
+        /*
+         * Dynamic attribute fields
+         */
         JPanel dynamicPanel = new JPanel(new GridLayout(0, 2, 10, 10));
         dynamicPanel.setBorder(BorderFactory.createTitledBorder("Attributes (By Type)"));
 
         heightField = new JTextField();
         widthField = new JTextField();
         weightField = new JTextField();
-
-        materialBox = new JComboBox<>();
-        styleBox = new JComboBox<>();
-        techniqueBox = new JComboBox<>();
-        categoryBox = new JComboBox<>();
-        editionTypeBox = new JComboBox<>();
-
-        materialBox.addItem(null);
-        for (Material m : Material.values()) materialBox.addItem(m);
-
-        styleBox.addItem(null);
-        for (Style s : Style.values()) styleBox.addItem(s);
-
-        techniqueBox.addItem(null);
-        for (Technique t : Technique.values()) techniqueBox.addItem(t);
-
-        categoryBox.addItem(null);
-        for (Category c : Category.values()) categoryBox.addItem(c);
-
-        editionTypeBox.addItem(null);
-        for (EditionType e : EditionType.values()) editionTypeBox.addItem(e);
 
         dynamicPanel.add(new JLabel("Height (in):"));
         dynamicPanel.add(heightField);
@@ -169,9 +174,10 @@ public class AddArtPanel extends JPanel implements InventoryChangeListener {
         gbc.gridy++;
         add(dynamicPanel, gbc);
 
-        // --- Result Area ---
+        /*
+         * Result display
+         */
         JTextArea resultArea = new JTextArea(4, 40);
-        resultArea.setFont(new Font("Arial", Font.PLAIN, 14));
         resultArea.setEditable(false);
         resultArea.setLineWrap(true);
         resultArea.setWrapStyleWord(true);
@@ -182,121 +188,125 @@ public class AddArtPanel extends JPanel implements InventoryChangeListener {
         gbc.weighty = 1;
         add(new JScrollPane(resultArea), gbc);
 
-        // --- Button Panel ---
-        gbc.gridy++;
-        gbc.weighty = 0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-
+        /*
+         * Action buttons
+         */
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
 
         JButton addBtn = new JButton("Add Art");
         addBtn.setFont(new Font("Papyrus", Font.BOLD, 16));
-        addBtn.setBackground(new Color(210, 250, 230));
 
         JButton returnBtn = new JButton("Return to Menu");
         returnBtn.setFont(new Font("Papyrus", Font.BOLD, 16));
         returnBtn.addActionListener(e -> {
-            Container parent = this.getParent();
+            Container parent = getParent();
             if (parent != null && parent.getLayout() instanceof CardLayout layout) {
                 layout.first(parent);
-            } // End if statement
-        }); // returnBtn ActionListener
+            }
+        });
 
         buttonPanel.add(addBtn);
         buttonPanel.add(returnBtn);
 
+        gbc.gridy++;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weighty = 0;
         add(buttonPanel, gbc);
 
-        // --- Action Logic ---
-
-        // Dynamically show fields based on art type
+        /*
+         * Dynamic field visibility based on art type
+         */
         typeBox.addActionListener(e -> {
             String selectedType = (String) typeBox.getSelectedItem();
-            boolean isPainting = "Painting".equals(selectedType);
-            boolean isDrawing = "Drawing".equals(selectedType);
-            boolean isPrint = "Print".equals(selectedType);
-            boolean isSculpture = "Sculpture".equals(selectedType);
 
-            heightField.setVisible(isPainting);
-            widthField.setVisible(isPainting);
-            styleBox.setVisible(isPainting || isDrawing);
-            techniqueBox.setVisible(isPainting || isDrawing);
-            categoryBox.setVisible(isPainting || isDrawing || isPrint);
-            editionTypeBox.setVisible(isPrint);
-            materialBox.setVisible(isSculpture);
-            weightField.setVisible(isSculpture);
-        }); // End typeBox ActionListener
+            boolean painting = "Painting".equals(selectedType);
+            boolean drawing = "Drawing".equals(selectedType);
+            boolean print = "Print".equals(selectedType);
+            boolean sculpture = "Sculpture".equals(selectedType);
+
+            heightField.setVisible(painting);
+            widthField.setVisible(painting);
+            styleBox.setVisible(painting || drawing);
+            techniqueBox.setVisible(painting || drawing);
+            categoryBox.setVisible(painting || drawing || print);
+            editionTypeBox.setVisible(print);
+            materialBox.setVisible(sculpture);
+            weightField.setVisible(sculpture);
+        });
 
         typeBox.setSelectedIndex(0);
-        typeBox.getActionListeners()[0].actionPerformed(null);
 
-        // Add Art Button Action
+        /*
+         * Add-art action logic
+         */
         addBtn.addActionListener(e -> {
             try {
                 String type = (String) typeBox.getSelectedItem();
-                if (type == null || type.isBlank())
+                if (type == null || type.isBlank()) {
                     throw new InvalidArtOperationException("Art Creation", "Please select an art type.");
-
-                if (titleField.getText().trim().isEmpty())
-                    throw new InvalidArtOperationException("Validation", "Title cannot be empty.");
-                if (authorField.getText().trim().isEmpty())
-                    throw new InvalidArtOperationException("Validation", "Author cannot be empty.");
-                if (descriptionField.getText().trim().isEmpty())
-                    throw new InvalidArtOperationException("Validation", "Description cannot be empty.");
+                }
 
                 int year = Integer.parseInt(yearField.getText().trim());
-                int currentYear = Year.now().getValue();
-                if (year <= 0 || year > currentYear)
+                if (year <= 0 || year > Year.now().getValue()) {
                     throw new InvalidArtOperationException("Validation", "Year must be valid.");
+                }
 
                 double price = Double.parseDouble(priceField.getText().trim());
-                if (price <= 0) throw new InvalidArtOperationException("Validation", "Price must be positive.");
-
-                ItemStatus status = ItemStatus.AVAILABLE;
+                if (price <= 0) {
+                    throw new InvalidArtOperationException("Validation", "Price must be positive.");
+                }
 
                 Art newArt = switch (type) {
-                    case "Painting" -> new Painting(idField.getText().trim(), price, year, titleField.getText().trim(),
-                            descriptionField.getText().trim(), authorField.getText().trim(), status,
+                    case "Painting" -> new Painting(
+                            idField.getText().trim(), price, year,
+                            titleField.getText().trim(), descriptionField.getText().trim(),
+                            authorField.getText().trim(), ItemStatus.AVAILABLE,
                             Integer.parseInt(heightField.getText().trim()),
                             Integer.parseInt(widthField.getText().trim()),
-                            (Style) styleBox.getSelectedItem(), (Technique) techniqueBox.getSelectedItem(),
-                            (Category) categoryBox.getSelectedItem());
-
-                    case "Drawing" -> new Drawing(idField.getText().trim(), price, year, titleField.getText().trim(),
-                            descriptionField.getText().trim(), authorField.getText().trim(), status,
-                            (Style) styleBox.getSelectedItem(), (Technique) techniqueBox.getSelectedItem(),
-                            (Category) categoryBox.getSelectedItem());
-
-                    case "Print" -> new Print(idField.getText().trim(), price, year, titleField.getText().trim(),
-                            descriptionField.getText().trim(), authorField.getText().trim(), status,
-                            (EditionType) editionTypeBox.getSelectedItem(), (Category) categoryBox.getSelectedItem());
-
-                    case "Sculpture" -> new Sculpture(idField.getText().trim(), price, year, titleField.getText().trim(),
-                            descriptionField.getText().trim(), authorField.getText().trim(), status,
-                            (Material) materialBox.getSelectedItem(), Double.parseDouble(weightField.getText().trim()));
-
+                            (Style) styleBox.getSelectedItem(),
+                            (Technique) techniqueBox.getSelectedItem(),
+                            (Category) categoryBox.getSelectedItem()
+                    );
+                    case "Drawing" -> new Drawing(
+                            idField.getText().trim(), price, year,
+                            titleField.getText().trim(), descriptionField.getText().trim(),
+                            authorField.getText().trim(), ItemStatus.AVAILABLE,
+                            (Style) styleBox.getSelectedItem(),
+                            (Technique) techniqueBox.getSelectedItem(),
+                            (Category) categoryBox.getSelectedItem()
+                    );
+                    case "Print" -> new Print(
+                            idField.getText().trim(), price, year,
+                            titleField.getText().trim(), descriptionField.getText().trim(),
+                            authorField.getText().trim(), ItemStatus.AVAILABLE,
+                            (EditionType) editionTypeBox.getSelectedItem(),
+                            (Category) categoryBox.getSelectedItem()
+                    );
+                    case "Sculpture" -> new Sculpture(
+                            idField.getText().trim(), price, year,
+                            titleField.getText().trim(), descriptionField.getText().trim(),
+                            authorField.getText().trim(), ItemStatus.AVAILABLE,
+                            (Material) materialBox.getSelectedItem(),
+                            Double.parseDouble(weightField.getText().trim())
+                    );
                     default -> throw new InvalidArtOperationException("Art Type", "Unsupported art type.");
-                }; // End switch statements
+                };
 
                 artInventoryManager.addArt(newArt);
                 artInventoryManager.saveInventoryToFile();
-                listener.onInventoryChanged();
+                broadcaster.notifyInventoryChanged();
+
                 resultArea.setText("Art added successfully: " + newArt.getTitle() + " by " + newArt.getAuthor());
+                clearForm();
 
             } catch (Exception ex) {
                 resultArea.setText("Error: " + ex.getMessage());
-            } // End try-catch statements
-
-            // Clear form after successful add
-            clearForm();
-
-        }); // addBtn ActionListener
-    } // End AddArtPanel constructor
+            }
+        });
+    }
 
     /**
-     * Clears all input fields and resets combo boxes to their default state.
-     * This method is called after successfully adding an artwork to ensure the form
-     * is ready for new input.
+     * Clears all input fields and resets selectors to their default state.
      */
     private void clearForm() {
         idField.setText("");
@@ -309,14 +319,10 @@ public class AddArtPanel extends JPanel implements InventoryChangeListener {
         widthField.setText("");
         weightField.setText("");
 
-        if (materialBox != null) materialBox.setSelectedIndex(0);
-        if (styleBox != null) styleBox.setSelectedIndex(0);
-        if (techniqueBox != null) techniqueBox.setSelectedIndex(0);
-        if (categoryBox != null) categoryBox.setSelectedIndex(0);
-        if (editionTypeBox != null) editionTypeBox.setSelectedIndex(0);
-    } // End clearForm
-
-    @Override
-    public void onInventoryChanged() { } // onInventoryChanged method
-
-} // End AddArtPanel class
+        materialBox.setSelectedIndex(0);
+        styleBox.setSelectedIndex(0);
+        techniqueBox.setSelectedIndex(0);
+        categoryBox.setSelectedIndex(0);
+        editionTypeBox.setSelectedIndex(0);
+    }
+}

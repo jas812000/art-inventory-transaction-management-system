@@ -1,41 +1,45 @@
-// This file is part of the ArtInventoryTransaction application, specifically the GUI package.
+/*
+ * This file is part of the ArtInventoryTransaction application.
+ * It defines a simple broadcaster for inventory change events.
+ */
 package com.artstore.gui;
 
-// Importing the listener interface
 import com.artstore.utilities.InventoryChangeListener;
 
-// Import to manage lists
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * InventoryEventBroadcaster is a simple publisher/broadcaster
- * that notifies registered listeners when the inventory has changed.
- *
- * It is used to propagate inventory updates to GUI panels or other components
- * that need to refresh their data when art is added, removed, or updated.
+ * Publishes inventory change events to registered listeners.
+ * <p>
+ * This broadcaster is used to notify GUI panels and other components
+ * when the inventory is modified, such as when art is added, removed,
+ * or updated.
+ * </p>
  */
 public class InventoryEventBroadcaster {
 
-    // List of listeners who subscribed to inventory change events
+    /**
+     * Registered listeners interested in inventory change events.
+     */
     private final List<InventoryChangeListener> listeners = new ArrayList<>();
 
     /**
-     * Registers a new InventoryChangeListener.
+     * Registers a listener to receive inventory change notifications.
      *
-     * @param listener the listener to be registered
+     * @param listener the listener to register
      */
     public void registerListener(InventoryChangeListener listener) {
         listeners.add(listener);
-    } // End registerListener method
+    }
 
     /**
      * Notifies all registered listeners that the inventory has changed.
-     * This is typically called after adding, removing, or updating art.
      */
     public void notifyInventoryChanged() {
         for (InventoryChangeListener listener : listeners) {
             listener.onInventoryChanged();
-        } // End for loop
-    } // End notifyInventoryChanged method
-} // End InventoryEventBroadcaster class
+        }
+    }
+}
+

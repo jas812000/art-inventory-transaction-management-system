@@ -1,88 +1,133 @@
-// This file is part of the ArtInventoryTransaction application, specifically the GUI package.
+/*
+ * This file is part of the ArtInventoryTransaction application, specifically the GUI package.
+ * It initializes core managers, loads persisted data, registers all GUI panels, and renders the main frame.
+ */
 package com.artstore.gui;
 
-// Import GUI components (Swing for GUI elements, AWT for layout management)
+import com.artstore.core.ArtInventoryManager;
+import com.artstore.core.CustomerManager;
+import com.artstore.core.TransactionManager;
+import com.artstore.gui.panel.*;
+import com.artstore.utilities.DirectoryManager;
+import com.config.EnvironmentConfig;
+
 import javax.swing.*;
 import java.awt.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-// Import core managers for managing art inventory, customers, and transactions
-import com.artstore.core.ArtInventoryManager;
-import com.artstore.core.CustomerManager;
-import com.artstore.core.TransactionManager;
-
-// Import GUI panels for the application interface
-import com.artstore.gui.panel.*;
-import com.artstore.utilities.DirectoryManager;
-import com.config.EnvironmentConfig;
-
-
 /**
- * Main GUI class that initializes and displays the Art Inventory & Transaction Manager interface.
- * It connects the core data managers with the GUI panels and sets up navigation.
+ * Main GUI bootstrap class for the Art Inventory &amp; Transaction Manager.
+ * <p>
+ * This class wires together:
+ * <ul>
+ *   <li>Core managers (inventory, customers, transactions)</li>
+ *   <li>Persisted storage locations</li>
+ *   <li>All Swing panels registered under a {@link CardLayout}</li>
+ * </ul>
+ * The application uses a central {@code mainPanel} containing all screens and a {@code MenuPanel}
+ * that navigates between them.
+ * </p>
  */
 public class ArtInventoryTransactionGUI {
 
+    /**
+     * Customer storage directory resolved from environment configuration.
+     */
     public static final String CUSTOMER_DIRECTORY = EnvironmentConfig.getCustomerDirectory();
-    public static final String INVENTORY_DIRECTORY = EnvironmentConfig.getInventoryDirectory();
-    public static final String TRANSACTION_DIRECTORY = EnvironmentConfig.getTransactionDirectory();
-    public static final String COUNTER_FILE = EnvironmentConfig.getCounterFilePath();
 
     /**
-     * Constructs the GUI and initializes all major components and layout.
+     * Inventory storage directory resolved from environment configuration.
+     */
+    public static final String INVENTORY_DIRECTORY = EnvironmentConfig.getInventoryDirectory();
+
+    /**
+     * Transaction storage directory resolved from environment configuration.
+     */
+    public static final String TRANSACTION_DIRECTORY = EnvironmentConfig.getTransactionDirectory();
+
+    /**
+     * Constructs the GUI application and initializes all major runtime components.
      */
     public ArtInventoryTransactionGUI() {
 
-        // Initialize directories
+        /*
+         * Initialize required directories for persistence.
+         */
         DirectoryManager.initializeDirectories(CUSTOMER_DIRECTORY, INVENTORY_DIRECTORY, TRANSACTION_DIRECTORY);
 
-        // Define the path for the transaction file
-        Path transactionFilePath = Paths.get(TRANSACTION_DIRECTORY, "transactions.txt");
+        /*
+         * Define the transaction file path used by TransactionManager persistence.
+         */
+        Path transactionFilePath = Paths.get(TRANSACTION_DIRECTORY, "transactions.csv");
 
-        // Declare shared manager instances
+        /*
+         * Create shared manager instances.
+         */
         CustomerManager customerManager = new CustomerManager();
         ArtInventoryManager artInventoryManager = new ArtInventoryManager();
         TransactionManager transactionManager = new TransactionManager(artInventoryManager, transactionFilePath);
 
-        // Panels (Single instances)
-        RemoveArtPanel removeArtPanel = new RemoveArtPanel(artInventoryManager);
-        AddArtPanel addArtPanel = new AddArtPanel(artInventoryManager, removeArtPanel);
+        /*
+         * Create a single broadcaster instance shared across all panels.
+         */
+        InventoryEventBroadcaster broadcaster = new InventoryEventBroadcaster();
 
-        // Load persisted data
+        /*
+         * Load persisted data before rendering panels that depend on it.
+         */
         artInventoryManager.loadInventoryFromFile();
         transactionManager.loadTransactionsFromFile();
 
-        // Initialize CardLayout for switching between panels
-        CardLayout cardLayout = new CardLayout();  // Initialize the CardLayout once
+        /*
+         * Create a single CardLayout and main container panel for all screens.
+         */
+        CardLayout cardLayout = new CardLayout();
+        JPanel mainPanel = new JPanel(cardLayout);
 
-        // Initialize the central display panel with CardLayout
-        JPanel mainPanel = new JPanel(cardLayout);  // Use the existing cardLayout instance
+        /*
+         * Create panels that depend on managers and event broadcasting.
+         */
+        RemoveArtPanel removeArtPanel = new RemoveArtPanel(artInventoryManager, broadcaster);
+        AddArtPanel addArtPanel = new AddArtPanel(artInventoryManager, broadcaster);
 
-        InventoryEventBroadcaster broadcaster = new InventoryEventBroadcaster();
+        CreateOrderPanel createOrderPanel =
+                new CreateOrderPanel(customerManager, artInventoryManager, transactionManager, broadcaster);
 
-        // Create panels
-        CreateOrderPanel createOrderPanel = new CreateOrderPanel(customerManager, artInventoryManager, transactionManager, broadcaster);
-        RemoveOrderPanel removeOrderPanel = new RemoveOrderPanel(transactionManager, createOrderPanel, artInventoryManager, broadcaster);
+        RemoveOrderPanel removeOrderPanel =
+                new RemoveOrderPanel(transactionManager, createOrderPanel, artInventoryManager, broadcaster);
 
-        // Register panels
+        /*
+         * Register all screens into the CardLayout container.
+         */
         mainPanel.add(new HomePanel(), "Home");
         mainPanel.add(addArtPanel, "AddArt");
         mainPanel.add(removeArtPanel, "RemoveArt");
         mainPanel.add(new ListArtPanel(artInventoryManager), "ListArt");
         mainPanel.add(createOrderPanel, "CreateOrder");
-        mainPanel.add(new CompleteOrderPanel(artInventoryManager, transactionManager), "CompleteOrder");
+
+        /*
+         * CompleteOrderPanel needs navigation access for its "Return to Menu" button.
+         * Pass CardLayout and mainPanel so the panel can navigate safely.
+         */
+        mainPanel.add(
+                new CompleteOrderPanel(cardLayout, mainPanel, artInventoryManager, transactionManager),
+                "CompleteOrder"
+        );
+
         mainPanel.add(removeOrderPanel, "RemoveOrder");
         mainPanel.add(new RetrieveOrderPanel(transactionManager), "RetrieveOrder");
         mainPanel.add(new ManageCustomerPanel(customerManager), "ManageCustomer");
         mainPanel.add(new ViewAllOrdersPanel(transactionManager), "ListOrders");
         mainPanel.add(new ExitPanel(), "Exit");
 
-        // Create and render the main application frame
-        MenuPanel menuPanel = new MenuPanel(cardLayout, mainPanel); // Pass the cardLayout to MenuPanel
-        // GUI frame and panel references
+        /*
+         * Create the navigation menu panel and main frame.
+         */
+        MenuPanel menuPanel = new MenuPanel(cardLayout, mainPanel);
         JFrame mainFrame = MainFrameInitializer.createMainFrame(mainPanel, menuPanel);
         mainFrame.setVisible(true);
-    } // End constructor
+    }
+}
 
-} // End ArtInventoryTransactionGUI class
+

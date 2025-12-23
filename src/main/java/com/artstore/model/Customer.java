@@ -1,17 +1,37 @@
-// This file is part of the ArtInventoryTransaction application, specifically the model package.
+/*
+ * This file belongs to the ArtInventoryTransaction application.
+ * It defines the Customer domain model and supports basic validation and persistence.
+ */
 package com.artstore.model;
 
-// Import custom exception for invalid input
 import com.artstore.exceptions.InvalidTransactionException;
+import com.artstore.utilities.CsvUtil;
 import com.artstore.utilities.ValidationUtilities;
 
+import java.util.List;
+
 /**
- * Represents a customer who can make art purchases.
- * Includes personal and contact information, including an Address object.
+ * Represents a customer who can purchase artwork.
+ * <p>
+ * Persistence:
+ * This class serializes to a single CSV row with proper CSV escaping so commas and quotes
+ * inside user-entered fields do not break the file format.
+ * </p>
+ *
+ * <p>CSV columns (8):</p>
+ * <ol>
+ *   <li>firstName</li>
+ *   <li>lastName</li>
+ *   <li>mailingAddress</li>
+ *   <li>city</li>
+ *   <li>state</li>
+ *   <li>zipCode</li>
+ *   <li>phone (digits only)</li>
+ *   <li>email</li>
+ * </ol>
  */
 public class Customer {
 
-    // Customer fields
     private String firstName;
     private String lastName;
     private Address address;
@@ -19,120 +39,102 @@ public class Customer {
     private String email;
 
     /**
-     * Constructs a Customer object with validated personal and contact information.
+     * Creates a customer with validated personal and contact information.
      *
-     * @param firstName Customer's first name (required)
-     * @param lastName Customer's last name (required)
-     * @param address Mailing address (must not be null)
-     * @param phoneNumber Customer's phone number (required)
-     * @param email Customer's email (required)
-     * @throws InvalidTransactionException if any field is invalid
+     * @param firstName   customer's first name (required, not blank)
+     * @param lastName    customer's last name (required, not blank)
+     * @param address     customer's mailing address (required, not {@code null})
+     * @param phoneNumber customer's phone number (required; validated and formatted)
+     * @param email       customer's email address (required; validated)
+     * @throws InvalidTransactionException if validation fails or {@code address} is {@code null}
      */
     public Customer(String firstName, String lastName, Address address, String phoneNumber, String email) {
         ValidationUtilities.validateNotBlank(firstName, "First Name");
         ValidationUtilities.validateNotBlank(lastName, "Last Name");
         ValidationUtilities.validateNotBlank(email, "Email");
-        ValidationUtilities.isValidEmail(email);
-        //ValidationUtilities.validatePhoneNumber(phoneNumber);
+        ValidationUtilities.validateEmail(email);
 
         if (address == null) {
             throw new InvalidTransactionException("Customer Creation", "Address is required.");
-        } // End if statement
+        }
 
         this.firstName = firstName;
         this.lastName = lastName;
         this.address = address;
         this.phoneNumber = ValidationUtilities.validatePhoneNumber(phoneNumber);
         this.email = email;
-    } // End constructor
+    }
 
-    // Getters
-    public String getFirstName() {
-        return firstName;
-    } // End getFirstName method
+    public String getFirstName() { return firstName; }
+    public String getLastName() { return lastName; }
+    public Address getAddress() { return address; }
+    public String getPhoneNumber() { return phoneNumber; }
+    public String getEmail() { return email; }
 
-    public String getLastName() {
-        return lastName;
-    } // End getLastName method
-
-    public Address getAddress() {
-        return address;
-    } // End getAddress method
-
-    public String getPhoneNumber() {
-        return phoneNumber;
-    } // End getPhoneNumber method
-
-    public String getEmail() {
-        return email;
-    } // End getEmail method
-
-    // Setters
     public void setFirstName(String firstName) {
         ValidationUtilities.validateNotBlank(firstName, "First Name");
         this.firstName = firstName;
-    } // End setFirstName method
+    }
 
     public void setLastName(String lastName) {
         ValidationUtilities.validateNotBlank(lastName, "Last Name");
         this.lastName = lastName;
-    } // End setLastName method
+    }
 
     public void setPhoneNumber(String phoneNumber) {
-        // Validate and format the phone number using the static method from ValidationUtilities
         this.phoneNumber = ValidationUtilities.validatePhoneNumber(phoneNumber);
-    } // End setPhoneNumber method
+    }
 
     public void setEmail(String email) {
         ValidationUtilities.validateNotBlank(email, "Email");
-        ValidationUtilities.isValidEmail(email);
+        ValidationUtilities.validateEmail(email);
         this.email = email;
-    } // End setEmail method
+    }
 
     public void setAddress(Address address) {
         if (address == null) {
             throw new InvalidTransactionException("Customer Update", "Address cannot be null.");
-        } // End if statement
+        }
         this.address = address;
-    } // End setAddress method
+    }
 
     /**
-     * Serializes the Customer into a single-line, comma-separated string.
-     * Includes address, unformatted phone number, and email.
+     * Serializes this customer to a single CSV row (escaped).
+     *
+     * @return CSV row representation of the customer
      */
     @Override
     public String toString() {
+        // Keep phone digits-only for persistence (your existing behavior)
+        String phoneDigits = phoneNumber == null ? "" : phoneNumber.replaceAll("\\D", "");
+
         return String.join(",",
-                firstName,
-                lastName,
-                address.toString(),
-                phoneNumber.replaceAll("[^\\d]", ""),  // Remove formatting like parentheses/hyphens
-                email
+                CsvUtil.escape(firstName),
+                CsvUtil.escape(lastName),
+                CsvUtil.escape(address.mailingAddress()),
+                CsvUtil.escape(address.city()),
+                CsvUtil.escape(address.state()),
+                CsvUtil.escape(address.zipCode()),
+                CsvUtil.escape(phoneDigits),
+                CsvUtil.escape(email)
         );
-    } // End toString method
+    }
 
     /**
-     * Parses a string and reconstructs a Customer object.
+     * Parses a serialized customer CSV row and reconstructs a validated {@link Customer}.
      *
-     * @param data the full string in format: firstName,lastName,address...,phone,email
-     * @return Customer instance
+     * @param data serialized customer CSV row
+     * @return reconstructed customer
+     * @throws InvalidTransactionException if required fields are missing/invalid
      */
     public static Customer fromString(String data) {
-        String[] parts = data.split(",", -1);
+        List<String> cols = CsvUtil.parseLine(data);
 
-        if (parts.length < 8) {
+        if (cols.size() < 8) {
             throw new InvalidTransactionException("Customer Parsing", "Insufficient customer data.");
-        } // End if statement
+        }
 
-        Address address = new Address(parts[2], parts[3], parts[4], parts[5]);
-
-        return new Customer(
-                parts[0],   // First name
-                parts[1],   // Last name
-                address,    // Address
-                parts[6],   // Phone
-                parts[7]    // Email
-        );
-    } // End fromString method
-
-} // End Customer class
+        Address address = new Address(cols.get(2), cols.get(3), cols.get(4), cols.get(5));
+        return new Customer(cols.get(0), cols.get(1), address, cols.get(6), cols.get(7));
+    }
+}

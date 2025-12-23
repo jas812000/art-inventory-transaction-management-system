@@ -1,22 +1,25 @@
-// This file is part of the ArtInventoryTransaction application, specifically the model package.
 package com.artstore.model;
 
-// Import custom exception for handling invalid art creation or updates
 import com.artstore.exceptions.InvalidArtOperationException;
 import com.artstore.model.enums.ItemStatus;
 import com.artstore.utilities.ValidationUtilities;
 
-// Import Year utility to validate the creation year of the artwork
 import java.time.Year;
 
 /**
- * Abstract class representing a general piece of art in the system.
- * All specific art types (e.g., Painting, Sculpture) extend this class.
+ * Abstract base class representing an artwork in the system.
+ * <p>
+ * Core identifying/descriptive fields are immutable after construction.
+ * The {@link ItemStatus} remains mutable to support reservation/sale workflows.
+ * </p>
  */
 public abstract class Art {
 
-    // Attributes
-    // Immutable after construction
+    /**
+     * Flat shipping cost applied to all art purchases.
+     */
+    protected static final double BASE_SHIPPING_COST = 10.99;
+
     private final String artIdentification;
     private final double artPrice;
     private final int yearCreated;
@@ -24,25 +27,32 @@ public abstract class Art {
     private final String artDescription;
     private final String artAuthor;
 
-    // Mutable
+    /**
+     * Current item status (available, reserved, or sold).
+     */
     private ItemStatus itemStatus;
 
-    // Shared shipping constant
-    protected static final double BASE_SHIPPING_COST = 10.99;
-
     /**
-     * Constructs an Art object with validated parameters.
+     * Constructs an {@code Art} instance with validated core fields.
      *
-     * @param artIdentification 10-digit numeric string
-     * @param artPrice Price of the art (must be > 0)
-     * @param yearCreated Year created (must be ≤ current year)
-     * @param artTitle Title of the art (non-blank)
-     * @param artDescription Description of the art (≤ 500 chars, non-blank)
-     * @param artAuthor Author of the art (non-blank)
+     * @param artIdentification unique 10-digit numeric identifier
+     * @param artPrice          base price (must be greater than zero)
+     * @param yearCreated       year created (must be positive and not in the future)
+     * @param artTitle          title of the artwork (non-blank)
+     * @param artDescription    description (non-blank, max 500 characters)
+     * @param artAuthor         author/artist name (non-blank)
+     * @param itemStatus        initial item status
+     * @throws InvalidArtOperationException if validation fails
      */
-    public Art(String artIdentification, double artPrice, int yearCreated,
-               String artTitle, String artDescription, String artAuthor, ItemStatus itemStatus) {
-
+    public Art(
+            String artIdentification,
+            double artPrice,
+            int yearCreated,
+            String artTitle,
+            String artDescription,
+            String artAuthor,
+            ItemStatus itemStatus
+    ) {
         int currentYear = Year.now().getValue();
 
         ValidationUtilities.validateNotBlank(artIdentification, "Art Identification");
@@ -50,21 +60,20 @@ public abstract class Art {
         ValidationUtilities.validateNotBlank(artDescription, "Description");
         ValidationUtilities.validateNotBlank(artAuthor, "Author");
 
-        if (!ValidationUtilities.isValidArtId(artIdentification)) {
-            throw new InvalidArtOperationException("Art Creation", "Art identification must be a 10-digit number.");
-        } // End if statement
+        // Validates and throws if invalid (no boolean return value).
+        ValidationUtilities.validateArtId(artIdentification);
 
         if (artPrice <= 0) {
-            throw new InvalidArtOperationException("Art Creation", "Invalid price: amount must be greater than zero.");
-        } // End if statement
+            throw new InvalidArtOperationException("Art Creation", "Price must be greater than zero.");
+        }
 
         if (yearCreated <= 0 || yearCreated > currentYear) {
-            throw new InvalidArtOperationException("Art Creation", "Invalid year: must be a positive number.");
-        } // End if statement
+            throw new InvalidArtOperationException("Art Creation", "Year must be positive and not in the future.");
+        }
 
         if (artDescription.length() > 500) {
-            throw new InvalidArtOperationException("Art Creation", "Invalid description: must be less than 500 characters.");
-        } // End if statement
+            throw new InvalidArtOperationException("Art Creation", "Description must be 500 characters or fewer.");
+        }
 
         this.artIdentification = artIdentification;
         this.artPrice = artPrice;
@@ -73,103 +82,100 @@ public abstract class Art {
         this.artDescription = artDescription;
         this.artAuthor = artAuthor;
         this.itemStatus = itemStatus;
-    } // End constructor
+    }
 
-    /// --- Getters ---
+    /** @return artwork identification */
     public String getArtIdentification() {
         return artIdentification;
-    } // End getArtIdentification method
+    }
 
+    /** @return base artwork price */
     public double getArtPrice() {
         return artPrice;
-    } // End getArtPrice method
+    }
 
+    /** @return year the artwork was created */
     public int getYearCreated() {
         return yearCreated;
-    } // End getYearCreated method
+    }
 
+    /** @return artwork title */
     public String getTitle() {
         return artTitle;
-    } // End getTitle method
+    }
 
+    /** @return artwork description */
     public String getDescription() {
         return artDescription;
-    } // End getDescription method
+    }
 
+    /** @return artwork author */
     public String getAuthor() {
         return artAuthor;
-    } // End getAuthor method
+    }
 
+    /** @return current item status */
     public ItemStatus getItemStatus() {
         return itemStatus;
-    } // End getItemStatus method
+    }
 
-     /// --- Status Helpers ---
-
-    /**
-     * Checks if the art is available for reservation or purchase.
-     *
-     * @return true if available
-     */
+    /** @return {@code true} if the artwork is available */
     public boolean isAvailable() {
-        return this.itemStatus == ItemStatus.AVAILABLE;
-    } // End isAvailable method
+        return itemStatus == ItemStatus.AVAILABLE;
+    }
 
-    /**
-     * Checks if the art is currently reserved.
-     *
-     * @return true if reserved
-     */
+    /** @return {@code true} if the artwork is reserved */
     public boolean isReserved() {
-        return this.itemStatus == ItemStatus.RESERVED;
-    }  // En isReserved method
+        return itemStatus == ItemStatus.RESERVED;
+    }
+
+    /** @return {@code true} if the artwork has been sold */
+    public boolean isSold() {
+        return itemStatus == ItemStatus.SOLD;
+    }
 
     /**
-     * Checks if the art has been sold.
+     * Updates the artwork status.
      *
-     * @return true if sold
+     * @param itemStatus new item status
      */
-    public boolean isSold() {
-        return this.itemStatus == ItemStatus.SOLD;
-    }  // End isSold method
-
-
-
-
-
-
-
-
-    /// --- Abstract Methods ---
-    public abstract String getType(); // End getType method
-
-    public abstract String toString(); // End toString method
-
-    public abstract double calculateArtPrice(); // End calculateArtPrice method
-
-    public abstract double getTotalPrice(); // End getTotalPrice method
-
     public void setItemStatus(ItemStatus itemStatus) {
         this.itemStatus = itemStatus;
-    } // End setItemStatus
+    }
+
+    /** @return artwork type name used in persistence */
+    public abstract String getType();
+
+    /** @return CSV serialization of this artwork */
+    @Override
+    public abstract String toString();
+
+    /** @return calculated artwork price */
+    public abstract double calculateArtPrice();
+
+    /** @return total price including shipping */
+    public abstract double getTotalPrice();
 
     /**
-     * Parses a CSV-formatted string and dispatches to the appropriate subclass.
+     * Parses a CSV-formatted line and dispatches to the appropriate {@link Art} subclass.
      *
-     * @param data A line of text representing an Art object.
-     * @return A reconstructed Art object
+     * @param data serialized CSV line
+     * @return reconstructed {@link Art} instance
+     * @throws IllegalArgumentException if the type is missing or unknown
      */
     public static Art fromString(String data) {
         String[] parts = data.split(",", -1);
-        String type = parts[0];
 
-        return switch (type) {
+        if (parts.length == 0 || parts[0].isBlank()) {
+            throw new IllegalArgumentException("Unknown Art type: <missing>");
+        }
+
+        return switch (parts[0]) {
             case "Painting" -> Painting.fromString(data);
             case "Drawing" -> Drawing.fromString(data);
             case "Print" -> Print.fromString(data);
             case "Sculpture" -> Sculpture.fromString(data);
-            default -> throw new IllegalArgumentException("Unknown Art type: " + type);
-        }; // End switch statement
-    } // End fromString method
-
-} // End Art class
+            default -> throw new IllegalArgumentException("Unknown Art type: " + parts[0]);
+        };
+    }
+}
