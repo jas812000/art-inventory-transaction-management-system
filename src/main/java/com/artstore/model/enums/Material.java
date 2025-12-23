@@ -1,7 +1,3 @@
-/*
- * This file belongs to the ArtInventoryTransaction application.
- * It defines materials used primarily in sculpture and mixed media.
- */
 package com.artstore.model.enums;
 
 /**
@@ -9,48 +5,49 @@ package com.artstore.model.enums;
  */
 public enum Material {
 
-    STONE("STONE"),
-    METAL("METAL"),
-    WOOD("WOOD"),
-    CLAY("CLAY"),
-    CERAMIC("CERAMIC"),
-    GLASS("GLASS"),
-    RESIN("RESIN"),
-    PLASTIC("PLASTIC"),
-    WAX("WAX"),
-    ICE("ICE"),
-    BONE("BONE"),
-    PAPER("PAPER"),
-    FIBERGLASS("FIBERGLASS"),
-    PLASTER("PLASTER"),
-    CONCRETE("CONCRETE"),
-    FOUND_OBJECTS("FOUND OBJECTS"),
-    FOAM("FOAM"),
-    TEXTILE("TEXTILE"),
-    LEATHER("LEATHER"),
-    WIRE("WIRE"),
-    SAND("SAND"),
-    CARBON_FIBER("CARBON FIBER"),
-    THREE_D_PRINTED_MATERIALS("3D PRINTED MATERIALS"),
-    BIODEGRADABLE_MATERIALS("BIODEGRADABLE MATERIALS");
+    STONE("Stone"),
+    METAL("Metal"),
+    WOOD("Wood"),
+    CLAY("Clay"),
+    CERAMIC("Ceramic"),
+    GLASS("Glass"),
+    RESIN("Resin"),
+    PLASTIC("Plastic"),
+    WAX("Wax"),
+    ICE("Ice"),
+    BONE("Bone"),
+    PAPER("Paper"),
+    FIBERGLASS("Fiberglass"),
+    PLASTER("Plaster"),
+    CONCRETE("Concrete"),
+    FOUND_OBJECTS("Found Objects"),
+    FOAM("Foam"),
+    TEXTILE("Textile"),
+    LEATHER("Leather"),
+    WIRE("Wire"),
+    SAND("Sand"),
+    CARBON_FIBER("Carbon Fiber"),
+    THREE_D_PRINTED_MATERIALS("3D Printed Materials"),
+    BIODEGRADABLE_MATERIALS("Biodegradable Materials");
 
-    private final String materialName;
+    private final String displayName;
 
     /**
-     * Creates a material with a display-friendly name.
+     * Constructs a material with a display-friendly name.
      *
-     * @param materialName readable name of the material
+     * @param displayName readable material name
      */
-    Material(String materialName) {
-        this.materialName = materialName;
+    Material(String displayName) {
+        this.displayName = displayName;
     }
 
     /**
-     * Returns the display name of the material.
+     * Returns the display-friendly material name.
      *
      * @return material name
      */
-    public String getMaterialName() {
-        return materialName;
+    @Override
+    public String toString() {
+        return displayName;
     }
 }

@@ -1,7 +1,3 @@
-/*
- * This file belongs to the ArtInventoryTransaction application.
- * It defines artistic styles used for artwork classification.
- */
 package com.artstore.model.enums;
 
 /**
@@ -9,67 +5,68 @@ package com.artstore.model.enums;
  */
 public enum Style {
 
-    ABSTRACT("ABSTRACT"),
-    SURREALISM("SURREALISM"),
-    IMPRESSIONISM("IMPRESSIONISM"),
-    POST_IMPRESSIONISM("POST IMPRESSIONISM"),
-    EXPRESSIONISM("EXPRESSIONISM"),
-    REALISM("REALISM"),
-    HYPERREALISM("HYPERREALISM"),
-    CUBISM("CUBISM"),
-    MINIMALISM("MINIMALISM"),
-    POP_ART("POP ART"),
-    PHOTOREALISM("PHOTOREALISM"),
-    FAUVISM("FAUVISM"),
-    BAROQUE("BAROQUE"),
-    ROCOCO("ROCOCO"),
-    RENAISSANCE("RENAISSANCE"),
-    NEOCLASSICISM("NEOCLASSICISM"),
-    ROMANTICISM("ROMANTICISM"),
-    SYMBOLISM("SYMBOLISM"),
-    ART_NOUVEAU("ART NOUVEAU"),
-    ART_DECO("ART DECO"),
-    FUTURISM("FUTURISM"),
-    CONSTRUCTIVISM("CONSTRUCTIVISM"),
-    DADAISM("DADAISM"),
-    CONCEPTUAL_ART("CONCEPTUAL ART"),
-    OP_ART("OP ART"),
-    NAÏVE_ART("NAÏVE ART"),
-    STREET_ART("STREET ART"),
-    FOLK_ART("FOLK ART"),
-    TACHISME("TACHISME"),
-    LUMINISM("LUMINISM"),
-    SUPREMATISM("SUPREMATISM"),
-    AUTOMATISM("AUTOMATISM"),
-    COLOR_FIELD_PAINTING("COLOR FIELD PAINTING"),
-    HARD_EDGE_PAINTING("HARD EDGE PAINTING"),
-    KINETIC_ART("KINETIC ART"),
-    GEOMETRIC_ABSTRACTION("GEOMETRIC ABSTRACTION"),
-    MANGA("MANGA"),
-    GRAPHIC_NOVEL("GRAPHIC NOVEL"),
-    SKETCH_ART("SKETCH ART"),
-    FANTASY_ART("FANTASY ART"),
-    GOTHIC_ART("GOTHIC ART"),
-    CROSSHATCHING("CROSSHATCHING"),
-    SCIENTIFIC_ILLUSTRATION("SCIENTIFIC ILLUSTRATION");
+    ABSTRACT("Abstract"),
+    SURREALISM("Surrealism"),
+    IMPRESSIONISM("Impressionism"),
+    POST_IMPRESSIONISM("Post-Impressionism"),
+    EXPRESSIONISM("Expressionism"),
+    REALISM("Realism"),
+    HYPERREALISM("Hyperrealism"),
+    CUBISM("Cubism"),
+    MINIMALISM("Minimalism"),
+    POP_ART("Pop Art"),
+    PHOTOREALISM("Photorealism"),
+    FAUVISM("Fauvism"),
+    BAROQUE("Baroque"),
+    ROCOCO("Rococo"),
+    RENAISSANCE("Renaissance"),
+    NEOCLASSICISM("Neoclassicism"),
+    ROMANTICISM("Romanticism"),
+    SYMBOLISM("Symbolism"),
+    ART_NOUVEAU("Art Nouveau"),
+    ART_DECO("Art Deco"),
+    FUTURISM("Futurism"),
+    CONSTRUCTIVISM("Constructivism"),
+    DADAISM("Dadaism"),
+    CONCEPTUAL_ART("Conceptual Art"),
+    OP_ART("Op Art"),
+    NAÏVE_ART("Naïve Art"),
+    STREET_ART("Street Art"),
+    FOLK_ART("Folk Art"),
+    TACHISME("Tachisme"),
+    LUMINISM("Luminism"),
+    SUPREMATISM("Suprematism"),
+    AUTOMATISM("Automatism"),
+    COLOR_FIELD_PAINTING("Color Field Painting"),
+    HARD_EDGE_PAINTING("Hard Edge Painting"),
+    KINETIC_ART("Kinetic Art"),
+    GEOMETRIC_ABSTRACTION("Geometric Abstraction"),
+    MANGA("Manga"),
+    GRAPHIC_NOVEL("Graphic Novel"),
+    SKETCH_ART("Sketch Art"),
+    FANTASY_ART("Fantasy Art"),
+    GOTHIC_ART("Gothic Art"),
+    CROSSHATCHING("Crosshatching"),
+    SCIENTIFIC_ILLUSTRATION("Scientific Illustration");
 
-    private final String styleName;
+    private final String displayName;
 
     /**
-     * Creates a style with a display-friendly name.
+     * Constructs a style with a display-friendly name.
      *
-     * @param styleName readable name of the style
+     * @param displayName readable style name
      */
-    Style(String styleName) {
-        this.styleName = styleName;
+    Style(String displayName) {
+        this.displayName = displayName;
     }
 
     /**
-     * Returns the display name of the style.
+     * Returns the display-friendly style name.
      *
      * @return style name
      */
-    public String getStyleName() {
-        return styleName;
+    @Override
+    public String toString() {
+        return displayName;
     }
 }

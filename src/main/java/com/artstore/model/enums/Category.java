@@ -1,7 +1,3 @@
-/*
- * This file belongs to the ArtInventoryTransaction application.
- * It defines categories used to classify artwork.
- */
 package com.artstore.model.enums;
 
 /**
@@ -9,33 +5,33 @@ package com.artstore.model.enums;
  */
 public enum Category {
 
-    HISTORY("HISTORY"),
-    PORTRAIT("PORTRAIT"),
-    GENRE("GENRE"),
-    LANDSCAPE("LANDSCAPE"),
-    STILL_LIFE("STILL LIFE");
+    HISTORY("History"),
+    PORTRAIT("Portrait"),
+    GENRE("Genre"),
+    LANDSCAPE("Landscape"),
+    STILL_LIFE("Still Life");
 
-    private final String categoryName;
+    private final String displayName;
 
     /**
-     * Creates a category with a display-friendly name.
+     * Constructs a category with a human-readable display name.
      *
-     * @param categoryName readable category name
+     * @param displayName display-friendly category name
      */
-    Category(String categoryName) {
-        this.categoryName = categoryName;
+    Category(String displayName) {
+        this.displayName = displayName;
     }
 
     /**
-     * Returns the display name of the category.
+     * Returns the display-friendly category name.
      *
-     * @return category name
+     * @return formatted category name
      */
-    public String getCategoryName() {
-        return categoryName;
+    @Override
+    public String toString() {
+        return displayName;
     }
 }
-
 
 
 

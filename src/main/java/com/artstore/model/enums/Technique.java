@@ -1,7 +1,3 @@
-/*
- * This file belongs to the ArtInventoryTransaction application.
- * It defines artistic techniques used in artwork creation.
- */
 package com.artstore.model.enums;
 
 /**
@@ -9,66 +5,67 @@ package com.artstore.model.enums;
  */
 public enum Technique {
 
-    OIL("OIL"),
-    ACRYLIC("ACRYLIC"),
-    WATERCOLOR("WATERCOLOR"),
-    GOUACHE("GOUACHE"),
-    ENCAUSTIC("ENCAUSTIC"),
-    TEMPERA("TEMPERA"),
-    FRESCO("FRESCO"),
-    SPRAY_PAINT("SPRAY PAINT"),
-    INK_WASH("INK WASH"),
-    MIXED_MEDIA("MIXED MEDIA"),
-    DIGITAL_PAINTING("DIGITAL PAINTING"),
-    GRAPHITE("GRAPHITE"),
-    CHARCOAL("CHARCOAL"),
-    COLORED_PENCIL("COLORED PENCIL"),
-    PASTEL("PASTEL"),
-    INK("INK"),
-    MARKER("MARKER"),
-    CONTE_CRAYON("CONTE CRAYON"),
-    SGRAFFITO("SGRAFFITO"),
-    AIRBRUSHING("AIRBRUSHING"),
-    POINTILLISM("POINTILLISM"),
-    GLAZING("GLAZING"),
-    IMPASTO("IMPASTO"),
-    DRY_BRUSH("DRY BRUSH"),
-    UNDERPAINTING("UNDERPAINTING"),
-    ALLA_PRIMA("ALLA PRIMA"),
-    GRISAILLE("GRISAILLE"),
-    DRIP_PAINTING("DRIP PAINTING"),
-    STIPPLING("STIPPLING"),
-    COLLAGE("COLLAGE"),
-    SCUMBLING("SCUMBLING"),
-    TROMPE_LŒIL("TROMPE-L'ŒIL"),
-    PALETTE_KNIFE_PAINTING("PALETTE KNIFE PAINTING"),
-    CROSS_HATCHING("CROSS-HATCHING"),
-    SMUDGING("SMUDGING"),
-    CONTINUOUS_LINE_DRAWING("CONTINUOUS LINE DRAWING"),
-    DOODLING("DOODLING"),
-    CALLIGRAPHY("CALLIGRAPHY"),
-    LITHOGRAPHY("LITHOGRAPHY"),
-    SCRIBBLING("SCRIBBLING"),
-    HATCHING("HATCHING"),
-    BLENDING("BLENDING");
+    OIL("Oil"),
+    ACRYLIC("Acrylic"),
+    WATERCOLOR("Watercolor"),
+    GOUACHE("Gouache"),
+    ENCAUSTIC("Encaustic"),
+    TEMPERA("Tempera"),
+    FRESCO("Fresco"),
+    SPRAY_PAINT("Spray Paint"),
+    INK_WASH("Ink Wash"),
+    MIXED_MEDIA("Mixed Media"),
+    DIGITAL_PAINTING("Digital Painting"),
+    GRAPHITE("Graphite"),
+    CHARCOAL("Charcoal"),
+    COLORED_PENCIL("Colored Pencil"),
+    PASTEL("Pastel"),
+    INK("Ink"),
+    MARKER("Marker"),
+    CONTE_CRAYON("Conte Crayon"),
+    SGRAFFITO("Sgraffito"),
+    AIRBRUSHING("Airbrushing"),
+    POINTILLISM("Pointillism"),
+    GLAZING("Glazing"),
+    IMPASTO("Impasto"),
+    DRY_BRUSH("Dry Brush"),
+    UNDERPAINTING("Underpainting"),
+    ALLA_PRIMA("Alla Prima"),
+    GRISAILLE("Grisaille"),
+    DRIP_PAINTING("Drip Painting"),
+    STIPPLING("Stippling"),
+    COLLAGE("Collage"),
+    SCUMBLING("Scumbling"),
+    TROMPE_LŒIL("Trompe-l'œil"),
+    PALETTE_KNIFE_PAINTING("Palette Knife Painting"),
+    CROSS_HATCHING("Cross-Hatching"),
+    SMUDGING("Smudging"),
+    CONTINUOUS_LINE_DRAWING("Continuous Line Drawing"),
+    DOODLING("Doodling"),
+    CALLIGRAPHY("Calligraphy"),
+    LITHOGRAPHY("Lithography"),
+    SCRIBBLING("Scribbling"),
+    HATCHING("Hatching"),
+    BLENDING("Blending");
 
-    private final String techniqueName;
+    private final String displayName;
 
     /**
-     * Creates a technique with a display-friendly name.
+     * Constructs a technique with a display-friendly name.
      *
-     * @param techniqueName readable name of the technique
+     * @param displayName readable technique name
      */
-    Technique(String techniqueName) {
-        this.techniqueName = techniqueName;
+    Technique(String displayName) {
+        this.displayName = displayName;
     }
 
     /**
-     * Returns the display name of the technique.
+     * Returns the display-friendly technique name.
      *
      * @return technique name
      */
-    public String getTechniqueName() {
-        return techniqueName;
+    @Override
+    public String toString() {
+        return displayName;
     }
 }

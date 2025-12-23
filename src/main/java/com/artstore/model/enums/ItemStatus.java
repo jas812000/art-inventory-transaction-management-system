@@ -1,7 +1,3 @@
-/*
- * This file belongs to the ArtInventoryTransaction application.
- * It defines availability states for inventory items.
- */
 package com.artstore.model.enums;
 
 /**
@@ -9,27 +5,28 @@ package com.artstore.model.enums;
  */
 public enum ItemStatus {
 
-    RESERVED("reserved"),
-    AVAILABLE("available"),
-    SOLD("sold");
+    AVAILABLE("Available"),
+    RESERVED("Reserved"),
+    SOLD("Sold");
 
-    private final String itemStatusName;
+    private final String displayName;
 
     /**
-     * Creates an item status with a display-friendly name.
+     * Constructs an item status with a display-friendly name.
      *
-     * @param itemStatusName readable status name
+     * @param displayName readable status name
      */
-    ItemStatus(String itemStatusName) {
-        this.itemStatusName = itemStatusName;
+    ItemStatus(String displayName) {
+        this.displayName = displayName;
     }
 
     /**
-     * Returns the display name of the item status.
+     * Returns the display-friendly item status name.
      *
      * @return item status name
      */
-    public String getItemStatusName() {
-        return itemStatusName;
+    @Override
+    public String toString() {
+        return displayName;
     }
 }

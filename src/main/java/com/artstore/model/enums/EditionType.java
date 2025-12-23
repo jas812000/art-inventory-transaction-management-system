@@ -1,7 +1,3 @@
-/*
- * This file belongs to the ArtInventoryTransaction application.
- * It defines edition types for printed artwork.
- */
 package com.artstore.model.enums;
 
 /**
@@ -9,29 +5,28 @@ package com.artstore.model.enums;
  */
 public enum EditionType {
 
-    CANVAS("CANVAS"),
-    PAPER("PAPER"),
-    PHOTO("PHOTO");
+    CANVAS("Canvas"),
+    PAPER("Paper"),
+    PHOTO("Photo");
 
-    private final String editionTypeName;
+    private final String displayName;
 
     /**
-     * Creates an edition type with a display-friendly name.
+     * Constructs an edition type with a display-friendly name.
      *
-     * @param editionTypeName readable edition type name
+     * @param displayName readable edition type name
      */
-    EditionType(String editionTypeName) {
-        this.editionTypeName = editionTypeName;
+    EditionType(String displayName) {
+        this.displayName = displayName;
     }
 
     /**
-     * Returns the display name of the edition type.
+     * Returns the display-friendly edition type name.
      *
      * @return edition type name
      */
-    public String getEditionTypeName() {
-        return editionTypeName;
+    @Override
+    public String toString() {
+        return displayName;
     }
 }
-
-
