@@ -9,6 +9,13 @@ import com.artstore.utilities.CsvUtil;
 
 import java.util.List;
 
+/**
+ * Represents a painting artwork with size-based pricing.
+ * <p>
+ * Paintings apply a surcharge based on area (height × width),
+ * in addition to base price and shipping.
+ * </p>
+ */
 public class Painting extends Art {
 
     private final int paintingHeight;
@@ -17,6 +24,11 @@ public class Painting extends Art {
     private final Technique technique;
     private final Category category;
 
+    /**
+     * Constructs a validated {@code Painting}.
+     *
+     * @throws InvalidArtOperationException if validation fails
+     */
     public Painting(
             String artIdentification,
             double price,
@@ -34,11 +46,17 @@ public class Painting extends Art {
         super(artIdentification, price, yearCreated, title, description, author, itemStatus);
 
         if (height <= 0 || width <= 0) {
-            throw new InvalidArtOperationException("Painting Creation", "Height and width must be positive integers.");
+            throw new InvalidArtOperationException(
+                    "Painting Creation",
+                    "Height and width must be positive integers."
+            );
         }
 
         if (style == null || technique == null || category == null) {
-            throw new InvalidArtOperationException("Painting Creation", "Style, Technique, and Category are required.");
+            throw new InvalidArtOperationException(
+                    "Painting Creation",
+                    "Style, Technique, and Category are required."
+            );
         }
 
         this.paintingHeight = height;
@@ -48,20 +66,28 @@ public class Painting extends Art {
         this.category = category;
     }
 
+    /** @return painting height */
     public int getHeight() { return paintingHeight; }
+
+    /** @return painting width */
     public int getWidth() { return paintingWidth; }
+
+    /** @return painting style */
     public Style getStyle() { return style; }
+
+    /** @return painting technique */
     public Technique getTechnique() { return technique; }
+
+    /** @return painting category */
     public Category getCategory() { return category; }
 
+    /** @return artwork type name */
     @Override
     public String getType() {
         return "Painting";
     }
 
-    /**
-     * CHANGE: CSV-safe serialization for text fields.
-     */
+    /** @return CSV-safe serialization */
     @Override
     public String toString() {
         return String.join(",",
@@ -82,52 +108,61 @@ public class Painting extends Art {
     }
 
     /**
-     * CHANGE: CSV-safe parsing.
-     * Painting,ID,Title,Author,Year,Description,Price,Height,Width,Style,Technique,Category,ItemStatus
+     * Parses a CSV row into a {@code Painting}.
+     *
+     * @throws InvalidArtOperationException if parsing fails
      */
     public static Painting fromString(String data) {
         List<String> parts = CsvUtil.parseLine(data);
 
         if (parts.size() < 13) {
-            throw new InvalidArtOperationException("Painting Parsing", "Invalid painting record format.");
+            throw new InvalidArtOperationException(
+                    "Painting Parsing",
+                    "Invalid painting record format."
+            );
         }
 
         try {
             return new Painting(
-                    parts.get(1),                         // ID
-                    Double.parseDouble(parts.get(6)),     // Price
-                    Integer.parseInt(parts.get(4)),       // Year
-                    parts.get(2),                         // Title
-                    parts.get(5),                         // Description
-                    parts.get(3),                         // Author
-                    ItemStatus.valueOf(parts.get(12)),    // Item Status
-                    Integer.parseInt(parts.get(7)),       // Height
-                    Integer.parseInt(parts.get(8)),       // Width
-                    Style.valueOf(parts.get(9)),          // Style
-                    Technique.valueOf(parts.get(10)),     // Technique
-                    Category.valueOf(parts.get(11))       // Category
+                    parts.get(1),
+                    Double.parseDouble(parts.get(6)),
+                    Integer.parseInt(parts.get(4)),
+                    parts.get(2),
+                    parts.get(5),
+                    parts.get(3),
+                    ItemStatus.valueOf(parts.get(12)),
+                    Integer.parseInt(parts.get(7)),
+                    Integer.parseInt(parts.get(8)),
+                    Style.valueOf(parts.get(9)),
+                    Technique.valueOf(parts.get(10)),
+                    Category.valueOf(parts.get(11))
             );
         } catch (RuntimeException ex) {
-            throw new InvalidArtOperationException("Painting Parsing", "Invalid painting record data: " + ex.getMessage());
+            throw new InvalidArtOperationException(
+                    "Painting Parsing",
+                    "Invalid painting record data: " + ex.getMessage()
+            );
         }
     }
 
+    /**
+     * Calculates the art price including size-based surcharge.
+     *
+     * @return base price plus area surcharge
+     */
     @Override
     public double calculateArtPrice() {
         int area = paintingHeight * paintingWidth;
 
-        double surcharge;
-        if (area < 100) {
-            surcharge = 5.99;
-        } else if (area <= 300) {
-            surcharge = 10.99;
-        } else {
-            surcharge = 15.99;
-        }
+        double surcharge =
+                area < 100 ? 5.99 :
+                        area <= 300 ? 10.99 :
+                                15.99;
 
         return getArtPrice() + surcharge;
     }
 
+    /** @return total price including shipping */
     @Override
     public double getTotalPrice() {
         return calculateArtPrice() + BASE_SHIPPING_COST;

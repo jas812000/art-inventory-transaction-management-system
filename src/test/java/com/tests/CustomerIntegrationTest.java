@@ -1,64 +1,67 @@
 package com.tests;
 
-import com.config.EnvironmentConfig;
-import com.artstore.core.*;
+import com.artstore.core.CustomerManager;
 import com.artstore.model.Address;
 import com.artstore.model.Customer;
 import org.junit.jupiter.api.*;
-
-import java.io.*;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
 import org.junit.jupiter.api.io.TempDir;
+
+import java.io.File;
 import java.nio.file.Files;
-import java.io.IOException;
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Integration tests for {@link CustomerManager} persistence behavior.
+ * <p>
+ * These tests verify that customer data can be correctly written to disk
+ * and reloaded using real file I/O.
+ * </p>
+ * <p>
+ * A JUnit-managed temporary directory ({@link TempDir}) is used to ensure
+ * isolation and prevent accidental modification of real application data.
+ * </p>
+ */
 public class CustomerIntegrationTest {
 
+    /**
+     * JUnit-provided temporary directory unique to each test run.
+     */
     @TempDir
     Path tempDir;
 
+    /**
+     * The customers.txt file used for persistence testing.
+     */
     private Path customerFile;
+
+    /**
+     * Customer manager under test.
+     */
     private CustomerManager customerManager;
 
+    /**
+     * Sets up an isolated customer directory and file before each test.
+     */
     @BeforeEach
-    void setUp() throws IOException {
+    void setUp() {
+        System.setProperty("runtime.mode", "test");
+        System.setProperty("test.data.dir", tempDir.toString());
 
-     	System.setProperty("runtime.mode", "test");
-	System.setProperty("test.data.dir", tempDir.toString());
+        Path customerDir = tempDir.resolve("Customer_Files");
+        try {
+            Files.createDirectories(customerDir);
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to create temp customer directory", e);
+        }
 
-	Path customerDir = tempDir.resolve("Customer_Files");
-	Files.createDirectories(customerDir);
-
-	customerFile = customerDir.resolve("customers.txt");
+        customerFile = customerDir.resolve("customers.txt");
 
         customerManager = new CustomerManager(customerFile.toString());
 
+        // Ensure directory exists and is clean
         File directory = customerFile.getParent().toFile();
-        if (!directory.exists()) {
-            if (!directory.mkdirs()) {
-                throw new IllegalStateException("Failed to create customer directory: " + directory.getAbsolutePath());
-            }
-        }
-
-    	// Prevent test from deleting the wrong directory.
-    	// Allow either the repo fixture root OR an explicit temp test root via -Dtest.data.dir.
-    	String overrideRoot = System.getProperty("test.data.dir");
-    	Path allowedRoot = (overrideRoot != null && !overrideRoot.isBlank())
-            	? Paths.get(overrideRoot)
-            	: Paths.get(System.getProperty("user.dir"), "src", "test", "resources", "test_data");
-
-    	Path dirPath = customerFile.getParent().toAbsolutePath().normalize();
-    	Path rootPath = allowedRoot.toAbsolutePath().normalize();
-
-    	if (!dirPath.startsWith(rootPath)) {
-    	    throw new IllegalStateException("Aborting! Not an allowed test directory: " + dirPath);
-    	}
-
-        // Clean test directory
         if (directory.exists()) {
             File[] files = directory.listFiles();
             if (files != null) {
@@ -68,32 +71,38 @@ public class CustomerIntegrationTest {
                     }
                 }
             }
-        } else {
-            if (!directory.mkdirs()) {
-                throw new IllegalStateException("Failed to create test directory: " + directory.getAbsolutePath());
-            }
         }
     }
 
-    // -- testSaveAndLoadCustomer --
+    /**
+     * Ensures that a customer saved via {@link CustomerManager} is
+     * persisted to disk and can be reloaded by a new manager instance.
+     */
     @Test
     void testSaveAndLoadCustomer() {
-        System.out.println("\tRunning test: testSaveAndLoadCustomer - Ensures a saved customer is properly persisted and reloaded from file");
+        System.out.println(
+                "\tRunning test: testSaveAndLoadCustomer - Ensures a saved customer is properly persisted and reloaded from file"
+        );
 
         Address address = new Address("101 Ocean Ave", "Seaville", "FL", "33445");
-        Customer customer = new Customer("Luna", "Painter", address,
-                "3216549870", "luna@artmail.com");
+        Customer customer = new Customer(
+                "Luna",
+                "Painter",
+                address,
+                "3216549870",
+                "luna@artmail.com"
+        );
 
+        // Save customer
         customerManager.addCustomer(customer);
 
-        List<Customer> loaded = customerManager.getAllCustomers();
+        // Reload using a fresh manager to verify persistence
+        CustomerManager reloadedManager = new CustomerManager(customerFile.toString());
+        reloadedManager.loadCustomersFromFile();
 
-        System.out.println("Files: " + loaded);
-
-        assertEquals(1, loaded.size(), "One customer should be loaded");
-        System.out.println("\t\tPassed: One customer successfully loaded from file");
-
-        Customer loadedCustomer = loaded.get(0);
+        Customer loadedCustomer = reloadedManager.getCustomerByEmail("luna@artmail.com");
+        assertNotNull(loadedCustomer, "Customer should be reloadable by email after saving");
+        System.out.println("\t\tPassed: Customer successfully reloaded from file");
 
         assertEquals("Luna", loadedCustomer.getFirstName());
         System.out.println("\t\tPassed: First name matches");
@@ -108,31 +117,17 @@ public class CustomerIntegrationTest {
         System.out.println("\t\tPassed: Phone number formatted and matches");
     }
 
-    private static void copyFileIfExists(Path src, Path dest) throws IOException {
-    	if (Files.exists(src)) {
-            Files.createDirectories(dest.getParent());
-            Files.copy(src, dest, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-    	}
-    }
-
+    /**
+     * Cleans up the temporary directory after each test.
+     * <p>
+     * {@link TempDir} will also be cleaned automatically by JUnit,
+     * but this keeps the directory tidy during execution.
+     * </p>
+     */
     @AfterEach
     void tearDown() {
         File directory = customerFile.getParent().toFile();
 
-        // Prevent test from deleting wrong directory
-	String overrideRoot = System.getProperty("test.data.dir");
-	String allowedRoot = (overrideRoot != null && !overrideRoot.isBlank())
-        	? overrideRoot
-        	: System.getProperty("user.dir") + "/src/test/resources/test_data";
-
-	String dirPath = directory.getAbsolutePath().replace("\\", "/");
-	String allowed = allowedRoot.replace("\\", "/");
-
-	if (!dirPath.startsWith(allowed)) {
-    	    throw new IllegalStateException("Aborting! Not an allowed test directory: " + directory.getAbsolutePath());
-	}
-
-        // Clean test directory
         if (directory.exists()) {
             File[] files = directory.listFiles();
             if (files != null) {
@@ -141,10 +136,6 @@ public class CustomerIntegrationTest {
                         throw new IllegalStateException("Failed to delete file: " + f.getAbsolutePath());
                     }
                 }
-            }
-        } else {
-            if (!directory.mkdirs()) {
-                throw new IllegalStateException("Failed to create test directory: " + directory.getAbsolutePath());
             }
         }
     }

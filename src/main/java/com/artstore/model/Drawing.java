@@ -9,12 +9,23 @@ import com.artstore.utilities.CsvUtil;
 
 import java.util.List;
 
+/**
+ * Represents a drawing artwork.
+ * <p>
+ * Drawings have no size-based surcharge and use the base art price plus shipping.
+ * </p>
+ */
 public class Drawing extends Art {
 
     private final Style style;
     private final Technique technique;
     private final Category category;
 
+    /**
+     * Constructs a validated {@code Drawing}.
+     *
+     * @throws InvalidArtOperationException if required fields are missing
+     */
     public Drawing(
             String artIdentification,
             double price,
@@ -41,19 +52,22 @@ public class Drawing extends Art {
         this.category = category;
     }
 
+    /** @return drawing style */
     public Style getStyle() { return style; }
+
+    /** @return drawing technique */
     public Technique getTechnique() { return technique; }
+
+    /** @return drawing category */
     public Category getCategory() { return category; }
 
+    /** @return artwork type name */
     @Override
     public String getType() {
         return "Drawing";
     }
 
-    /**
-     * CHANGE: CSV-safe serialization.
-     * Any user-entered text fields (title/author/description) are escaped so commas don't break parsing.
-     */
+    /** @return CSV-safe serialization */
     @Override
     public String toString() {
         return String.join(",",
@@ -72,41 +86,48 @@ public class Drawing extends Art {
     }
 
     /**
-     * CHANGE: CSV-safe parsing.
-     * We no longer use split(",") because commas may appear inside quoted fields.
+     * Parses a CSV row into a {@code Drawing}.
+     *
+     * @throws InvalidArtOperationException if parsing fails
      */
     public static Drawing fromString(String data) {
         List<String> parts = CsvUtil.parseLine(data);
 
-        // Drawing,ID,Title,Author,Year,Description,Price,Style,Technique,Category,ItemStatus
         if (parts.size() < 11) {
-            throw new InvalidArtOperationException("Drawing Parsing", "Invalid drawing record format.");
+            throw new InvalidArtOperationException(
+                    "Drawing Parsing",
+                    "Invalid drawing record format."
+            );
         }
 
         try {
-            String id = parts.get(1);
-            String title = parts.get(2);
-            String author = parts.get(3);
-            int year = Integer.parseInt(parts.get(4));
-            String description = parts.get(5);
-            double price = Double.parseDouble(parts.get(6));
-
-            Style style = Style.valueOf(parts.get(7));
-            Technique technique = Technique.valueOf(parts.get(8));
-            Category category = Category.valueOf(parts.get(9));
-            ItemStatus status = ItemStatus.valueOf(parts.get(10));
-
-            return new Drawing(id, price, year, title, description, author, status, style, technique, category);
+            return new Drawing(
+                    parts.get(1),
+                    Double.parseDouble(parts.get(6)),
+                    Integer.parseInt(parts.get(4)),
+                    parts.get(2),
+                    parts.get(5),
+                    parts.get(3),
+                    ItemStatus.valueOf(parts.get(10)),
+                    Style.valueOf(parts.get(7)),
+                    Technique.valueOf(parts.get(8)),
+                    Category.valueOf(parts.get(9))
+            );
         } catch (RuntimeException ex) {
-            throw new InvalidArtOperationException("Drawing Parsing", "Invalid drawing record data: " + ex.getMessage());
+            throw new InvalidArtOperationException(
+                    "Drawing Parsing",
+                    "Invalid drawing record data: " + ex.getMessage()
+            );
         }
     }
 
+    /** @return base art price */
     @Override
     public double calculateArtPrice() {
         return getArtPrice();
     }
 
+    /** @return total price including shipping */
     @Override
     public double getTotalPrice() {
         return calculateArtPrice() + BASE_SHIPPING_COST;

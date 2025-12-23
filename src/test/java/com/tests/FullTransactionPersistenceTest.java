@@ -1,6 +1,5 @@
 package com.tests;
 
-import com.config.EnvironmentConfig;
 import com.artstore.core.ArtInventoryManager;
 import com.artstore.core.TransactionManager;
 import com.artstore.model.*;
@@ -8,187 +7,275 @@ import com.artstore.model.enums.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.Files;
-import java.io.IOException;
-import java.util.stream.Stream;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Integration tests for full transaction persistence and recovery.
+ * <p>
+ * These tests validate that completed transactions can be saved to disk and
+ * restored with all critical data intact.
+ * </p>
+ * <p>
+ * Test isolation: all persistence is directed to a JUnit-managed {@link TempDir}.
+ * </p>
+ */
 class FullTransactionPersistenceTest {
 
+    /**
+     * JUnit-managed temporary directory for test isolation.
+     */
     @TempDir
     static Path tempDir;
 
-    private static Path transactionFile;
+    /**
+     * Base directory used by {@link TransactionManager} to persist CSV files.
+     * <p>
+     * The manager writes:
+     * <ul>
+     *   <li>{@code transactions.csv}</li>
+     *   <li>{@code transaction_items.csv}</li>
+     * </ul>
+     * inside this directory.
+     * </p>
+     */
+    private static Path transactionDir;
 
+    /**
+     * Sets up a temporary test data directory and copies seed data before all tests.
+     *
+     * @throws IOException if test data setup fails
+     */
     @BeforeAll
     static void setupTempDataDir() throws IOException {
-    	System.setProperty("runtime.mode", "test");
-    	System.setProperty("test.data.dir", tempDir.toString());
+        System.setProperty("runtime.mode", "test");
+        System.setProperty("test.data.dir", tempDir.toString());
 
-    	// Copy seed test_data into tempDir so tests can write without mutating repo fixtures
-    	Path seedRoot = Paths.get(System.getProperty("user.dir"), "src", "test", "resources", "test_data");
-    	copyDirectory(seedRoot, tempDir);
+        // Copy seed test data into the temp directory (if your app expects fixtures there)
+        Path seedRoot = Paths.get(System.getProperty("user.dir"), "src", "test", "resources", "test_data");
+        copyDirectory(seedRoot, tempDir);
 
-    	transactionFile = Paths.get(EnvironmentConfig.getTransactionDirectory(), "transactions.txt");
+        // IMPORTANT: TransactionManager expects a base directory, not a file path.
+        // Keep it inside tempDir for full isolation.
+        transactionDir = tempDir.resolve("Art_Transaction_Files");
+        Files.createDirectories(transactionDir);
 
-    	System.out.println("=== FullTransactionPersistenceTest using temp test.data.dir: " + tempDir + " ===");
+        System.out.println("=== FullTransactionPersistenceTest using tempDir: " + tempDir + " ===");
+        System.out.println("=== Transaction CSV dir: " + transactionDir + " ===");
     }
 
+    /**
+     * Ensures a clean transactions persistence state before each test by deleting the CSV files.
+     */
     @BeforeEach
-    void resetFile() {
-        File file = transactionFile.toFile();
-        if (file.exists() && !file.delete()) {
-            throw new IllegalStateException("Could not delete transaction file before test: " + file.getAbsolutePath());
+    void resetFiles() {
+        Path transactionsCsv = transactionDir.resolve("transactions.csv");
+        Path itemsCsv = transactionDir.resolve("transaction_items.csv");
+
+        try {
+            Files.deleteIfExists(transactionsCsv);
+            Files.deleteIfExists(itemsCsv);
+        } catch (IOException e) {
+            throw new IllegalStateException("Could not reset transaction CSV files", e);
         }
     }
 
-    // --- testFullTransactionPersistence ---
+    /**
+     * Validates persistence and recovery of a completed transaction with a single art item.
+     */
     @Test
     void testFullTransactionPersistence() {
-        System.out.println("\tRunning test: testFullTransactionPersistence - Validates full persistence and" +
-                " recovery of a completed transaction");
+        System.out.println("\tRunning test: testFullTransactionPersistence - Single art item");
 
-        ArtInventoryManager inventoryManager = new ArtInventoryManager();
-        //Path transactionFilePath = Paths.get("src/test/java/data/Test_Transaction_Files/transactions.txt");
-        Path transactionFilePath = transactionFile;
+        ArtInventoryManager inventoryManager = createInventoryManager();
 
-        Address address = new Address("404 Canvas Way", "Brushville", "TX", "75001");
-        Customer customer = new Customer("Eva", "Brush", address, "5551234567",
-                "eva@studio.com");
+        Address address = createTestAddress();
+        Customer customer = createTestCustomer(address);
 
-        Art art = new Print("9998887776", 85.00, 2023, "Shadow Lines",
-                "Minimalist piece", "E. Ink", ItemStatus.AVAILABLE, EditionType.PAPER,
-                Category.STILL_LIFE);
+        Art art = createTestPrint();
 
         Transaction transaction = new Transaction("TXN-9999", customer, List.of(art));
         transaction.completeTransaction();
 
-        TransactionManager manager = new TransactionManager(inventoryManager, transactionFilePath);
+        TransactionManager manager = createTransactionManager(inventoryManager, transactionDir);
         manager.addTransaction(transaction);
         manager.saveTransactionsToFile();
         System.out.println("\t\tPassed: Transaction saved to file");
 
-        TransactionManager loadedManager = new TransactionManager(inventoryManager, transactionFilePath);
+        TransactionManager loadedManager = createTransactionManager(inventoryManager, transactionDir);
         loadedManager.loadTransactionsFromFile();
         System.out.println("\t\tPassed: Transactions loaded from file");
 
-        List<Transaction> result = loadedManager.getTransactions("TXN-9999", null,
-                null, null, null);
-        assertFalse(result.isEmpty());
+        List<Transaction> result = loadedManager.getTransactions("TXN-9999", null, null, null, null);
+        assertFalse(result.isEmpty(), "Expected persisted transaction to be loaded");
         Transaction loaded = result.get(0);
 
-        assertNotNull(loaded);
-        System.out.println("\t\tPassed: Loaded transaction is not null");
-
         assertEquals("TXN-9999", loaded.getTransactionId());
-        System.out.println("\t\tPassed: Transaction ID matches");
-
         assertEquals("Eva", loaded.getCustomer().getFirstName());
-        System.out.println("\t\tPassed: Customer first name matches");
-
         assertEquals(1, loaded.getArtItems().size());
-        System.out.println("\t\tPassed: Correct number of art items loaded");
-
         assertEquals(TransactionStatus.COMPLETED, loaded.getStatus());
-        System.out.println("\t\tPassed: Transaction marked as completed");
-
         assertEquals(LocalDate.now(), loaded.getTransactionDate());
-        System.out.println("\t\tPassed: Transaction date matches current date");
-
         assertTrue(loaded.getArtItems().get(0).getTitle().contains("Shadow Lines"));
-        System.out.println("\t\tPassed: Art title matches expected value");
     }
 
-    // --- testFullTransactionPersistenceWithMultipleArtItems ---
+    /**
+     * Validates persistence and recovery of a completed transaction with multiple art items.
+     */
     @Test
     void testFullTransactionPersistenceWithMultipleArtItems() {
-        System.out.println("\tRunning test: testFullTransactionPersistenceWithMultipleArtItems - Validates full " +
-                "persistence and recovery of a completed transaction with multiple art items");
+        System.out.println("\tRunning test: testFullTransactionPersistenceWithMultipleArtItems");
 
-        ArtInventoryManager inventoryManager = new ArtInventoryManager();
-        //Path transactionFilePath = Paths.get("src/test/java/data/Test_Transaction_Files/transactions.txt");
-        Path transactionFilePath = transactionFile;
+        ArtInventoryManager inventoryManager = createInventoryManager();
 
-        Address address = new Address("404 Canvas Way", "Brushville", "TX", "75001");
-        Customer customer = new Customer("Eva", "Brush", address, "5551234567",
-                "eva@studio.com");
+        Address address = createTestAddress();
+        Customer customer = createTestCustomer(address);
 
-        Art art1 = new Print("9998887776", 85.00, 2023, "Shadow Lines",
-                "Minimalist piece", "E. Ink", ItemStatus.AVAILABLE, EditionType.PAPER,
-                Category.STILL_LIFE);
-
-        Art art2 = new Painting("1112223337", 150.00, 2024, "Vibrant Colors",
-                "Oil on canvas", "M. Artist", ItemStatus.AVAILABLE,
-                20, 25, Style.ABSTRACT, Technique.OIL, Category.LANDSCAPE);
+        Art art1 = createTestPrint();
+        Art art2 = createTestPainting();
 
         Transaction transaction = new Transaction("TXN-10000", customer, List.of(art1, art2));
         transaction.completeTransaction();
 
-        TransactionManager manager = new TransactionManager(inventoryManager, transactionFilePath);
+        TransactionManager manager = createTransactionManager(inventoryManager, transactionDir);
         manager.addTransaction(transaction);
         manager.saveTransactionsToFile();
-        System.out.println("\t\tPassed: Transaction with multiple art items saved to file");
 
-        TransactionManager loadedManager = new TransactionManager(inventoryManager, transactionFilePath);
+        TransactionManager loadedManager = createTransactionManager(inventoryManager, transactionDir);
         loadedManager.loadTransactionsFromFile();
-        System.out.println("\t\tPassed: Transactions loaded from file");
 
-        List<Transaction> result = loadedManager.getTransactions("TXN-10000", null,
-                null, null, null);
-        assertFalse(result.isEmpty());
+        List<Transaction> result = loadedManager.getTransactions("TXN-10000", null, null, null, null);
+        assertFalse(result.isEmpty(), "Expected persisted transaction to be loaded");
         Transaction loaded = result.get(0);
 
-        assertNotNull(loaded);
-        System.out.println("\t\tPassed: Loaded transaction is not null");
-
         assertEquals("TXN-10000", loaded.getTransactionId());
-        System.out.println("\t\tPassed: Transaction ID matches");
-
         assertEquals("Eva", loaded.getCustomer().getFirstName());
-        System.out.println("\t\tPassed: Customer first name matches");
-
         assertEquals(2, loaded.getArtItems().size());
-        System.out.println("\t\tPassed: Correct number of art items loaded");
-
         assertEquals(TransactionStatus.COMPLETED, loaded.getStatus());
-        System.out.println("\t\tPassed: Transaction marked as completed");
-
         assertEquals(LocalDate.now(), loaded.getTransactionDate());
-        System.out.println("\t\tPassed: Transaction date matches current date");
-
         assertTrue(loaded.getArtItems().get(0).getTitle().contains("Shadow Lines"));
-        System.out.println("\t\tPassed: Art title 1 matches expected value");
-
         assertTrue(loaded.getArtItems().get(1).getTitle().contains("Vibrant Colors"));
-        System.out.println("\t\tPassed: Art title 2 matches expected value");
     }
 
+    /**
+     * Creates a standard test address shared by multiple tests.
+     *
+     * @return a valid {@link Address} instance
+     */
+    private static Address createTestAddress() {
+        return new Address("404 Canvas Way", "Brushville", "TX", "75001");
+    }
+
+    /**
+     * Creates a standard test customer shared by multiple tests.
+     *
+     * @param address mailing address to associate with the customer
+     * @return a valid {@link Customer} instance
+     */
+    private static Customer createTestCustomer(Address address) {
+        return new Customer("Eva", "Brush", address, "5551234567", "eva@studio.com");
+    }
+
+    /**
+     * Creates a standard {@link ArtInventoryManager} for tests.
+     *
+     * @return a new {@link ArtInventoryManager}
+     */
+    private static ArtInventoryManager createInventoryManager() {
+        return new ArtInventoryManager();
+    }
+
+    /**
+     * Creates a {@link TransactionManager} configured to persist transactions to the given base directory.
+     *
+     * @param inventoryManager inventory manager used by the transaction manager
+     * @param transactionDir   base directory where CSV files are stored
+     * @return a new {@link TransactionManager}
+     */
+    private static TransactionManager createTransactionManager(
+            ArtInventoryManager inventoryManager,
+            Path transactionDir
+    ) {
+        return new TransactionManager(inventoryManager, transactionDir);
+    }
+
+    /**
+     * Creates a standard {@link Print} instance used in persistence tests.
+     *
+     * @return a valid {@link Print}
+     */
+    private static Print createTestPrint() {
+        return new Print(
+                "9998887776",
+                85.00,
+                2023,
+                "Shadow Lines",
+                "Minimalist piece",
+                "E. Ink",
+                ItemStatus.AVAILABLE,
+                EditionType.PAPER,
+                Category.STILL_LIFE
+        );
+    }
+
+    /**
+     * Creates a standard {@link Painting} instance used in persistence tests.
+     *
+     * @return a valid {@link Painting}
+     */
+    private static Painting createTestPainting() {
+        return new Painting(
+                "1112223337",
+                150.00,
+                2024,
+                "Vibrant Colors",
+                "Oil on canvas",
+                "M. Artist",
+                ItemStatus.AVAILABLE,
+                20,
+                25,
+                Style.ABSTRACT,
+                Technique.OIL,
+                Category.LANDSCAPE
+        );
+    }
+
+    /**
+     * Cleans up after all tests in this class have run.
+     */
     @AfterAll
     static void tearDown() {
         System.out.println("=== Finished FullTransactionPersistenceTest ===\n");
     }
 
+    /**
+     * Recursively copies a directory tree from {@code source} to {@code target}.
+     *
+     * @param source source directory
+     * @param target destination directory
+     * @throws IOException if directory walking fails
+     */
     private static void copyDirectory(Path source, Path target) throws IOException {
-    	try (Stream<Path> stream = Files.walk(source)) {
+        try (Stream<Path> stream = Files.walk(source)) {
             stream.forEach(src -> {
-            	try {
+                try {
                     Path dest = target.resolve(source.relativize(src).toString());
                     if (Files.isDirectory(src)) {
-                    	Files.createDirectories(dest);
+                        Files.createDirectories(dest);
                     } else {
-                    	Files.createDirectories(dest.getParent());
-                    	Files.copy(src, dest, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                        Files.createDirectories(dest.getParent());
+                        Files.copy(src, dest, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                     }
-            	} catch (IOException e) {
+                } catch (IOException e) {
                     throw new RuntimeException("Failed copying " + src, e);
-            	}
+                }
             });
-    	}
+        }
     }
 }
