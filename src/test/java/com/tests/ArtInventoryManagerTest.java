@@ -163,7 +163,7 @@ class ArtInventoryManagerTest {
                 "\tRunning test: testSaveAndLoadInventory - Verifies inventory is saved to file and accurately reloaded"
         );
 
-        Path file = Paths.get(EnvironmentConfig.getInventoryDirectory(), "inventory.txt");
+        Path file = Paths.get(EnvironmentConfig.getInventoryDirectory(), "inventory.csv");
         Files.deleteIfExists(file);
 
         ArtInventoryManager freshManager = new ArtInventoryManager();

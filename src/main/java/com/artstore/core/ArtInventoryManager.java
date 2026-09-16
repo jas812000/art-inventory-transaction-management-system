@@ -6,11 +6,10 @@
 package com.artstore.core;
 
 import com.artstore.model.Art;
+import com.artstore.exceptions.PersistenceException;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,11 +29,9 @@ import java.util.Map;
 public class ArtInventoryManager {
 
     /**
-     * Base directory used for inventory file storage.
-     * The value is resolved from the application environment configuration.
+     * Inventory file used for persistence.
      */
-    private static final String INVENTORY_DIRECTORY =
-            com.config.EnvironmentConfig.getInventoryDirectory();
+    private final Path inventoryFile;
 
     /**
      * Internal map storing all artworks indexed by their unique identification.
@@ -42,10 +39,25 @@ public class ArtInventoryManager {
     private final Map<String, Art> inventory;
 
     /**
-     * Constructs a new {@code ArtInventoryManager} with an empty inventory.
+     * Constructs a new {@code ArtInventoryManager} using the configured
+     * application inventory directory.
      */
     public ArtInventoryManager() {
+        this(Paths.get(
+                com.config.EnvironmentConfig.getInventoryDirectory(),
+                "inventory.csv"
+        ));
+    }
+
+    /**
+     * Constructs a new {@code ArtInventoryManager} using the specified
+     * inventory file.
+     *
+     * @param inventoryFile inventory file used for persistence
+     */
+    public ArtInventoryManager(Path inventoryFile) {
         this.inventory = new HashMap<>();
+        this.inventoryFile = inventoryFile;
     }
 
     /**
@@ -94,15 +106,15 @@ public class ArtInventoryManager {
      * <p>
      * Each artwork is written to a separate line using
      * {@link Art#toString()} and stored in
-     * {@code <inventoryDirectory>/inventory.txt}.
+     * {@code <inventoryDirectory>/inventory.csv}.
      * </p>
      * <p>
      * The inventory directory is created if it does not already exist.
+     * @throws PersistenceException if the inventory cannot be written
      * </p>
      */
     public void saveInventoryToFile() {
-        String filePath = INVENTORY_DIRECTORY + "/inventory.txt";
-        Path file = Paths.get(filePath);
+        Path file = inventoryFile;
         Path directoryPath = file.getParent();
 
         try {
@@ -114,14 +126,17 @@ public class ArtInventoryManager {
                 );
             }
 
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+            try (BufferedWriter writer = Files.newBufferedWriter(file)) {
                 for (Art art : inventory.values()) {
                     writer.write(art.toString());
                     writer.newLine();
                 }
             }
         } catch (IOException e) {
-            System.err.println("Failed to save inventory: " + e.getMessage());
+            throw new PersistenceException(
+                    "Save Inventory",
+                    "Failed to save inventory to file: " + e.getMessage()
+            );
         }
     }
 
@@ -135,11 +150,11 @@ public class ArtInventoryManager {
      * <p>
      * If the inventory file does not exist, the inventory is cleared
      * and remains empty.
+     * @throws PersistenceException if the inventory cannot be written
      * </p>
      */
     public void loadInventoryFromFile() {
-        String filePath = INVENTORY_DIRECTORY + "/inventory.txt";
-        Path file = Paths.get(filePath);
+        Path file = inventoryFile;
         Path directoryPath = file.getParent();
 
         if (!Files.exists(directoryPath)) {
@@ -149,9 +164,9 @@ public class ArtInventoryManager {
                         "Directory created: " + directoryPath.toAbsolutePath()
                 );
             } catch (IOException e) {
-                System.err.println(
-                        "Failed to create directory: "
-                                + directoryPath.toAbsolutePath()
+                throw new PersistenceException(
+                        "Load Inventory",
+                        "Failed to create inventory directory: " + e.getMessage()
                 );
             }
         }
@@ -164,7 +179,7 @@ public class ArtInventoryManager {
             return;
         }
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+        try (BufferedReader reader = Files.newBufferedReader(file)) {
             String line;
 
             while ((line = reader.readLine()) != null) {
@@ -176,9 +191,10 @@ public class ArtInventoryManager {
                 inventory.put(art.getArtIdentification(), art);
             }
 
-            System.out.println("Inventory loaded successfully from: " + filePath);
+            System.out.println("Inventory loaded successfully from: " + file);
         } catch (IOException e) {
-            System.err.println(
+            throw new PersistenceException(
+                    "Load Inventory",
                     "Failed to load inventory from file: " + e.getMessage()
             );
         }

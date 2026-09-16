@@ -171,29 +171,23 @@ public final class EnvironmentConfig {
     }
 
     /**
-     * Seeds sample data into a fresh runtime directory if no user data exists.
+     * Seeds any missing sample data files into the runtime directory.
      * <p>
-     * This method never overwrites existing user data.
+     * Existing user data is never overwritten.
      *
      * @param runtimeRoot application data root
      */
     private static void initializeSampleDataIfEmpty(Path runtimeRoot) {
-        Path customers = runtimeRoot.resolve("Customer_Files/customers.txt");
-        Path inventory = runtimeRoot.resolve("Art_Inventory_Files/inventory.txt");
-        Path transactions = runtimeRoot.resolve("Art_Transaction_Files/transactions.txt");
+        Path customers = runtimeRoot.resolve("Customer_Files/customers.csv");
+        Path inventory = runtimeRoot.resolve("Art_Inventory_Files/inventory.csv");
+        Path transactions = runtimeRoot.resolve("Art_Transaction_Files/transactions.csv");
+        Path transactionItems = runtimeRoot.resolve("Art_Transaction_Files/transaction_items.csv");
         Path counter = runtimeRoot.resolve("Transaction_Counter_Files/transaction_counter.txt");
 
-        boolean alreadyInitialized =
-                Files.exists(customers) ||
-                        Files.exists(inventory) ||
-                        Files.exists(transactions) ||
-                        Files.exists(counter);
-
-        if (alreadyInitialized) return;
-
-        copyResourceIfMissing("/data/Customer_Files/customers.txt", customers);
-        copyResourceIfMissing("/data/Art_Inventory_Files/inventory.txt", inventory);
-        copyResourceIfMissing("/data/Art_Transaction_Files/transactions.txt", transactions);
+        copyResourceIfMissing("/data/Customer_Files/customers.csv", customers);
+        copyResourceIfMissing("/data/Art_Inventory_Files/inventory.csv", inventory);
+        copyResourceIfMissing("/data/Art_Transaction_Files/transactions.csv", transactions);
+        copyResourceIfMissing("/data/Art_Transaction_Files/transaction_items.csv", transactionItems);
         copyResourceIfMissing("/data/Transaction_Counter_Files/transaction_counter.txt", counter);
     }
 }

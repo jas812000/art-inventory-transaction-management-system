@@ -2,128 +2,246 @@ package com.tests;
 
 import com.artstore.core.ArtInventoryManager;
 import com.artstore.core.TransactionManager;
-import com.artstore.model.*;
-import com.artstore.model.enums.*;
-import com.config.EnvironmentConfig;
-import org.junit.jupiter.api.*;
+import com.artstore.model.Address;
+import com.artstore.model.Art;
+import com.artstore.model.Customer;
+import com.artstore.model.Painting;
+import com.artstore.model.Print;
+import com.artstore.model.Transaction;
+import com.artstore.model.enums.Category;
+import com.artstore.model.enums.EditionType;
+import com.artstore.model.enums.ItemStatus;
+import com.artstore.model.enums.Style;
+import com.artstore.model.enums.Technique;
+import com.artstore.model.enums.TransactionStatus;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Integration tests for {@link Transaction} and {@link TransactionManager}.
- * <p>
- * These tests validate transaction lifecycle behavior while using a temporary
- * filesystem location to ensure test isolation.
- * </p>
+ * Integration tests for transaction lifecycle behavior and inventory persistence.
  */
 class TransactionIntegrationTest {
 
-    /**
-     * JUnit-managed temporary directory for file-based isolation.
-     */
     @TempDir
-    static Path tempDir;
+    Path tempDir;
 
-    /*
-     * Configure runtime for test isolation.
+    /**
+     * Verifies that adding a pending transaction reserves its artwork
+     * and persists the inventory state.
      */
-    @BeforeAll
-    static void setupEnvironment() {
-        System.setProperty("runtime.mode", "test");
-        System.setProperty("test.data.dir", tempDir.toString());
+    @Test
+    void testAddPendingTransactionReservesAndPersistsArt() {
+        Path inventoryFile = tempDir.resolve("inventory.csv");
+        ArtInventoryManager inventoryManager =
+                new ArtInventoryManager(inventoryFile);
+        TransactionManager transactionManager =
+                new TransactionManager(inventoryManager, tempDir);
 
-        System.out.println(
-                "=== TransactionIntegrationTest using temp test.data.dir: " + tempDir + " ==="
-        );
+        Art art = createSilentWhisperPrint();
+        inventoryManager.addArt(art);
+
+        Transaction transaction =
+                new Transaction("TXN-0001", createAliceCustomer(), List.of(art));
+
+        transactionManager.addTransaction(transaction);
+
+        assertEquals(ItemStatus.RESERVED, art.getItemStatus());
+        assertTrue(inventoryManager.getAllArt().contains(art));
+
+        ArtInventoryManager reloadedInventory =
+                new ArtInventoryManager(inventoryFile);
+        reloadedInventory.loadInventoryFromFile();
+
+        Art persistedArt =
+                reloadedInventory.getArtById(art.getArtIdentification());
+
+        assertNotNull(persistedArt);
+        assertEquals(ItemStatus.RESERVED, persistedArt.getItemStatus());
     }
 
     /**
-     * Verifies that a {@link Transaction} starts incomplete, can be completed,
-     * sets today's date, and calculates its total price correctly.
+     * Verifies that completing a transaction through the manager marks the
+     * transaction completed, removes sold artwork from inventory, and persists
+     * both changes.
      */
     @Test
-    void testTransactionCreationAndCompletion() {
-        Customer customer = createAliceCustomer();
+    void testCompleteTransactionUpdatesTransactionAndInventory() {
+        Path inventoryFile = tempDir.resolve("inventory.csv");
+        ArtInventoryManager inventoryManager =
+                new ArtInventoryManager(inventoryFile);
+        TransactionManager transactionManager =
+                new TransactionManager(inventoryManager, tempDir);
+
         Art art = createSilentWhisperPrint();
+        inventoryManager.addArt(art);
 
-        Transaction transaction = new Transaction("TXN-0001", customer, List.of(art));
+        Transaction transaction =
+                new Transaction("TXN-0002", createAliceCustomer(), List.of(art));
 
-        assertNotEquals(TransactionStatus.COMPLETED, transaction.getStatus());
-
-        transaction.completeTransaction();
+        transactionManager.addTransaction(transaction);
+        transactionManager.completeTransaction(transaction);
 
         assertEquals(TransactionStatus.COMPLETED, transaction.getStatus());
         assertEquals(LocalDate.now(), transaction.getTransactionDate());
-        assertEquals(art.getTotalPrice(), transaction.getTransactionPrice(), 0.001);
-    }
+        assertNull(inventoryManager.getArtById(art.getArtIdentification()));
 
-    /**
-     * Verifies a completed transaction can be added to {@link TransactionManager}
-     * and retrieved by transaction ID.
-     */
-    @Test
-    void testAddTransactionToManager() {
-        TransactionManager manager = createTransactionManager();
+        ArtInventoryManager reloadedInventory =
+                new ArtInventoryManager(inventoryFile);
+        reloadedInventory.loadInventoryFromFile();
 
-        Customer customer = createBobCustomer();
-        Art art = createEchoesPrint();
+        assertNull(reloadedInventory.getArtById(art.getArtIdentification()));
 
-        Transaction transaction = new Transaction("TXN-0002", customer, List.of(art));
-        transaction.completeTransaction();
+        TransactionManager reloadedTransactions =
+                new TransactionManager(reloadedInventory, tempDir);
+        reloadedTransactions.loadTransactionsFromFile();
 
-        manager.addTransaction(transaction);
-
-        Transaction retrieved = manager
-                .getTransactions("TXN-0002", null, null, null, null)
+        Transaction persistedTransaction = reloadedTransactions
+                .getTransactions(
+                        "TXN-0002",
+                        null,
+                        null,
+                        null,
+                        TransactionStatus.COMPLETED
+                )
                 .stream()
                 .findFirst()
                 .orElse(null);
 
-        assertNotNull(retrieved);
-        assertEquals(TransactionStatus.COMPLETED, retrieved.getStatus());
+        assertNotNull(persistedTransaction);
+        assertEquals(
+                TransactionStatus.COMPLETED,
+                persistedTransaction.getStatus()
+        );
+        assertNotNull(persistedTransaction.getTransactionDate());
     }
 
     /**
-     * Verifies that multiple completed transactions can be added and retrieved together.
+     * Verifies that removing a pending transaction releases reserved artwork
+     * and persists the restored available state.
      */
     @Test
-    void testAddMultipleTransactions() {
-        TransactionManager manager = createTransactionManager();
-        Customer customer = createBobCustomer();
+    void testRemovePendingTransactionReleasesAndPersistsArt() {
+        Path inventoryFile = tempDir.resolve("inventory.csv");
+        ArtInventoryManager inventoryManager =
+                new ArtInventoryManager(inventoryFile);
+        TransactionManager transactionManager =
+                new TransactionManager(inventoryManager, tempDir);
 
-        Transaction t1 = new Transaction("TXN-0003", customer, List.of(createEchoesPrint()));
-        Transaction t2 = new Transaction("TXN-0004", customer, List.of(createVividCanvasPainting()));
+        Art art = createEchoesPrint();
+        inventoryManager.addArt(art);
 
-        t1.completeTransaction();
-        t2.completeTransaction();
+        Transaction transaction =
+                new Transaction("TXN-0003", createBobCustomer(), List.of(art));
 
-        manager.addTransaction(t1);
-        manager.addTransaction(t2);
+        transactionManager.addTransaction(transaction);
 
-        // FIX: TransactionStatus.ALL is not a real persisted status; it will filter everything out.
-        List<Transaction> all =
-                manager.getTransactions(null, null, null, null, TransactionStatus.COMPLETED);
+        assertEquals(ItemStatus.RESERVED, art.getItemStatus());
 
-        assertEquals(2, all.size());
+        transactionManager.removeTransaction(transaction.getTransactionId());
+
+        assertEquals(ItemStatus.AVAILABLE, art.getItemStatus());
+        assertNotNull(inventoryManager.getArtById(art.getArtIdentification()));
+        assertTrue(
+                transactionManager
+                        .getTransactions(
+                                "TXN-0003",
+                                null,
+                                null,
+                                null,
+                                null
+                        )
+                        .isEmpty()
+        );
+
+        ArtInventoryManager reloadedInventory =
+                new ArtInventoryManager(inventoryFile);
+        reloadedInventory.loadInventoryFromFile();
+
+        Art persistedArt =
+                reloadedInventory.getArtById(art.getArtIdentification());
+
+        assertNotNull(persistedArt);
+        assertEquals(ItemStatus.AVAILABLE, persistedArt.getItemStatus());
     }
 
-    /* ============================================================
-       Helper / factory methods (intentional fixed test fixtures)
-       ============================================================ */
+    /**
+     * Verifies startup reconciliation restores RESERVED status when persisted
+     * inventory and a pending transaction disagree.
+     */
+    @Test
+    void testSyncArtStatusesRestoresPendingReservation() {
+        Path inventoryFile = tempDir.resolve("inventory.csv");
+        ArtInventoryManager inventoryManager =
+                new ArtInventoryManager(inventoryFile);
+        TransactionManager transactionManager =
+                new TransactionManager(inventoryManager, tempDir);
 
-    private static TransactionManager createTransactionManager() {
-        ArtInventoryManager inventoryManager = new ArtInventoryManager();
-        return new TransactionManager(inventoryManager, getTransactionDirectory());
+        Art art = createEchoesPrint();
+        inventoryManager.addArt(art);
+        inventoryManager.saveInventoryToFile();
+
+        Transaction transaction =
+                new Transaction("TXN-0004", createBobCustomer(), List.of(art));
+
+        transactionManager.addTransaction(transaction);
+
+        art.setItemStatus(ItemStatus.AVAILABLE);
+        inventoryManager.saveInventoryToFile();
+
+        transactionManager.syncArtStatuses();
+
+        assertEquals(ItemStatus.RESERVED, art.getItemStatus());
+
+        ArtInventoryManager reloadedInventory =
+                new ArtInventoryManager(inventoryFile);
+        reloadedInventory.loadInventoryFromFile();
+
+        assertEquals(
+                ItemStatus.RESERVED,
+                reloadedInventory
+                        .getArtById(art.getArtIdentification())
+                        .getItemStatus()
+        );
     }
 
-    private static Path getTransactionDirectory() {
-        return Paths.get(EnvironmentConfig.getTransactionDirectory());
+    /**
+     * Verifies startup reconciliation removes artwork that is still present
+     * in inventory but belongs to a completed transaction.
+     */
+    @Test
+    void testSyncArtStatusesRemovesCompletedTransactionArt() {
+        Path inventoryFile = tempDir.resolve("inventory.csv");
+        ArtInventoryManager inventoryManager =
+                new ArtInventoryManager(inventoryFile);
+        TransactionManager transactionManager =
+                new TransactionManager(inventoryManager, tempDir);
+
+        Art art = createVividCanvasPainting();
+        inventoryManager.addArt(art);
+
+        Transaction transaction =
+                new Transaction("TXN-0005", createBobCustomer(), List.of(art));
+
+        transaction.completeTransaction();
+        transactionManager.addTransaction(transaction);
+
+        inventoryManager.saveInventoryToFile();
+
+        transactionManager.syncArtStatuses();
+
+        assertNull(inventoryManager.getArtById(art.getArtIdentification()));
+
+        ArtInventoryManager reloadedInventory =
+                new ArtInventoryManager(inventoryFile);
+        reloadedInventory.loadInventoryFromFile();
+
+        assertNull(reloadedInventory.getArtById(art.getArtIdentification()));
     }
 
     private static Customer createAliceCustomer() {
@@ -189,13 +307,5 @@ class TransactionIntegrationTest {
                 Technique.OIL,
                 Category.GENRE
         );
-    }
-
-    /**
-     * Cleanup hook for console clarity.
-     */
-    @AfterAll
-    static void tearDown() {
-        System.out.println("=== Finished TransactionIntegrationTest ===\n");
     }
 }

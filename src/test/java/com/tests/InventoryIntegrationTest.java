@@ -6,30 +6,36 @@ import com.artstore.model.Print;
 import com.artstore.model.enums.Category;
 import com.artstore.model.enums.EditionType;
 import com.artstore.model.enums.ItemStatus;
-import com.config.EnvironmentConfig;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
-import java.io.File;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Integration tests for {@link ArtInventoryManager} persistence behavior.
  * <p>
- * These tests verify that the inventory can be saved to disk, loaded back into memory,
- * and updated through add/remove operations using file-based persistence.
+ * These tests verify that inventory can be saved to disk, loaded back into
+ * memory, and updated through add/remove operations.
  * </p>
  */
 class InventoryIntegrationTest {
 
     /**
-     * Inventory file used for persistence during tests.
+     * Temporary directory automatically managed by JUnit.
      */
-    private static final Path TEST_INVENTORY_FILE =
-            Paths.get(EnvironmentConfig.getInventoryDirectory(), "inventory.txt");
+    @TempDir
+    Path tempDir;
+
+    /**
+     * Inventory file used during each test.
+     */
+    private Path inventoryFile;
 
     /**
      * Inventory manager under test.
@@ -37,25 +43,12 @@ class InventoryIntegrationTest {
     private ArtInventoryManager inventoryManager;
 
     /**
-     * Enables test runtime mode and initializes a fresh inventory manager before each test.
+     * Initializes isolated inventory persistence before each test.
      */
     @BeforeEach
     void setUp() {
-        System.setProperty("runtime.mode", "test");
-        inventoryManager = new ArtInventoryManager();
-    }
-
-    /**
-     * Deletes the test inventory file after each test to ensure isolation.
-     */
-    @AfterEach
-    void cleanUp() {
-        File file = TEST_INVENTORY_FILE.toFile();
-        if (file.exists() && !file.delete()) {
-            throw new IllegalStateException(
-                    "Failed to delete test inventory file: " + file.getAbsolutePath()
-            );
-        }
+        inventoryFile = tempDir.resolve("inventory.csv");
+        inventoryManager = new ArtInventoryManager(inventoryFile);
     }
 
     /**
@@ -66,24 +59,39 @@ class InventoryIntegrationTest {
         System.out.println("\tRunning test: testSaveAndLoadInventory - Verifies inventory persistence");
 
         Art art = createTestPrint();
+
         inventoryManager.addArt(art);
         inventoryManager.saveInventoryToFile();
+
         System.out.println("\t\tPassed: Inventory saved to file");
 
-        ArtInventoryManager loadedManager = new ArtInventoryManager();
+        ArtInventoryManager loadedManager = new ArtInventoryManager(inventoryFile);
         loadedManager.loadInventoryFromFile();
+
         System.out.println("\t\tPassed: Inventory loaded from file");
 
         List<Art> loadedArt = loadedManager.getAllArt();
 
         assertEquals(1, loadedArt.size(), "Exactly one art piece should be loaded");
+
         System.out.println("\t\tPassed: Correct number of art pieces loaded");
 
         Art loaded = loadedArt.get(0);
-        assertEquals(art.getArtIdentification(), loaded.getArtIdentification(), "Loaded art ID should match");
+
+        assertEquals(
+                art.getArtIdentification(),
+                loaded.getArtIdentification(),
+                "Loaded art ID should match"
+        );
+
         System.out.println("\t\tPassed: Art ID matches");
 
-        assertEquals(art.getTitle(), loaded.getTitle(), "Loaded title should match");
+        assertEquals(
+                art.getTitle(),
+                loaded.getTitle(),
+                "Loaded title should match"
+        );
+
         System.out.println("\t\tPassed: Art title matches");
     }
 
@@ -95,15 +103,21 @@ class InventoryIntegrationTest {
         System.out.println("\tRunning test: testAddAndRemoveArtFromInventory - Verifies add/remove operations");
 
         Art art = createTestPrint();
+
         inventoryManager.addArt(art);
 
         List<Art> artList = inventoryManager.getAllArt();
+
         assertEquals(1, artList.size(), "Art should be added successfully");
+
         System.out.println("\t\tPassed: Art added successfully");
 
         inventoryManager.removeArt(art.getArtIdentification());
+
         artList = inventoryManager.getAllArt();
+
         assertTrue(artList.isEmpty(), "Art should be removed successfully");
+
         System.out.println("\t\tPassed: Art removed successfully");
     }
 

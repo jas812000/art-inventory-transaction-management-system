@@ -1,6 +1,6 @@
 package com.tests;
 
-import com.artstore.exceptions.InvalidTransactionException;
+import com.artstore.exceptions.InvalidInputException;
 import com.artstore.model.Address;
 import com.artstore.model.Customer;
 import org.junit.jupiter.api.*;
@@ -97,7 +97,7 @@ class CustomerTest {
 
     /**
      * Ensures that setting a {@code null} address is rejected with an
-     * {@link InvalidTransactionException}.
+     * {@link InvalidInputException}.
      */
     @Test
     void testSetAddressNullThrowsException() {
@@ -105,8 +105,8 @@ class CustomerTest {
 
         Customer customer = new Customer("Alice", "Smith", address, "1234567890", "alice@example.com");
 
-        InvalidTransactionException ex = assertThrows(
-                InvalidTransactionException.class,
+        InvalidInputException ex = assertThrows(
+                InvalidInputException.class,
                 () -> customer.setAddress(null)
         );
 

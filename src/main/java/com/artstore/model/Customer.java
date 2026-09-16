@@ -4,7 +4,7 @@
  */
 package com.artstore.model;
 
-import com.artstore.exceptions.InvalidTransactionException;
+import com.artstore.exceptions.InvalidInputException;
 import com.artstore.utilities.CsvUtil;
 import com.artstore.utilities.ValidationUtilities;
 
@@ -46,7 +46,7 @@ public class Customer {
      * @param address     customer's mailing address (required, not {@code null})
      * @param phoneNumber customer's phone number (required; validated and formatted)
      * @param email       customer's email address (required; validated)
-     * @throws InvalidTransactionException if validation fails or {@code address} is {@code null}
+     * @throws InvalidInputException if validation fails or {@code address} is {@code null}
      */
     public Customer(String firstName, String lastName, Address address, String phoneNumber, String email) {
         ValidationUtilities.validateNotBlank(firstName, "First Name");
@@ -55,7 +55,7 @@ public class Customer {
         ValidationUtilities.validateEmail(email);
 
         if (address == null) {
-            throw new InvalidTransactionException("Customer Creation", "Address is required.");
+            throw new InvalidInputException("Customer Creation", "Address is required.");
         }
 
         this.firstName = firstName;
@@ -93,7 +93,7 @@ public class Customer {
 
     public void setAddress(Address address) {
         if (address == null) {
-            throw new InvalidTransactionException("Customer Update", "Address cannot be null.");
+            throw new InvalidInputException("Customer Update", "Address cannot be null.");
         }
         this.address = address;
     }
@@ -125,13 +125,13 @@ public class Customer {
      *
      * @param data serialized customer CSV row
      * @return reconstructed customer
-     * @throws InvalidTransactionException if required fields are missing/invalid
+     * @throws InvalidInputException if required fields are missing/invalid
      */
     public static Customer fromString(String data) {
         List<String> cols = CsvUtil.parseLine(data);
 
         if (cols.size() < 8) {
-            throw new InvalidTransactionException("Customer Parsing", "Insufficient customer data.");
+            throw new InvalidInputException("Customer Parsing", "Insufficient customer data.");
         }
 
         Address address = new Address(cols.get(2), cols.get(3), cols.get(4), cols.get(5));

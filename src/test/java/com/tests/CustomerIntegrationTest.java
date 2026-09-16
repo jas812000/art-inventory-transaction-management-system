@@ -32,7 +32,7 @@ public class CustomerIntegrationTest {
     Path tempDir;
 
     /**
-     * The customers.txt file used for persistence testing.
+     * The customers.csv file used for persistence testing.
      */
     private Path customerFile;
 
@@ -56,7 +56,7 @@ public class CustomerIntegrationTest {
             throw new IllegalStateException("Failed to create temp customer directory", e);
         }
 
-        customerFile = customerDir.resolve("customers.txt");
+        customerFile = customerDir.resolve("customers.csv");
 
         customerManager = new CustomerManager(customerFile.toString());
 

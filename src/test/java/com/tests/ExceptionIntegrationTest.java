@@ -2,6 +2,7 @@ package com.tests;
 
 import com.artstore.exceptions.InvalidArtOperationException;
 import com.artstore.exceptions.InvalidTransactionException;
+import com.artstore.exceptions.InvalidInputException;
 import com.artstore.model.Address;
 import com.artstore.model.Customer;
 import com.artstore.model.Print;
@@ -39,14 +40,14 @@ class ExceptionIntegrationTest {
 
     /**
      * Verifies that creating a {@link Customer} with a blank first name throws an
-     * {@link InvalidTransactionException}.
+     * {@link InvalidInputException}.
      */
     @Test
     void testInvalidCustomerThrowsException() {
         System.out.println("\tRunning test: testInvalidCustomerThrowsException - Blank customer first name triggers exception");
 
-        InvalidTransactionException ex = assertThrows(
-                InvalidTransactionException.class,
+        InvalidInputException ex = assertThrows(
+                InvalidInputException.class,
                 () -> new Customer(
                         "",
                         "Last",
@@ -66,14 +67,14 @@ class ExceptionIntegrationTest {
 
     /**
      * Verifies that creating an {@link Address} with an invalid state code throws an
-     * {@link InvalidTransactionException}.
+     * {@link InvalidInputException}.
      */
     @Test
     void testInvalidAddressThrowsException() {
         System.out.println("\tRunning test: testInvalidAddressThrowsException - Invalid state code triggers exception");
 
-        InvalidTransactionException ex = assertThrows(
-                InvalidTransactionException.class,
+        InvalidInputException ex = assertThrows(
+                InvalidInputException.class,
                 () -> new Address("Street", "City", "California", "90210")
         );
 

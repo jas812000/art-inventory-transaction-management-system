@@ -57,16 +57,16 @@ public class ArtInventoryTransactionGUI {
         DirectoryManager.initializeDirectories(CUSTOMER_DIRECTORY, INVENTORY_DIRECTORY, TRANSACTION_DIRECTORY);
 
         /*
-         * Define the transaction file path used by TransactionManager persistence.
+         * Define the transaction directory used by TransactionManager persistence.
          */
-        Path transactionFilePath = Paths.get(TRANSACTION_DIRECTORY, "transactions.csv");
+        Path transactionDirectory = Paths.get(TRANSACTION_DIRECTORY);
 
         /*
          * Create shared manager instances.
          */
         CustomerManager customerManager = new CustomerManager();
         ArtInventoryManager artInventoryManager = new ArtInventoryManager();
-        TransactionManager transactionManager = new TransactionManager(artInventoryManager, transactionFilePath);
+        TransactionManager transactionManager = new TransactionManager(artInventoryManager, transactionDirectory);
 
         /*
          * Create a single broadcaster instance shared across all panels.
@@ -78,6 +78,7 @@ public class ArtInventoryTransactionGUI {
          */
         artInventoryManager.loadInventoryFromFile();
         transactionManager.loadTransactionsFromFile();
+        transactionManager.syncArtStatuses();
 
         /*
          * Create a single CardLayout and main container panel for all screens.
@@ -95,7 +96,7 @@ public class ArtInventoryTransactionGUI {
                 new CreateOrderPanel(customerManager, artInventoryManager, transactionManager, broadcaster);
 
         RemoveOrderPanel removeOrderPanel =
-                new RemoveOrderPanel(transactionManager, createOrderPanel, artInventoryManager, broadcaster);
+                new RemoveOrderPanel(transactionManager, createOrderPanel, broadcaster);
 
         /*
          * Register all screens into the CardLayout container.
@@ -111,7 +112,7 @@ public class ArtInventoryTransactionGUI {
          * Pass CardLayout and mainPanel so the panel can navigate safely.
          */
         mainPanel.add(
-                new CompleteOrderPanel(cardLayout, mainPanel, artInventoryManager, transactionManager),
+                new CompleteOrderPanel(cardLayout, mainPanel, transactionManager),
                 "CompleteOrder"
         );
 

@@ -11,7 +11,6 @@ import com.artstore.gui.InventoryEventBroadcaster;
 import com.artstore.model.Art;
 import com.artstore.model.Customer;
 import com.artstore.model.Transaction;
-import com.artstore.model.enums.ItemStatus;
 import com.artstore.utilities.ArtFormatter;
 import com.artstore.utilities.InventoryChangeListener;
 import com.artstore.utilities.TransactionCounterManager;
@@ -282,10 +281,6 @@ public class CreateOrderPanel extends JPanel implements InventoryChangeListener 
             String transactionId = String.format("TXN-%03d", nextId);
 
             Transaction transaction = new Transaction(transactionId, customer, new ArrayList<>(cart));
-
-            for (Art art : transaction.getArtItems()) {
-                art.setItemStatus(ItemStatus.RESERVED);
-            }
 
             transactionManager.addTransaction(transaction);
 
