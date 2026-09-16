@@ -4,7 +4,6 @@
  */
 package com.artstore.gui.panel;
 
-import com.artstore.core.ArtInventoryManager;
 import com.artstore.core.TransactionManager;
 import com.artstore.model.Transaction;
 import com.artstore.model.enums.TransactionStatus;
@@ -49,13 +48,11 @@ public class CompleteOrderPanel extends JPanel {
      *
      * @param cardLayout         card layout controller used for navigation
      * @param mainPanel          container that holds the card layout screens
-     * @param inventoryManager   inventory manager used for persistence after completion
      * @param transactionManager transaction manager used to fetch and complete transactions
      */
     public CompleteOrderPanel(
             CardLayout cardLayout,
             JPanel mainPanel,
-            ArtInventoryManager inventoryManager,
             TransactionManager transactionManager
     ) {
         this.cardLayout = cardLayout;
@@ -203,7 +200,6 @@ public class CompleteOrderPanel extends JPanel {
         addComponentListener(new ComponentAdapter() {
             @Override
             public void componentShown(ComponentEvent e) {
-                transactionManager.syncArtStatuses();
                 updateTransactionList.run();
             }
         });
@@ -251,7 +247,6 @@ public class CompleteOrderPanel extends JPanel {
             }
 
             transactionManager.completeTransaction(transaction);
-            inventoryManager.saveInventoryToFile();
 
             updateTransactionList.run();
 

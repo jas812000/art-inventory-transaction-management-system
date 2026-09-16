@@ -1,168 +1,250 @@
 # Art Inventory & Transaction Management System
 
 ## Overview
-The Art Inventory & Transaction Management System is a Java application designed to manage an art store’s inventory, customers, and sales 
-transactions.
 
-The project emphasizes **backend engineering principles**—domain modeling, persistence, validation, configuration management, and 
-automated testing—while providing a lightweight Swing-based GUI to exercise the system end-to-end.
+The Art Inventory & Transaction Management System is a Java desktop application for managing an art store's inventory, customers, and sales transactions.
 
-Data is persisted using a **file-based storage model** (no database), with a clear separation between:
-- bundled **sample data** (for demos), and
-- **runtime data** written outside the repository.
+The project emphasizes backend software engineering through object-oriented domain modeling, persistence, validation, transaction lifecycle management, configuration, and automated testing. A lightweight Java Swing interface provides an end-to-end way to exercise the application.
+
+The application uses file-based persistence rather than a database. Bundled sample data supports demonstrations, while writable runtime data is stored outside the repository.
 
 ---
 
 ## Features
-- Manage an inventory of artwork across multiple art types:
-  - Painting, Drawing, Print, Sculpture
-- Customer management with validation and persistence
-- Transaction workflows:
-  - create, retrieve, complete, and remove transactions
-- Controlled state transitions for inventory and transactions
-- File-based persistence with deterministic loading
-- Automatic initialization of runtime data on first run
-- Fully automated JUnit 5 test suite (unit + integration tests)
+
+- Manage artwork across multiple types:
+  - Painting
+  - Drawing
+  - Print
+  - Sculpture
+- Create and maintain customer records
+- Create, retrieve, complete, and remove transactions
+- Reserve artwork while a transaction is pending
+- Remove sold artwork from active inventory when a transaction is completed
+- Restore artwork availability when a pending transaction is removed
+- Reconcile persisted inventory with transaction state during startup
+- Validate customer, artwork, and transaction input
+- Persist application data using CSV files
+- Initialize missing runtime data from bundled sample resources without overwriting existing data
+- Exercise the system through a Java Swing GUI
+- Verify domain, manager, persistence, and lifecycle behavior with JUnit 5 tests
 
 ---
 
-## Architecture Overview
-The system follows a layered, object-oriented architecture:
+## Architecture
+
+The application separates domain behavior, persistence, and presentation responsibilities.
 
 ### Core / Service Layer
+
 - `ArtInventoryManager`
 - `CustomerManager`
 - `TransactionManager`
 
-These classes encapsulate domain logic and persistence behavior and are **decoupled from the GUI**.
+The manager classes coordinate domain operations and persistence independently of the Swing interface.
 
 ### Domain Model
-- Abstract base classes with concrete specializations
-- Strong typing via enums (status, category, style, material, etc.)
-- Controlled state transitions to preserve data consistency
 
-### Persistence Strategy
-- Plain text files (one directory per domain concern)
-- Deterministic load/save behavior
-- Explicit validation and error handling during parsing
+The domain layer models artwork, customers, addresses, and transactions using:
+
+- inheritance and polymorphism for artwork types
+- enums for controlled domain values and states
+- validation at domain boundaries
+- explicit transaction lifecycle behavior
+
+### Persistence Layer
+
+Application state is persisted using CSV files organized by domain concern.
+
+Transaction persistence is separated into:
+
+- transaction header/customer data
+- transaction artwork snapshots
+
+This allows transactions to retain historical artwork information independently of the active inventory.
+
+Persistence failures are surfaced through application-specific exceptions rather than being silently ignored.
 
 ### GUI Layer
-- Java Swing GUI used only as a driver for backend functionality
-- No persistence logic inside GUI components
+
+The Java Swing interface acts as the presentation layer and delegates inventory, customer, transaction, and persistence operations to the manager classes.
 
 ---
 
-## Data & Persistence Model
+## Data & Persistence
 
-### Sample Data (Bundled)
-Sample data is included in the repository for demo purposes:
-```
+### Bundled Sample Data
+
+Sample data is stored under:
+
+```text
 src/main/resources/data/
-├── Customer_Files/customers.txt
-├── Art_Inventory_Files/inventory.txt
-├── Art_Transaction_Files/transactions.txt
-└── Transaction_Counter_Files/transaction_counter.txt
+├── Art_Inventory_Files/
+│   └── inventory.csv
+├── Art_Transaction_Files/
+│   ├── transaction_items.csv
+│   └── transactions.csv
+├── Customer_Files/
+│   └── customers.csv
+└── Transaction_Counter_Files/
+    └── transaction_counter.txt
 ```
 
----
+CSV is used for structured application data. The transaction counter remains a text file because it stores a single scalar value.
 
-## Runtime Data (Writable)
-At runtime, the application writes data **outside the repository**:
+### Runtime Data
 
-```
+Writable application data is stored outside the repository by default:
+
+```text
 ~/.artstore/data/
 ```
 
+At startup, the application checks the required runtime files individually. Any missing sample file is copied from the bundled resources while existing runtime data is preserved.
 
-On first application run:
-- If the runtime directory is empty
-- Sample data is automatically copied from the bundled resources
+### Runtime Data Structure
+
+```text
+~/.artstore/data/
+├── Art_Inventory_Files/
+│   └── inventory.csv
+├── Art_Transaction_Files/
+│   ├── transaction_items.csv
+│   └── transactions.csv
+├── Customer_Files/
+│   └── customers.csv
+└── Transaction_Counter_Files/
+    └── transaction_counter.txt
+```
 
 ---
 
 ## Configuration
-- Default runtime location: `~/.artstore/data`
-- Override with environment variable:
+
+The default runtime data location is:
+
+```text
+~/.artstore/data
+```
+
+To use another location, set the `ARTSTORE_DATA_DIR` environment variable before launching the application:
+
 ```bash
 export ARTSTORE_DATA_DIR=/path/to/custom/data
 ```
 
 ---
 
+## Prerequisites
+
+- Java 21 or later
+- Maven 3.6.3 or later
+
+The Maven build enforces these minimum versions.
+
+---
 
 ## Build & Test
-### Prerequisites
-- Java 21+
-- Maven 3.8+
 
+### Run the Test Suite
 
-### Run Tests
 ```bash
 mvn clean test
 ```
 
-### Build
+Current verified result:
+
+```text
+Tests run: 47, Failures: 0, Errors: 0, Skipped: 0
+BUILD SUCCESS
+```
+
+### Build the Application
+
 ```bash
 mvn clean package
 ```
 
+The Maven Shade Plugin produces an executable JAR:
+
+```text
+target/art-inventory.jar
+```
+
 ---
 
-## Run (GUI)
-### Recommended (Maven)
+## Run the Application
 
-Runs the application using the configured entry point:
+### Maven
+
 ```bash
 mvn -q exec:java
 ```
 
-### Runnable JAR
+### Executable JAR
 
-Build and run the shaded JAR:
 ```bash
 mvn clean package
 java -jar target/art-inventory.jar
 ```
 
-The GUI launches and loads persisted data automatically.
+The Swing interface launches and loads persisted runtime data automatically.
 
 ---
 
 ## Testing Strategy
-- Unit tests validate domain models and manager logic
-- Integration tests verify file persistence and reload behavior
-- Tests use isolated temporary directories to prevent data leakage
-- All tests pass on a clean checkout
+
+The project uses JUnit 5 for unit and integration testing.
+
+Coverage includes:
+
+- domain model behavior
+- input validation
+- inventory management
+- customer persistence
+- transaction creation and retrieval
+- transaction completion and removal
+- inventory reservation and release
+- persistence and reload behavior
+- transaction/inventory startup reconciliation
+- application-specific exception behavior
+
+Persistence integration tests use isolated temporary directories so test execution does not modify application runtime data.
 
 ---
 
-## Tools & Technologies
+## Technologies
 
-- **Language**: Java 21
-- **Build Tool**: Maven
-- **Testing**: JUnit 5
-- **GUI**: Java Swing
-- **Persistence**: Structured text files
-- **Packaging**: Maven Shade Plugin
+- **Java 21**
+- **Java Swing**
+- **Maven**
+- **JUnit 5**
+- **CSV-based file persistence**
+- **Maven Surefire Plugin**
+- **Maven Shade Plugin**
+- **Maven Enforcer Plugin**
 
 ---
 
-## Purpose
+## Engineering Focus
 
-This project serves as a backend engineering case study demonstrating:
-- Object-oriented design and inheritance
-- Clean separation of concerns
-- File-based persistence strategies
-- Environment-aware configuration
-- Defensive input validation
-- Automated testing and regression safety
-- Transitioning from prototype paths to production-ready structure
+This project demonstrates:
+
+- object-oriented design and inheritance
+- separation of concerns
+- manager/service-layer design
+- file-based persistence
+- transaction lifecycle management
+- state consistency across related domain objects
+- environment-aware runtime configuration
+- defensive validation and exception handling
+- unit and integration testing
+- executable JAR packaging
 
 ---
 
 ## License
+
 This project is licensed under the MIT License.
+
 See the [LICENSE](LICENSE) file for details.
-
----
-

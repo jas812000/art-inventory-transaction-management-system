@@ -122,14 +122,14 @@ class TransactionManagerTest {
     }
 
     /**
-     * Creates a {@link TransactionManager} using the configured transaction file location.
+     * Creates a {@link TransactionManager} using the configured transaction directory.
      *
      * @return a configured transaction manager
      */
     private static TransactionManager createTransactionManager() {
         ArtInventoryManager inventoryManager = new ArtInventoryManager();
-        Path transactionFilePath = Paths.get(EnvironmentConfig.getTransactionDirectory(), "transactions.txt");
-        return new TransactionManager(inventoryManager, transactionFilePath);
+        Path transactionDirectory = Paths.get(EnvironmentConfig.getTransactionDirectory());
+        return new TransactionManager(inventoryManager, transactionDirectory);
     }
 
     /**

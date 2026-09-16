@@ -5,7 +5,7 @@
  */
 package com.artstore.core;
 
-import com.artstore.exceptions.InvalidTransactionOperationException;
+import com.artstore.exceptions.PersistenceException;
 import com.artstore.model.*;
 import com.artstore.model.enums.ItemStatus;
 import com.artstore.model.enums.TransactionStatus;
@@ -75,7 +75,12 @@ public class TransactionManager {
      */
     public void addTransaction(Transaction transaction) {
         transactions.put(transaction.getTransactionId(), transaction);
-        markArtAsReserved(transaction);
+
+        if (transaction.isPending()) {
+            markArtAsReserved(transaction);
+            inventoryManager.saveInventoryToFile();
+        }
+
         saveTransactionsToFile();
     }
 
@@ -91,6 +96,7 @@ public class TransactionManager {
 
         if (txn != null && txn.isPending()) {
             markArtAsUnReserved(txn);
+            inventoryManager.saveInventoryToFile();
         }
 
         saveTransactionsToFile();
@@ -108,29 +114,46 @@ public class TransactionManager {
         }
 
         transaction.completeTransaction();
+
+        inventoryManager.saveInventoryToFile();
         saveTransactionsToFile();
     }
 
     /**
-     * Synchronizes inventory item statuses based on transaction state.
+     * Reconciles persisted inventory with loaded transaction state.
      * <p>
-     * Guards against redundant status writes.
+     * Artwork associated with pending transactions is marked as reserved.
+     * Artwork associated with completed transactions is removed from inventory.
+     * Inventory is persisted only when reconciliation changes its state.
      * </p>
      */
     public void syncArtStatuses() {
-        for (Transaction txn : transactions.values()) {
-            for (Art artInTxn : txn.getArtItems()) {
-                Art inventoryArt =
-                        inventoryManager.getArtById(artInTxn.getArtIdentification());
+        boolean inventoryChanged = false;
 
-                if (inventoryArt == null) continue;
+        for (Transaction transaction : transactions.values()) {
+            for (Art transactionArt : transaction.getArtItems()) {
+                Art inventoryArt = inventoryManager.getArtById(
+                        transactionArt.getArtIdentification()
+                );
 
-                if (txn.isPending() && !inventoryArt.isReserved()) {
+                if (inventoryArt == null) {
+                    continue;
+                }
+
+                if (transaction.isPending() && !inventoryArt.isReserved()) {
                     inventoryArt.setItemStatus(ItemStatus.RESERVED);
-                } else if (txn.isCompleted() && !inventoryArt.isSold()) {
-                    inventoryArt.setItemStatus(ItemStatus.SOLD);
+                    inventoryChanged = true;
+                } else if (transaction.isCompleted()) {
+                    inventoryManager.removeArt(
+                            inventoryArt.getArtIdentification()
+                    );
+                    inventoryChanged = true;
                 }
             }
+        }
+
+        if (inventoryChanged) {
+            inventoryManager.saveInventoryToFile();
         }
     }
 
@@ -154,7 +177,9 @@ public class TransactionManager {
                 .filter(t -> artIdentification == null
                         || t.getArtItems().stream()
                         .anyMatch(a -> a.getArtIdentification().equals(artIdentification)))
-                .filter(t -> status == null || t.getStatus() == status)
+                .filter(t -> status == null
+                        || status == TransactionStatus.ALL
+                        || t.getStatus() == status)
                 .collect(Collectors.toList());
     }
 
@@ -210,7 +235,10 @@ public class TransactionManager {
 
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Failed to save transactions", e);
-            throw new InvalidTransactionOperationException("Save Transactions", e.getMessage());
+            throw new PersistenceException(
+                    "Save Transactions",
+                    "Failed to save transaction data: " + e.getMessage()
+            );
         }
     }
 
@@ -247,7 +275,12 @@ public class TransactionManager {
                             .add(art);
                 }
             } catch (IOException e) {
-                logger.log(Level.SEVERE, "Failed to load transaction items", e);
+                logger.log(Level.SEVERE, "Failed to load transactions", e);
+                transactions.clear();
+                throw new PersistenceException(
+                        "Load Transactions",
+                        "Failed to load transactions from file: " + e.getMessage()
+                );
             }
         }
 
@@ -291,6 +324,10 @@ public class TransactionManager {
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Failed to load transactions", e);
             transactions.clear();
+            throw new PersistenceException(
+                    "Load Transactions",
+                    "Failed to load transactions from file: " + e.getMessage()
+            );
         }
     }
 

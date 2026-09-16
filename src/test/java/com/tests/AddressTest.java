@@ -1,6 +1,6 @@
 package com.tests;
 
-import com.artstore.exceptions.InvalidTransactionException;
+import com.artstore.exceptions.InvalidInputException;
 import com.artstore.model.Address;
 import org.junit.jupiter.api.*;
 
@@ -50,15 +50,15 @@ class AddressTest {
     }
 
     /**
-     * Ensures that an {@link InvalidTransactionException} is thrown when
+     * Ensures that an {@link InvalidInputException} is thrown when
      * an invalid (non–2-letter) state code is provided.
      */
     @Test
     void testInvalidStateThrowsException() {
         System.out.println("\tRunning test: testInvalidStateThrowsException - Ensures an exception is thrown when state format is invalid");
 
-        InvalidTransactionException ex = assertThrows(
-                InvalidTransactionException.class,
+        InvalidInputException ex = assertThrows(
+                InvalidInputException.class,
                 () -> new Address("456 Maple", "City", "Illinois", "62704")
         );
         System.out.println("\t\tPassed: Exception thrown for invalid state");
@@ -72,15 +72,15 @@ class AddressTest {
     }
 
     /**
-     * Ensures that an {@link InvalidTransactionException} is thrown when
+     * Ensures that an {@link InvalidInputException} is thrown when
      * an invalid ZIP code is provided.
      */
     @Test
     void testInvalidZipThrowsException() {
         System.out.println("\tRunning test: testInvalidZipThrowsException - Ensures an exception is thrown for invalid ZIP code");
 
-        InvalidTransactionException ex = assertThrows(
-                InvalidTransactionException.class,
+        InvalidInputException ex = assertThrows(
+                InvalidInputException.class,
                 () -> new Address("456 Maple", "City", "CA", "123") // Too short
         );
         System.out.println("\t\tPassed: Exception thrown for invalid ZIP");

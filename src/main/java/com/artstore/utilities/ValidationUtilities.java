@@ -2,8 +2,8 @@
 package com.artstore.utilities;
 
 import com.artstore.exceptions.InvalidArtOperationException;
-import com.artstore.exceptions.InvalidTransactionException;
 import com.artstore.exceptions.InvalidTransactionOperationException;
+import com.artstore.exceptions.InvalidInputException;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -33,12 +33,12 @@ public final class ValidationUtilities {
      * Validates that an email address is in standard format.
      *
      * @param email email string to validate
-     * @throws InvalidTransactionException if invalid
+     * @throws InvalidInputException if invalid
      */
     public static void validateEmail(String email) {
         if (email == null || !email.matches("^[\\w.-]+@[\\w.-]+\\.[A-Za-z]{2,}$")) {
             logger.warning("Invalid email format: " + email);
-            throw new InvalidTransactionException(
+            throw new InvalidInputException(
                     "Email Validation",
                     "Invalid email format: " + email
             );
@@ -49,11 +49,11 @@ public final class ValidationUtilities {
      * Validates a date string in yyyy-MM-dd format.
      *
      * @param date date string
-     * @throws InvalidTransactionException if invalid
+     * @throws InvalidInputException if invalid
      */
     public static void validateDate(String date) {
         if (date == null || !date.matches("^\\d{4}-\\d{2}-\\d{2}$")) {
-            throw new InvalidTransactionException(
+            throw new InvalidInputException(
                     "Date Validation",
                     "Invalid date format (expected yyyy-MM-dd): " + date
             );
@@ -62,7 +62,7 @@ public final class ValidationUtilities {
         try {
             LocalDate.parse(date, DATE_FORMAT);
         } catch (DateTimeParseException e) {
-            throw new InvalidTransactionException(
+            throw new InvalidInputException(
                     "Date Validation",
                     "Invalid date value: " + date
             );
@@ -95,7 +95,7 @@ public final class ValidationUtilities {
 
     public static void validateNotBlank(String value, String fieldName) {
         if (value == null || value.trim().isEmpty()) {
-            throw new InvalidTransactionException(
+            throw new InvalidInputException(
                     "Entry Validation",
                     fieldName + " cannot be blank."
             );
@@ -104,7 +104,7 @@ public final class ValidationUtilities {
 
     public static void validateStateCode(String state) {
         if (state == null || !state.matches("[A-Za-z]{2}")) {
-            throw new InvalidTransactionException(
+            throw new InvalidInputException(
                     "Address Validation",
                     "State must be a 2-letter code."
             );
@@ -113,7 +113,7 @@ public final class ValidationUtilities {
 
     public static void validateZipCode(String zipCode) {
         if (zipCode == null || !zipCode.matches("\\d{5}")) {
-            throw new InvalidTransactionException(
+            throw new InvalidInputException(
                     "Address Validation",
                     "ZIP Code must be a 5-digit number."
             );
@@ -128,23 +128,26 @@ public final class ValidationUtilities {
      */
     public static String validatePhoneNumber(String phoneNumber) {
         if (phoneNumber == null) {
-            throw new InvalidTransactionException(
+            throw new InvalidInputException(
                     "Phone Number Validation",
                     "Phone number cannot be null."
             );
         }
 
         String digits = phoneNumber.replaceAll("\\D", "");
+
         if (digits.length() != 10) {
-            throw new InvalidTransactionException(
+            throw new InvalidInputException(
                     "Phone Number Validation",
                     "Phone number must contain exactly 10 digits."
             );
         }
 
-        return String.format("(%s) %s-%s",
+        return String.format(
+                "(%s) %s-%s",
                 digits.substring(0, 3),
                 digits.substring(3, 6),
-                digits.substring(6));
+                digits.substring(6)
+        );
     }
 }

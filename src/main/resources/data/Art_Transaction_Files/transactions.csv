@@ -1,0 +1,9 @@
+transactionId,date,status,firstName,lastName,address,city,state,zip,phone,email,totalPrice
+TXN-018,,PENDING,Alice,Johnson,456 Oak Rd,Austin,TX,73301,5125555678,alice.johnson@email.com,0.0
+TXN-019,,PENDING,Noah,Bennett,25 Garden Street,Portland,OR,97201,5035552323,noah.bennett@email.com,0.0
+TXN-016,2025-04-01,COMPLETED,Olivia,Taylor,79 Cedar Ln,Austin,TX,73301,5125551122,olivia.taylor@email.com,312.97
+TXN-017,2025-04-01,COMPLETED,Luna,Painter,101 Ocean Ave,Seaville,FL,33445,3216549870,luna@artmail.com,196.98
+TXN-014,,PENDING,Noah,Bennett,25 Garden Street,Portland,OR,97201,5035552323,noah.bennett@email.com,0.0
+TXN-015,2025-04-01,COMPLETED,David,Lee,456 Pine Road,Seattle,WA,98101,2065556789,david.lee@email.com,360.99
+TXN-012,2025-04-01,COMPLETED,Olivia,Taylor,79 Cedar Ln,Austin,TX,73301,5125551122,olivia.taylor@email.com,543.96
+TXN-011,,PENDING,John,Smith,123 Maple St,Springfield,IL,62704,2175551234,john.smith@email.com,0.0

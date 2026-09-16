@@ -5,7 +5,7 @@
  */
 package com.artstore.core;
 
-import com.artstore.exceptions.InvalidTransactionOperationException;
+import com.artstore.exceptions.PersistenceException;
 import com.artstore.model.Customer;
 
 import java.io.BufferedWriter;
@@ -41,11 +41,10 @@ public class CustomerManager {
     /**
      * Creates a {@code CustomerManager} using the default configured customer directory.
      * <p>
-     * The customer file is expected at {@code <customerDirectory>/customers.txt}.
-     * </p>
+     * The customer file is expected at {@code <customerDirectory>/customers.csv
      */
     public CustomerManager() {
-        this(Paths.get(com.config.EnvironmentConfig.getCustomerDirectory(), "customers.txt").toString());
+        this(Paths.get(com.config.EnvironmentConfig.getCustomerDirectory(), "customers.csv").toString());
     }
 
     /**
@@ -118,7 +117,7 @@ public class CustomerManager {
      * If the file does not exist, the in-memory map is cleared and remains empty.
      * </p>
      *
-     * @throws InvalidTransactionOperationException if the file exists but cannot be read
+     * @throws PersistenceException if the file exists but cannot be read
      */
     public void loadCustomersFromFile() {
         Path filePath = Paths.get(customerFilePath);
@@ -139,7 +138,7 @@ public class CustomerManager {
 
             System.out.println("Customers loaded successfully from: " + filePath.toAbsolutePath());
         } catch (IOException e) {
-            throw new InvalidTransactionOperationException(
+            throw new PersistenceException(
                     "Load Customers",
                     "Failed to load customers from file: " + e.getMessage()
             );
@@ -153,7 +152,7 @@ public class CustomerManager {
      * Parent directories are created automatically when needed.
      * </p>
      *
-     * @throws InvalidTransactionOperationException if the file cannot be written
+     * @throws PersistenceException if the file cannot be written
      */
     public void saveCustomersToFile() {
         Path filePath = Paths.get(customerFilePath);
@@ -170,7 +169,7 @@ public class CustomerManager {
 
             System.out.println("Customers saved successfully to: " + filePath.toAbsolutePath());
         } catch (IOException e) {
-            throw new InvalidTransactionOperationException(
+            throw new PersistenceException(
                     "Save Customers",
                     "Failed to save customers to file: " + e.getMessage()
             );

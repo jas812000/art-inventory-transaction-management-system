@@ -4,7 +4,6 @@
  */
 package com.artstore.gui.panel;
 
-import com.artstore.core.ArtInventoryManager;
 import com.artstore.core.TransactionManager;
 import com.artstore.gui.InventoryEventBroadcaster;
 import com.artstore.model.Transaction;
@@ -12,6 +11,8 @@ import com.artstore.model.enums.TransactionStatus;
 import com.artstore.utilities.InventoryChangeListener;
 import com.artstore.utilities.TransactionFormatter;
 
+import java.util.HashMap;
+import java.util.Map;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
@@ -40,14 +41,14 @@ public class RemoveOrderPanel extends JPanel implements InventoryChangeListener 
     private final CreateOrderPanel createOrder;
 
     /**
-     * Inventory manager used to persist inventory changes after unreserving items.
-     */
-    private final ArtInventoryManager artInventoryManager;
-
-    /**
      * Dropdown containing labels for pending transactions.
      */
     private final JComboBox<String> transactionDropdown = new JComboBox<>();
+
+    /**
+     * Maps dropdown labels to their corresponding transactions.
+     */
+    private final Map<String, Transaction> labelToTransactionMap = new HashMap<>();
 
     /**
      * Displays details of the currently selected transaction.
@@ -71,18 +72,15 @@ public class RemoveOrderPanel extends JPanel implements InventoryChangeListener 
      *
      * @param transactionManager  manager used to retrieve and remove transactions
      * @param createOrder         create-order panel used to refresh UI after removal
-     * @param artInventoryManager manager used to persist inventory changes
      * @param broadcaster         event broadcaster used to receive inventory change notifications
      */
     public RemoveOrderPanel(
             TransactionManager transactionManager,
             CreateOrderPanel createOrder,
-            ArtInventoryManager artInventoryManager,
             InventoryEventBroadcaster broadcaster
     ) {
         this.transactionManager = transactionManager;
         this.createOrder = createOrder;
-        this.artInventoryManager = artInventoryManager;
 
         broadcaster.registerListener(this);
 
@@ -207,34 +205,23 @@ public class RemoveOrderPanel extends JPanel implements InventoryChangeListener 
 
         transactionDropdown.addActionListener(e -> {
             String selectedLabel = (String) transactionDropdown.getSelectedItem();
+            Transaction transaction = labelToTransactionMap.get(selectedLabel);
 
-            if (selectedLabel == null) {
-                transactionDetailsArea.setText("");
-                return;
-            }
-
-            String txnId = selectedLabel.split(",")[0].trim();
-            Transaction txn = transactionManager.getTransactions(txnId, null, null, null, null).stream()
-                    .findFirst()
-                    .orElse(null);
-
-            transactionDetailsArea.setText(txn != null ? TransactionFormatter.format(txn) : "");
+            transactionDetailsArea.setText(
+                    transaction != null ? TransactionFormatter.format(transaction) : ""
+            );
         });
 
         removeButton.addActionListener(e -> {
             String selectedLabel = (String) transactionDropdown.getSelectedItem();
+            Transaction transaction = labelToTransactionMap.get(selectedLabel);
 
-            if (selectedLabel == null || selectedLabel.isEmpty()) {
+            if (transaction == null) {
                 transactionDetailsArea.setText("No transaction selected.");
                 return;
             }
 
-            String txnId = selectedLabel.split(",")[0].trim();
-            Transaction txn = transactionManager.getTransactions(txnId, null, null, null, null).stream()
-                    .findFirst()
-                    .orElse(null);
-
-            if (txn == null || !txn.isPending()) {
+            if (!transaction.isPending()) {
                 transactionDetailsArea.setText("Only pending orders can be removed.");
                 return;
             }
@@ -253,13 +240,14 @@ public class RemoveOrderPanel extends JPanel implements InventoryChangeListener 
             /*
              * Remove the transaction and persist related inventory changes.
              */
-            transactionManager.removeTransaction(txn.getTransactionId());
+            transactionManager.removeTransaction(transaction.getTransactionId());
             createOrder.onInventoryChanged();
-            artInventoryManager.saveInventoryToFile();
 
             refreshDropdown.run();
 
-            transactionDetailsArea.setText("Transaction removed successfully. Art pieces have been unreserved.");
+            transactionDetailsArea.setText(
+                    "Transaction removed successfully. Art pieces have been unreserved."
+            );
             transactionDropdown.setSelectedItem(null);
         });
     }
@@ -270,13 +258,16 @@ public class RemoveOrderPanel extends JPanel implements InventoryChangeListener 
     private void populateTransactionDropdown() {
         transactionDropdown.removeAllItems();
         transactionDropdown.addItem(null);
+        labelToTransactionMap.clear();
 
-        List<Transaction> all = transactionManager.getTransactions(null, null, null, null, TransactionStatus.ALL)
+        List<Transaction> all = transactionManager
+                .getTransactions(null, null, null, null, TransactionStatus.ALL)
                 .stream()
                 .filter(Transaction::isPending)
                 .toList();
 
         String sortKey = Optional.ofNullable((String) sortBox.getSelectedItem()).orElse("");
+
         Comparator<Transaction> comparator = switch (sortKey) {
             case "Customer Name" -> Comparator.comparing(
                     t -> t.getCustomer().getFirstName() + " " + t.getCustomer().getLastName()
@@ -287,10 +278,15 @@ public class RemoveOrderPanel extends JPanel implements InventoryChangeListener 
 
         all.stream()
                 .sorted(comparator)
-                .forEach(t -> transactionDropdown.addItem(
-                        t.getTransactionId() + ", " + t.getCustomer().getFirstName() + " "
-                                + t.getCustomer().getLastName() + " (" + t.getCustomer().getEmail() + ")"
-                ));
+                .forEach(transaction -> {
+                    String label = transaction.getTransactionId() + ", "
+                            + transaction.getCustomer().getFirstName() + " "
+                            + transaction.getCustomer().getLastName() + " ("
+                            + transaction.getCustomer().getEmail() + ")";
+
+                    transactionDropdown.addItem(label);
+                    labelToTransactionMap.put(label, transaction);
+                });
 
         removeButton.setEnabled(!all.isEmpty());
     }
