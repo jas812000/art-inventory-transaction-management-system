@@ -4,11 +4,15 @@
  */
 package com.artstore.gui.panel;
 
+import com.artstore.utilities.PageResetHelper;
+import com.artstore.utilities.Resettable;
 import com.artstore.core.ArtInventoryManager;
 import com.artstore.exceptions.InvalidArtOperationException;
 import com.artstore.model.*;
 import com.artstore.model.enums.*;
 import com.artstore.gui.InventoryEventBroadcaster;
+
+import com.artstore.utilities.PageNavigationHelper;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,7 +25,7 @@ import java.time.Year;
  * and performs validation before creating and persisting new artwork entries.
  * </p>
  */
-public class AddArtPanel extends JPanel {
+public class AddArtPanel extends JPanel implements Resettable {
 
     /**
      * Common input fields used across multiple art types.
@@ -188,6 +192,17 @@ public class AddArtPanel extends JPanel {
         gbc.weighty = 1;
         add(new JScrollPane(resultArea), gbc);
 
+        // Consistent inline confirmation and status area.
+        InlineFeedbackPanel feedback = new InlineFeedbackPanel();
+        GridBagConstraints feedbackConstraints = new GridBagConstraints();
+        feedbackConstraints.gridx = 0;
+        feedbackConstraints.gridy = 20;
+        feedbackConstraints.gridwidth = 2;
+        feedbackConstraints.weightx = 1;
+        feedbackConstraints.fill = GridBagConstraints.HORIZONTAL;
+        feedbackConstraints.insets = new Insets(5, 5, 5, 5);
+        add(feedback, feedbackConstraints);
+
         /*
          * Action buttons
          */
@@ -200,9 +215,15 @@ public class AddArtPanel extends JPanel {
         returnBtn.setFont(new Font("Papyrus", Font.BOLD, 16));
         returnBtn.addActionListener(e -> {
             Container parent = getParent();
-            if (parent != null && parent.getLayout() instanceof CardLayout layout) {
-                layout.first(parent);
-            }
+            if (parent instanceof JPanel mainPanel
+        && parent.getLayout() instanceof CardLayout layout) {
+
+    PageNavigationHelper.navigate(
+            layout,
+            mainPanel,
+            "Home"
+    );
+}
         });
 
         buttonPanel.add(addBtn);
@@ -292,15 +313,22 @@ public class AddArtPanel extends JPanel {
                     default -> throw new InvalidArtOperationException("Art Type", "Unsupported art type.");
                 };
 
-                artInventoryManager.addArt(newArt);
-                artInventoryManager.saveInventoryToFile();
-                broadcaster.notifyInventoryChanged();
-
-                resultArea.setText("Art added successfully: " + newArt.getTitle() + " by " + newArt.getAuthor());
-                clearForm();
+                // Confirm inline; do not clear the form until the save succeeds.
+                feedback.confirm("Add " + newArt.getTitle() + " to inventory?", "Confirm Add", () -> {
+                    try {
+                        artInventoryManager.addArt(newArt);
+                        artInventoryManager.saveInventoryToFile();
+                        broadcaster.notifyInventoryChanged();
+                        resultArea.setText("Art: " + newArt.getTitle() + " by " + newArt.getAuthor());
+                        clearForm();
+                        feedback.success("Artwork added successfully.");
+                    } catch (RuntimeException ex) {
+                        feedback.error("Could not add artwork: " + ex.getMessage());
+                    }
+                });
 
             } catch (Exception ex) {
-                resultArea.setText("Error: " + ex.getMessage());
+                feedback.error("Error: " + ex.getMessage());
             }
         });
     }
@@ -325,4 +353,14 @@ public class AddArtPanel extends JPanel {
         categoryBox.setSelectedIndex(0);
         editionTypeBox.setSelectedIndex(0);
     }
+
+    /**
+     * Restores temporary input and selection controls
+     * when leaving this page.
+     */
+    @Override
+    public void resetPage() {
+        PageResetHelper.resetControls(this);
+    }
+
 }

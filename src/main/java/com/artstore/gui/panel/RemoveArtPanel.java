@@ -4,12 +4,16 @@
  */
 package com.artstore.gui.panel;
 
+import com.artstore.utilities.PageResetHelper;
+import com.artstore.utilities.Resettable;
 import com.artstore.core.ArtInventoryManager;
 import com.artstore.gui.InventoryEventBroadcaster;
 import com.artstore.model.Art;
 import com.artstore.model.enums.ItemStatus;
 import com.artstore.utilities.ArtFormatter;
 import com.artstore.utilities.InventoryChangeListener;
+
+import com.artstore.utilities.PageNavigationHelper;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,7 +28,7 @@ import java.util.stream.Collectors;
  * of available art pieces.
  * </p>
  */
-public class RemoveArtPanel extends JPanel implements InventoryChangeListener {
+public class RemoveArtPanel extends JPanel implements Resettable, InventoryChangeListener {
 
     /**
      * Dropdown listing available artwork.
@@ -146,6 +150,18 @@ public class RemoveArtPanel extends JPanel implements InventoryChangeListener {
         gbc.weighty = 0;
         add(buttonPanel, gbc);
 
+        /** Inline confirmation, success, and validation messages. */
+        InlineFeedbackPanel feedback = new InlineFeedbackPanel();
+
+        GridBagConstraints feedbackConstraints = new GridBagConstraints();
+        feedbackConstraints.gridx = 0;
+        feedbackConstraints.gridy = 20;
+        feedbackConstraints.gridwidth = 2;
+        feedbackConstraints.weightx = 1;
+        feedbackConstraints.fill = GridBagConstraints.HORIZONTAL;
+        feedbackConstraints.insets = new Insets(5, 5, 5, 5);
+        add(feedback, feedbackConstraints);
+
         /*
          * Return to menu
          */
@@ -153,9 +169,15 @@ public class RemoveArtPanel extends JPanel implements InventoryChangeListener {
         returnButton.setFont(new Font("Papyrus", Font.BOLD, 16));
         returnButton.addActionListener(e -> {
             Container parent = getParent();
-            if (parent != null && parent.getLayout() instanceof CardLayout layout) {
-                layout.first(parent);
-            }
+            if (parent instanceof JPanel mainPanel
+        && parent.getLayout() instanceof CardLayout layout) {
+
+    PageNavigationHelper.navigate(
+            layout,
+            mainPanel,
+            "Home"
+    );
+}
         });
 
         JPanel returnPanel = new JPanel();
@@ -222,29 +244,32 @@ public class RemoveArtPanel extends JPanel implements InventoryChangeListener {
             Art selectedArt = (Art) artDropdown.getSelectedItem();
 
             if (selectedArt == null) {
-                artDetailsArea.setText("No art selected.");
+                feedback.error("Select artwork to remove.");
                 return;
             }
 
             if (selectedArt.isSold()) {
-                artDetailsArea.setText("Sold artwork cannot be removed.");
+                feedback.error("Sold artwork cannot be removed.");
                 return;
             }
 
-            int confirm = JOptionPane.showConfirmDialog(
-                    this,
-                    "Are you sure you want to remove this art?",
-                    "Confirm Removal",
-                    JOptionPane.YES_NO_OPTION
-            );
-
-            if (confirm != JOptionPane.YES_OPTION) {
-                return;
-            }
-
-            artInventoryManager.removeArt(selectedArt.getArtIdentification());
-            broadcaster.notifyInventoryChanged();
-            artDetailsArea.setText("Art removed successfully.");
+            // Ask for confirmation inside the screen instead of opening a dialog.
+            feedback.confirm("Remove " + selectedArt.getTitle() + " from inventory?", "Confirm Removal", () -> {
+                try {
+                    if (selectedArt.isSold() || !selectedArt.isAvailable()) {
+                        feedback.error("This artwork is no longer available for removal.");
+                        refreshDropdown.run();
+                        return;
+                    }
+                    artInventoryManager.removeArt(selectedArt.getArtIdentification());
+                    broadcaster.notifyInventoryChanged();
+                    artDropdown.setSelectedItem(null);
+                    artDetailsArea.setText("");
+                    feedback.success("Artwork removed successfully.");
+                } catch (RuntimeException ex) {
+                    feedback.error("Could not remove artwork: " + ex.getMessage());
+                }
+            });
         });
 
         refreshDropdown.run();
@@ -257,6 +282,16 @@ public class RemoveArtPanel extends JPanel implements InventoryChangeListener {
     public void onInventoryChanged() {
         refreshDropdown.run();
     }
+
+    /**
+     * Restores temporary input and selection controls
+     * when leaving this page.
+     */
+    @Override
+    public void resetPage() {
+        PageResetHelper.resetControls(this);
+    }
+
 }
 
 

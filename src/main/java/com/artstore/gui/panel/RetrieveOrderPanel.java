@@ -4,6 +4,8 @@
  */
 package com.artstore.gui.panel;
 
+import com.artstore.utilities.PageResetHelper;
+import com.artstore.utilities.Resettable;
 import com.artstore.core.TransactionManager;
 import com.artstore.exceptions.InvalidArtOperationException;
 import com.artstore.exceptions.InvalidTransactionException;
@@ -13,9 +15,9 @@ import com.artstore.model.Transaction;
 import com.artstore.utilities.TransactionFormatter;
 import com.artstore.utilities.ValidationUtilities;
 
+import com.artstore.utilities.PageNavigationHelper;
+
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -30,7 +32,7 @@ import java.util.Optional;
  * or associated art ID. Results can also be sorted by multiple attributes.
  * </p>
  */
-public class RetrieveOrderPanel extends JPanel {
+public class RetrieveOrderPanel extends JPanel implements Resettable {
 
     /**
      * Constructs the {@code RetrieveOrderPanel}.
@@ -114,6 +116,18 @@ public class RetrieveOrderPanel extends JPanel {
         gbc.weighty = 1;
         add(new JScrollPane(resultArea), gbc);
 
+        /** Inline confirmation, success, and validation messages. */
+        InlineFeedbackPanel feedback = new InlineFeedbackPanel();
+
+        GridBagConstraints feedbackConstraints = new GridBagConstraints();
+        feedbackConstraints.gridx = 0;
+        feedbackConstraints.gridy = 20;
+        feedbackConstraints.gridwidth = 2;
+        feedbackConstraints.weightx = 1;
+        feedbackConstraints.fill = GridBagConstraints.HORIZONTAL;
+        feedbackConstraints.insets = new Insets(5, 5, 5, 5);
+        add(feedback, feedbackConstraints);
+
         /*
          * Return navigation
          */
@@ -121,9 +135,15 @@ public class RetrieveOrderPanel extends JPanel {
         returnButton.setFont(new Font("Papyrus", Font.BOLD, 16));
         returnButton.addActionListener(e -> {
             Container parent = getParent();
-            if (parent != null && parent.getLayout() instanceof CardLayout layout) {
-                layout.first(parent);
-            }
+            if (parent instanceof JPanel mainPanel
+        && parent.getLayout() instanceof CardLayout layout) {
+
+    PageNavigationHelper.navigate(
+            layout,
+            mainPanel,
+            "Home"
+    );
+}
         });
 
         JPanel returnPanel = new JPanel();
@@ -138,58 +158,109 @@ public class RetrieveOrderPanel extends JPanel {
          * Search execution
          */
         searchButton.addActionListener(e -> {
+            feedback.hideMessage();
             String transactionId = null;
             String customerEmail = null;
             LocalDate date = null;
             String artId = null;
 
-            // Transaction ID validation (throws if invalid)
-            if (!transactionIdField.getText().isBlank()) {
-                try {
-                    ValidationUtilities.validateTransactionId(transactionIdField.getText());
-                    transactionId = transactionIdField.getText();
-                } catch (InvalidTransactionOperationException ex) {
-                    JOptionPane.showMessageDialog(this, ex.getMessage());
-                    return;
-                }
+
+            // Partial, case-insensitive search criteria.
+            String idQuery = transactionIdField.getText().trim();
+            String emailQuery = emailField.getText().trim();
+            String artQuery = artIdField.getText().trim();
+            String dateQuery = dateField.getText().trim();
+
+            if (idQuery.isEmpty()
+                    && emailQuery.isEmpty()
+                    && artQuery.isEmpty()
+                    && dateQuery.isEmpty()) {
+                feedback.error("Enter at least one search criterion.");
+                resultArea.setText("");
+                return;
             }
 
-            // Email validation (throws if invalid)
-            if (!emailField.getText().isBlank()) {
+            if (!dateQuery.isEmpty()) {
                 try {
-                    ValidationUtilities.validateEmail(emailField.getText());
-                    customerEmail = emailField.getText();
+                    ValidationUtilities.validateDate(dateQuery);
+                    date = LocalDate.parse(
+                            dateQuery,
+                            DateTimeFormatter.ISO_LOCAL_DATE
+                    );
                 } catch (InvalidTransactionException ex) {
-                    JOptionPane.showMessageDialog(this, ex.getMessage());
+                    feedback.error(ex.getMessage());
+                    resultArea.setText("");
                     return;
                 }
             }
 
-            // Date validation (throws if invalid)
-            if (!dateField.getText().isBlank()) {
-                try {
-                    ValidationUtilities.validateDate(dateField.getText());
-                    date = LocalDate.parse(dateField.getText(), DateTimeFormatter.ISO_LOCAL_DATE);
-                } catch (InvalidTransactionException ex) {
-                    JOptionPane.showMessageDialog(this, ex.getMessage());
-                    return;
-                }
-            }
+            List<Transaction> filtered =
+                    transactionManager.getTransactions(
+                            null, null, null, null, null
+                    );
 
-            // Art ID validation (throws if invalid)
-            if (!artIdField.getText().isBlank()) {
-                try {
-                    ValidationUtilities.validateArtId(artIdField.getText());
-                    artId = artIdField.getText();
-                } catch (InvalidArtOperationException ex) {
-                    JOptionPane.showMessageDialog(this, ex.getMessage());
-                    return;
-                }
-            }
+            LocalDate requestedDate = date;
 
-            List<Transaction> filtered = transactionManager.getTransactions(
-                    transactionId, customerEmail, date, artId, null
-            );
+            filtered = filtered.stream()
+                    .filter(t -> {
+                        String formatted =
+                                TransactionFormatter.format(t);
+
+                        String formattedId =
+                                extractField(
+                                        formatted,
+                                        "Transaction ID:"
+                                );
+
+                        String formattedEmail =
+                                extractField(
+                                        formatted,
+                                        "Email:"
+                                );
+
+                        boolean idMatches =
+                                idQuery.isEmpty()
+                                || formattedId.toLowerCase(
+                                        java.util.Locale.ROOT
+                                ).contains(
+                                        idQuery.toLowerCase(
+                                                java.util.Locale.ROOT
+                                        )
+                                );
+
+                        boolean emailMatches =
+                                emailQuery.isEmpty()
+                                || formattedEmail.toLowerCase(
+                                        java.util.Locale.ROOT
+                                ).contains(
+                                        emailQuery.toLowerCase(
+                                                java.util.Locale.ROOT
+                                        )
+                                );
+
+                        boolean dateMatches =
+                                requestedDate == null
+                                || requestedDate.equals(
+                                        t.getTransactionDate()
+                                );
+
+                        boolean artMatches =
+                                artQuery.isEmpty()
+                                || containsArtId(
+                                        formatted,
+                                        artQuery
+                                );
+
+                        return idMatches
+                                && emailMatches
+                                && dateMatches
+                                && artMatches;
+                    })
+                    .collect(
+                            java.util.stream.Collectors.toCollection(
+                                    java.util.ArrayList::new
+                            )
+                    );
 
             /*
              * Sorting uses the first art item in the transaction as a representative value
@@ -252,53 +323,9 @@ public class RetrieveOrderPanel extends JPanel {
             dateField.setText("");
             artIdField.setText("");
             resultArea.setText("");
+            feedback.hideMessage();
         });
 
-        /*
-         * Disable competing fields while typing.
-         * This encourages the user to search using one primary criterion at a time.
-         */
-        transactionIdField.getDocument().addDocumentListener(
-                createFieldListener(transactionIdField, emailField, dateField, artIdField));
-        emailField.getDocument().addDocumentListener(
-                createFieldListener(emailField, transactionIdField, dateField, artIdField));
-        dateField.getDocument().addDocumentListener(
-                createFieldListener(dateField, transactionIdField, emailField, artIdField));
-        artIdField.getDocument().addDocumentListener(
-                createFieldListener(artIdField, transactionIdField, emailField, dateField));
-    }
-
-    /**
-     * Creates a document listener that disables unrelated fields while a field is active.
-     *
-     * @param currentField field currently being edited
-     * @param otherFields  fields to disable or enable
-     * @return configured document listener
-     */
-    private DocumentListener createFieldListener(JTextField currentField, JTextField... otherFields) {
-        return new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                toggle(false);
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                toggle(true);
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                toggle(true);
-            }
-
-            private void toggle(boolean enable) {
-                boolean empty = currentField.getText().isEmpty();
-                for (JTextField field : otherFields) {
-                    field.setEnabled(empty || enable);
-                }
-            }
-        };
     }
 
     /**
@@ -308,10 +335,69 @@ public class RetrieveOrderPanel extends JPanel {
      * @param transaction transaction to inspect
      * @return first art item or {@code null}
      */
+
+    private static String extractField(
+            String formatted,
+            String label
+    ) {
+        for (String line : formatted.split("\\R")) {
+            String trimmed = line.trim();
+
+            if (trimmed.startsWith(label)) {
+                return trimmed.substring(
+                        label.length()
+                ).trim();
+            }
+        }
+
+        return "";
+    }
+
+    private static boolean containsArtId(
+            String formatted,
+            String query
+    ) {
+        String normalized =
+                query.toLowerCase(java.util.Locale.ROOT);
+
+        boolean insideArt = false;
+
+        for (String line : formatted.split("\\R")) {
+            String trimmed = line.trim();
+
+            if (trimmed.matches("Art #\\d+:")) {
+                insideArt = true;
+                continue;
+            }
+
+            if (insideArt && trimmed.startsWith("ID:")) {
+                String id = trimmed.substring(3).trim();
+
+                if (id.toLowerCase(
+                        java.util.Locale.ROOT
+                ).contains(normalized)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     private static Art firstArtOrNull(Transaction transaction) {
         if (transaction == null || transaction.getArtItems() == null || transaction.getArtItems().isEmpty()) {
             return null;
         }
         return transaction.getArtItems().get(0);
     }
+
+    /**
+     * Restores temporary input and selection controls
+     * when leaving this page.
+     */
+    @Override
+    public void resetPage() {
+        PageResetHelper.resetControls(this);
+    }
+
 }

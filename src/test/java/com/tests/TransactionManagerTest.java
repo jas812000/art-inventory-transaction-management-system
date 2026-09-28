@@ -11,156 +11,470 @@ import com.artstore.model.enums.Category;
 import com.artstore.model.enums.EditionType;
 import com.artstore.model.enums.ItemStatus;
 import com.artstore.model.enums.TransactionStatus;
-import com.config.EnvironmentConfig;
-import org.junit.jupiter.api.*;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests for {@link TransactionManager}.
- * <p>
- * These tests validate core transaction manager behaviors:
- * <ul>
- *     <li>Adding and retrieving transactions</li>
- *     <li>Completing a transaction and verifying status/date</li>
- *     <li>Removing transactions</li>
- * </ul>
- * </p>
+ * Tests transaction creation, completion, cancellation,
+ * artwork removal, and inventory reservation management.
  */
 class TransactionManagerTest {
 
-    /**
-     * Transaction manager under test.
-     */
-    private TransactionManager manager;
+    @TempDir
+    Path tempDirectory;
 
-    /*
-     * Static initializer used for suite-level console output and enforcing test mode.
-     */
+    private TransactionManager manager;
+    private ArtInventoryManager inventoryManager;
+
     static {
         System.setProperty("runtime.mode", "test");
+
         System.out.println(
-                "=== TransactionManagerTest: Tests functionality for managing, querying, and removing transactions ==="
+                "=== TransactionManagerTest: Transaction Management Tests ==="
         );
     }
 
     /**
-     * Initializes the manager and seeds one transaction before each test.
+     * Creates an isolated transaction manager and registers
+     * the seed artwork in inventory before creating an order.
      */
     @BeforeEach
     void setup() {
+
         System.setProperty("runtime.mode", "test");
 
-        manager = createTransactionManager();
+        inventoryManager = new ArtInventoryManager(
+                tempDirectory.resolve("inventory.csv")
+        );
 
-        Transaction transaction = createSeedTransaction();
+        manager = new TransactionManager(
+                inventoryManager,
+                tempDirectory
+        );
+
+        Art artwork = createArtItem("1234567890");
+
+        inventoryManager.addArt(artwork);
+
+        Transaction transaction = new Transaction(
+                "TXN-0001",
+                createSeedCustomer(),
+                List.of(artwork)
+        );
+
         manager.addTransaction(transaction);
     }
 
     /**
-     * Verifies that a transaction can be added and retrieved by ID.
+     * Verifies that transactions can be created and retrieved.
      */
     @Test
     void testAddAndGetTransaction() {
-        System.out.println("\tRunning test: testAddAndGetTransaction - Verifies transaction can be added and retrieved");
 
-        List<Transaction> result = manager.getTransactions("TXN-0001", null, null, null, null);
-        assertFalse(result.isEmpty(), "Transaction should be retrievable");
+        System.out.println(
+                "\tRunning test: testAddAndGetTransaction"
+        );
 
-        Transaction retrieved = result.get(0);
-        assertNotNull(retrieved, "Retrieved transaction should not be null");
-        System.out.println("\t\tPassed: Transaction retrieved successfully");
+        List<Transaction> results = manager.getTransactions(
+                "TXN-0001",
+                null,
+                null,
+                null,
+                null
+        );
 
-        assertEquals("TXN-0001", retrieved.getTransactionId());
-        System.out.println("\t\tPassed: Transaction ID matches");
+        assertEquals(1, results.size());
+
+        Transaction transaction = results.getFirst();
+
+        assertEquals(
+                "TXN-0001",
+                transaction.getTransactionId()
+        );
+
+        assertTrue(transaction.isPending());
+
+        assertTrue(
+                inventoryManager.getArtById("1234567890")
+                        .isReserved()
+        );
+
+        System.out.println(
+                "\t\tPassed: Transaction created and artwork reserved"
+        );
     }
 
     /**
-     * Verifies transaction completion updates status and sets a transaction date.
+     * Verifies that completing a transaction updates its
+     * status and date and removes sold artwork from inventory.
      */
     @Test
     void testTransactionCompletion() {
-        System.out.println("\tRunning test: testTransactionCompletion - Verifies transaction completion logic");
+
+        System.out.println(
+                "\tRunning test: testTransactionCompletion"
+        );
 
         Transaction transaction = getSeedTransaction();
-        assertNotNull(transaction, "Transaction should exist before marking completed");
 
-        transaction.completeTransaction();
+        manager.completeTransaction(transaction);
 
-        assertEquals(TransactionStatus.COMPLETED, transaction.getStatus(), "Transaction should be marked as completed");
-        assertNotNull(transaction.getTransactionDate(), "Transaction date should be set");
+        assertEquals(
+                TransactionStatus.COMPLETED,
+                transaction.getStatus()
+        );
 
-        System.out.println("\t\tPassed: Transaction marked as completed");
+        assertNotNull(
+                transaction.getTransactionDate()
+        );
+
+        assertTrue(
+                transaction.getTransactionPrice() > 0
+        );
+
+        assertNull(
+                inventoryManager.getArtById("1234567890")
+        );
+
+        System.out.println(
+                "\t\tPassed: Transaction completed successfully"
+        );
     }
 
     /**
-     * Verifies that a transaction can be removed and is no longer retrievable.
+     * Verifies that removing a pending transaction
+     * releases its reserved artwork.
      */
     @Test
     void testRemoveTransaction() {
-        System.out.println("\tRunning test: testRemoveTransaction - Verifies transaction can be removed");
+
+        System.out.println(
+                "\tRunning test: testRemoveTransaction"
+        );
 
         manager.removeTransaction("TXN-0001");
 
-        List<Transaction> result = manager.getTransactions("TXN-0001", null, null, null, null);
-        assertTrue(result.isEmpty(), "Transaction list should be empty after removal");
+        List<Transaction> results = manager.getTransactions(
+                "TXN-0001",
+                null,
+                null,
+                null,
+                null
+        );
 
-        System.out.println("\t\tPassed: Transaction removed successfully");
+        assertTrue(results.isEmpty());
+
+        Art artwork = inventoryManager.getArtById(
+                "1234567890"
+        );
+
+        assertNotNull(artwork);
+
+        assertEquals(
+                ItemStatus.AVAILABLE,
+                artwork.getItemStatus()
+        );
+
+        System.out.println(
+                "\t\tPassed: Transaction removed and artwork released"
+        );
     }
 
     /**
-     * Retrieves the seeded transaction used by this test class.
-     *
-     * @return the seeded transaction
+     * Verifies that canceling an order removes the
+     * pending transaction and releases its artwork.
+     */
+    @Test
+    void testCancelTransaction() {
+
+        System.out.println(
+                "\tRunning test: testCancelTransaction"
+        );
+
+        manager.cancelTransaction("TXN-0001");
+
+        assertTrue(
+                manager.getTransactions(
+                        "TXN-0001",
+                        null,
+                        null,
+                        null,
+                        null
+                ).isEmpty()
+        );
+
+        Art artwork = inventoryManager.getArtById(
+                "1234567890"
+        );
+
+        assertNotNull(artwork);
+
+        assertEquals(
+                ItemStatus.AVAILABLE,
+                artwork.getItemStatus()
+        );
+
+        System.out.println(
+                "\t\tPassed: Order canceled and artwork released"
+        );
+    }
+
+    /**
+     * Verifies that individual artwork can be removed
+     * from a pending transaction containing multiple items.
+     */
+    @Test
+    void testRemoveArtFromTransaction() {
+
+        System.out.println(
+                "\tRunning test: testRemoveArtFromTransaction"
+        );
+
+        Art firstArtwork = createArtItem("2345678901");
+        Art secondArtwork = createArtItem("3456789012");
+
+        inventoryManager.addArt(firstArtwork);
+        inventoryManager.addArt(secondArtwork);
+
+        Transaction transaction = new Transaction(
+                "TXN-0002",
+                createSeedCustomer(),
+                List.of(firstArtwork, secondArtwork)
+        );
+
+        manager.addTransaction(transaction);
+
+        assertEquals(
+                2,
+                transaction.getArtItems().size()
+        );
+
+        manager.removeArtFromTransaction(
+                "TXN-0002",
+                "2345678901"
+        );
+
+        assertEquals(
+                1,
+                transaction.getArtItems().size()
+        );
+
+        assertEquals(
+                "3456789012",
+                transaction.getArtItems()
+                        .getFirst()
+                        .getArtIdentification()
+        );
+
+        assertEquals(
+                ItemStatus.AVAILABLE,
+                inventoryManager
+                        .getArtById("2345678901")
+                        .getItemStatus()
+        );
+
+        assertTrue(
+                inventoryManager
+                        .getArtById("3456789012")
+                        .isReserved()
+        );
+
+        assertTrue(transaction.isPending());
+
+        System.out.println(
+                "\t\tPassed: Artwork removed and reservation released"
+        );
+    }
+
+    /**
+     * Verifies that the final artwork cannot be removed
+     * from a pending transaction.
+     */
+    @Test
+    void testCannotRemoveFinalArtwork() {
+
+        System.out.println(
+                "\tRunning test: testCannotRemoveFinalArtwork"
+        );
+
+        assertThrows(
+                RuntimeException.class,
+                () -> manager.removeArtFromTransaction(
+                        "TXN-0001",
+                        "1234567890"
+                )
+        );
+
+        Transaction transaction = getSeedTransaction();
+
+        assertEquals(
+                1,
+                transaction.getArtItems().size()
+        );
+
+        assertTrue(
+                inventoryManager
+                        .getArtById("1234567890")
+                        .isReserved()
+        );
+
+        System.out.println(
+                "\t\tPassed: Final artwork removal prevented"
+        );
+    }
+
+    /**
+     * Verifies that completed transactions cannot
+     * be canceled.
+     */
+    @Test
+    void testCannotCancelCompletedTransaction() {
+
+        System.out.println(
+                "\tRunning test: testCannotCancelCompletedTransaction"
+        );
+
+        Transaction transaction = getSeedTransaction();
+
+        manager.completeTransaction(transaction);
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> manager.cancelTransaction("TXN-0001")
+        );
+
+        assertEquals(
+                TransactionStatus.COMPLETED,
+                getSeedTransaction().getStatus()
+        );
+
+        System.out.println(
+                "\t\tPassed: Completed transaction cannot be canceled"
+        );
+    }
+
+    /**
+     * Verifies that completed transactions cannot
+     * have artwork removed.
+     */
+    @Test
+    void testCannotModifyCompletedTransaction() {
+
+        System.out.println(
+                "\tRunning test: testCannotModifyCompletedTransaction"
+        );
+
+        Transaction transaction = getSeedTransaction();
+
+        manager.completeTransaction(transaction);
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> manager.removeArtFromTransaction(
+                        "TXN-0001",
+                        "1234567890"
+                )
+        );
+
+        assertEquals(
+                1,
+                transaction.getArtItems().size()
+        );
+
+        System.out.println(
+                "\t\tPassed: Completed transaction cannot be modified"
+        );
+    }
+
+    /**
+     * Verifies that an order cannot reserve artwork
+     * that does not exist in inventory.
+     */
+    @Test
+    void testCannotReserveMissingArtwork() {
+
+        System.out.println(
+                "\tRunning test: testCannotReserveMissingArtwork"
+        );
+
+        Art missingArtwork = createArtItem("4567890123");
+
+        Transaction transaction = new Transaction(
+                "TXN-0003",
+                createSeedCustomer(),
+                List.of(missingArtwork)
+        );
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> manager.addTransaction(transaction)
+        );
+
+        assertTrue(
+                manager.getTransactions(
+                        "TXN-0003",
+                        null,
+                        null,
+                        null,
+                        null
+                ).isEmpty()
+        );
+
+        System.out.println(
+                "\t\tPassed: Missing artwork reservation prevented"
+        );
+    }
+
+    /**
+     * Retrieves the seeded transaction.
      */
     private Transaction getSeedTransaction() {
-        return manager.getTransactions("TXN-0001", null, null, null, null).get(0);
+
+        return manager.getTransactions(
+                "TXN-0001",
+                null,
+                null,
+                null,
+                null
+        ).getFirst();
     }
 
     /**
-     * Creates a {@link TransactionManager} using the configured transaction directory.
-     *
-     * @return a configured transaction manager
-     */
-    private static TransactionManager createTransactionManager() {
-        ArtInventoryManager inventoryManager = new ArtInventoryManager();
-        Path transactionDirectory = Paths.get(EnvironmentConfig.getTransactionDirectory());
-        return new TransactionManager(inventoryManager, transactionDirectory);
-    }
-
-    /**
-     * Creates a consistent seed transaction used across these tests.
-     *
-     * @return a new {@link Transaction} instance
-     */
-    private static Transaction createSeedTransaction() {
-        Customer customer = createSeedCustomer();
-        Art artItem = createSeedArtItem();
-        return new Transaction("TXN-0001", customer, List.of(artItem));
-    }
-
-    /**
-     * Creates a customer used in seeded transactions.
-     *
-     * @return a valid {@link Customer}
+     * Creates a valid test customer.
      */
     private static Customer createSeedCustomer() {
-        Address address = new Address("123 A St", "City", "CA", "90210");
-        return new Customer("Jane", "Doe", address, "1234567890", "jane@domain.com");
+
+        Address address = new Address(
+                "123 A St",
+                "City",
+                "CA",
+                "90210"
+        );
+
+        return new Customer(
+                "Jane",
+                "Doe",
+                address,
+                "1234567890",
+                "jane@domain.com"
+        );
     }
 
     /**
-     * Creates an art item used in seeded transactions.
-     *
-     * @return a valid {@link Art} instance
+     * Creates artwork with a specified identification number.
      */
-    private static Art createSeedArtItem() {
+    private static Art createArtItem(String identification) {
+
         return new Print(
-                "1234567890",
+                identification,
                 200.0,
                 2022,
                 "Artwork",
@@ -173,10 +487,13 @@ class TransactionManagerTest {
     }
 
     /**
-     * Runs once after all tests in this class have completed.
+     * Displays the completion message for this test class.
      */
     @AfterAll
     static void tearDown() {
-        System.out.println("=== Finished TransactionManagerTest ===\n");
+
+        System.out.println(
+                "=== Finished TransactionManagerTest ===\n"
+        );
     }
 }
