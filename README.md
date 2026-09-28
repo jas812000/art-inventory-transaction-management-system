@@ -1,5 +1,26 @@
 # Art Inventory & Transaction Management System
 
+<!-- SCREENSHOT_GALLERY_START -->
+## Application Screenshots
+
+The Java Swing interface supports artwork inventory,
+customer management, and transaction workflows.
+
+| Dashboard | Inventory |
+|---|---|
+| ![Application dashboard](docs/screenshots/dashboard.png) | ![Artwork inventory](docs/screenshots/inventory.png) |
+
+| Create Order | View All Orders |
+|---|---|
+| ![Create order](docs/screenshots/create-order.png) | ![View all orders](docs/screenshots/all-orders.png) |
+
+Explore all 14 screenshots in the
+[Application Screenshot Gallery](docs/screenshots/README.md).
+
+<!-- SCREENSHOT_GALLERY_END -->
+
+---
+
 ## Overview
 
 The Art Inventory & Transaction Management System is a Java desktop application for managing an art store's inventory, customers, and sales transactions.
@@ -28,6 +49,28 @@ The application uses file-based persistence rather than a database. Bundled samp
 - Initialize missing runtime data from bundled sample resources without overwriting existing data
 - Exercise the system through a Java Swing GUI
 - Verify domain, manager, persistence, and lifecycle behavior with JUnit 5 tests
+
+---
+
+## GUI Workflow Improvements
+
+The Java Swing interface provides:
+
+- Artwork inventory management and availability tracking.
+- Customer creation and profile updates.
+- Order creation, modification, retrieval, completion,
+  and cancellation.
+- Search and sorting controls for transaction records.
+- Partial matching for supported order-search fields.
+- Confirmation dialogs and inline operation feedback.
+- Page resets when navigating between application screens.
+- Current customer contact information in order displays,
+  while retaining historical transaction records.
+
+Customer lookup for existing transactions uses email
+addresses. A permanent customer identifier would be
+needed to reliably associate historical transactions
+after a customer's email address changes.
 
 ---
 
@@ -152,10 +195,10 @@ The Maven build enforces these minimum versions.
 mvn clean test
 ```
 
-Current verified result:
+Latest verified test results:
 
 ```text
-Tests run: 47, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 53, Failures: 0, Errors: 0, Skipped: 0
 BUILD SUCCESS
 ```
 

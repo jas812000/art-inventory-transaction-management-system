@@ -1,4 +1,3 @@
-// This file is part of the ArtInventoryTransaction application, specifically the model package.
 package com.artstore.model;
 
 import com.artstore.exceptions.InvalidTransactionException;
@@ -10,17 +9,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents a transaction containing a customer and one or more purchased
+ * Represents a transaction containing a customer and one or more
  * artwork items.
  * <p>
- * A transaction begins in a pending state. When completed, its total price is
- * calculated, the completion date is recorded, and its status becomes
- * {@link TransactionStatus#COMPLETED}.
- * </p>
- * <p>
- * Transaction persistence is coordinated by
- * {@link com.artstore.core.TransactionManager}.
- * </p>
+ * Transactions begin in a pending state. Artwork can be removed
+ * while a transaction is pending, but completed transactions
+ * cannot be modified.
  */
 public class Transaction {
 
@@ -33,23 +27,32 @@ public class Transaction {
     private TransactionStatus status;
 
     /**
-     * Constructs a new Transaction object.
+     * Constructs a new pending transaction.
      *
-     * @param transactionId Unique ID for the transaction
-     * @param customer      Customer who made the purchase
-     * @param artItems      List of purchased Art objects
-     * @throws InvalidTransactionException if input data is invalid
+     * @param transactionId unique transaction identifier
+     * @param customer customer associated with the transaction
+     * @param artItems artwork included in the transaction
      */
-    public Transaction(String transactionId, Customer customer, List<Art> artItems) {
+    public Transaction(
+            String transactionId,
+            Customer customer,
+            List<Art> artItems
+    ) {
 
         ValidationUtilities.validateTransactionId(transactionId);
 
         if (customer == null) {
-            throw new InvalidTransactionException("Transaction Creation", "Customer cannot be null.");
+            throw new InvalidTransactionException(
+                    "Transaction Creation",
+                    "Customer cannot be null."
+            );
         }
 
         if (artItems == null || artItems.isEmpty()) {
-            throw new InvalidTransactionException("Transaction Creation", "At least one art item is required.");
+            throw new InvalidTransactionException(
+                    "Transaction Creation",
+                    "At least one art item is required."
+            );
         }
 
         this.transactionId = transactionId;
@@ -57,43 +60,118 @@ public class Transaction {
         this.artItems = new ArrayList<>(artItems);
 
         this.transactionDate = null;
-        this.transactionPrice = 0.0;
+        this.transactionPrice = calculateTransactionPrice();
         this.status = TransactionStatus.PENDING;
     }
 
-    // --- Getters ---
-    public String getTransactionId() { return transactionId; }
-    public Customer getCustomer() { return customer; }
-    public List<Art> getArtItems() { return new ArrayList<>(artItems); }
-    public LocalDate getTransactionDate() { return transactionDate; }
-    public double getTransactionPrice() { return transactionPrice; }
-    public TransactionStatus getStatus() { return status; }
+    // Getters
+
+    public String getTransactionId() {
+        return transactionId;
+    }
+
+    public Customer getCustomer() {
+        return customer;
+    }
+
+    public List<Art> getArtItems() {
+        return new ArrayList<>(artItems);
+    }
+
+    public LocalDate getTransactionDate() {
+        return transactionDate;
+    }
+
+    public double getTransactionPrice() {
+        return transactionPrice;
+    }
+
+    public TransactionStatus getStatus() {
+        return status;
+    }
 
     public void setStatus(TransactionStatus status) {
         this.status = status;
     }
 
-    public boolean isPending() { return status == TransactionStatus.PENDING; }
-    public boolean isCompleted() { return status == TransactionStatus.COMPLETED; }
+    public boolean isPending() {
+        return status == TransactionStatus.PENDING;
+    }
+
+    public boolean isCompleted() {
+        return status == TransactionStatus.COMPLETED;
+    }
 
     /**
-     * Calculates and returns the total price of the transaction (including shipping).
+     * Removes an artwork item from a pending transaction
+     * and recalculates the transaction total.
+     *
+     * @param artIdentification identifier of the artwork to remove
+     * @return the removed artwork
+     */
+    public Art removeArtItem(String artIdentification) {
+
+        if (!isPending()) {
+            throw new InvalidTransactionException(
+                    "Remove Artwork",
+                    "Only pending transactions can be modified."
+            );
+        }
+
+        if (artIdentification == null || artIdentification.isBlank()) {
+            throw new InvalidTransactionException(
+                    "Remove Artwork",
+                    "Select an artwork item to remove."
+            );
+        }
+
+        Art selectedArt = artItems.stream()
+                .filter(art -> art.getArtIdentification()
+                        .equals(artIdentification))
+                .findFirst()
+                .orElseThrow(() -> new InvalidTransactionException(
+                        "Remove Artwork",
+                        "The selected artwork does not belong to this transaction."
+                ));
+
+        if (artItems.size() == 1) {
+            throw new InvalidTransactionException(
+                    "Remove Artwork",
+                    "Cannot remove the final artwork. Cancel the order instead."
+            );
+        }
+
+        artItems.remove(selectedArt);
+
+        calculateTransactionPrice();
+
+        return selectedArt;
+    }
+
+    /**
+     * Calculates the transaction total, including shipping
+     * as calculated by each artwork item.
+     *
+     * @return calculated transaction total
      */
     public double calculateTransactionPrice() {
+
         this.transactionPrice = artItems.stream()
                 .mapToDouble(Art::getTotalPrice)
                 .sum();
+
         return transactionPrice;
     }
 
     /**
-     * Finalizes the transaction:
-     * - Calculates total price
-     * - Assigns the current date
-     * - Marks status completed
+     * Completes a pending transaction by calculating its
+     * final total, recording the completion date, and
+     * updating its status.
      */
     public void completeTransaction() {
+
         if (isPending()) {
+
             this.transactionPrice = calculateTransactionPrice();
             this.transactionDate = LocalDate.now();
             this.status = TransactionStatus.COMPLETED;
@@ -101,25 +179,22 @@ public class Transaction {
     }
 
     /**
-     * Restores persisted transaction state after loading from storage.
+     * Restores persisted transaction state after loading
+     * from storage.
      * <p>
-     * This method is intended <strong>only</strong> for use by persistence
-     * and infrastructure code (e.g., {@link com.artstore.core.TransactionManager})
-     * when reconstructing transactions from disk.
-     * </p>
-     * <p>
-     * Business logic should NOT call this method directly.
-     * </p>
+     * This method is intended exclusively for persistence
+     * and infrastructure operations.
      *
-     * @param date   transaction completion date, or {@code null} if pending
+     * @param date transaction completion date
      * @param status persisted transaction status
-     * @param price  persisted total transaction price
+     * @param price persisted transaction total
      */
     public void restoreFromPersistence(
             LocalDate date,
             TransactionStatus status,
             double price
     ) {
+
         this.transactionDate = date;
         this.status = status;
         this.transactionPrice = price;

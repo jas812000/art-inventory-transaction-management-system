@@ -4,9 +4,13 @@
  */
 package com.artstore.gui.panel;
 
+import com.artstore.utilities.PageResetHelper;
+import com.artstore.utilities.Resettable;
 import com.artstore.core.ArtInventoryManager;
 import com.artstore.model.Art;
 import com.artstore.utilities.ArtFormatter;
+
+import com.artstore.utilities.PageNavigationHelper;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,7 +28,7 @@ import java.util.stream.Collectors;
  * and sort the displayed artwork list by common attributes.
  * </p>
  */
-public class ListArtPanel extends JPanel {
+public class ListArtPanel extends JPanel implements Resettable {
 
     /**
      * Constructs a {@code ListArtPanel} that lists inventory items with sorting and filtering controls.
@@ -97,9 +101,15 @@ public class ListArtPanel extends JPanel {
         returnButton.setFont(new Font("Papyrus", Font.BOLD, 16));
         returnButton.addActionListener(e -> {
             Container parent = getParent();
-            if (parent != null && parent.getLayout() instanceof CardLayout layout) {
-                layout.first(parent);
-            }
+            if (parent instanceof JPanel mainPanel
+        && parent.getLayout() instanceof CardLayout layout) {
+
+    PageNavigationHelper.navigate(
+            layout,
+            mainPanel,
+            "Home"
+    );
+}
         });
 
         JPanel bottomPanel = new JPanel();
@@ -171,4 +181,14 @@ public class ListArtPanel extends JPanel {
             }
         });
     }
+
+    /**
+     * Restores temporary input and selection controls
+     * when leaving this page.
+     */
+    @Override
+    public void resetPage() {
+        PageResetHelper.resetControls(this);
+    }
+
 }

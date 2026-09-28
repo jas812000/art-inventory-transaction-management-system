@@ -6,23 +6,20 @@ import com.artstore.model.Print;
 import com.artstore.model.enums.Category;
 import com.artstore.model.enums.EditionType;
 import com.artstore.model.enums.ItemStatus;
-import com.config.EnvironmentConfig;
 import org.junit.jupiter.api.*;
-
+import org.junit.jupiter.api.io.TempDir;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for {@link ArtInventoryManager}.
+ *
  * <p>
- * These tests verify core inventory behavior including:
+ * These tests verify core inventory behavior, including:
  * <ul>
  *     <li>Adding and retrieving artwork</li>
  *     <li>Removing existing and non-existing artwork</li>
@@ -30,9 +27,11 @@ import static org.junit.jupiter.api.Assertions.*;
  *     <li>Loading inventory data back into memory</li>
  * </ul>
  * </p>
+ *
  * <p>
- * All tests are executed in {@code test} runtime mode and use a
- * dedicated inventory directory.
+ * Each test uses a JUnit-managed {@link org.junit.jupiter.api.io.TempDir}
+ * to provide isolated temporary storage. Tests do not depend on global
+ * runtime configuration or access live application inventory files.
  * </p>
  */
 class ArtInventoryManagerTest {
@@ -42,48 +41,40 @@ class ArtInventoryManagerTest {
      */
     private ArtInventoryManager inventory;
 
+    /**
+     * JUnit-managed temporary directory for isolated inventory tests.
+     */
+    @TempDir
+    Path tempDirectory;
+
+    /**
+     * Inventory file used by the current test.
+     */
+    private Path inventoryFile;
+
     /*
      * Static initializer for test-wide configuration and logging.
      */
     static {
-        System.setProperty("runtime.mode", "test");
         System.out.println(
                 "=== ArtInventoryManagerTest: Tests core functionality of adding, retrieving, and removing art pieces from the inventory ==="
         );
     }
 
     /**
-     * Sets up a clean test environment before each test.
+     * Creates an isolated inventory file and initializes
+     * the inventory with one known artwork before each test.
      * <p>
-     * This method:
-     * <ul>
-     *     <li>Ensures test runtime mode is enabled</li>
-     *     <li>Deletes any existing inventory files</li>
-     *     <li>Initializes the inventory with one known {@link Print}</li>
-     * </ul>
-     * </p>
-     *
-     * @throws IOException if file cleanup fails
+     * @throws IOException if temporary file cleanup fails
      */
     @BeforeEach
     void setup() throws IOException {
-        System.setProperty("runtime.mode", "test");
 
-        Path testInventoryDir = Paths.get(EnvironmentConfig.getInventoryDirectory());
-        if (Files.exists(testInventoryDir)) {
-            try (Stream<Path> paths = Files.walk(testInventoryDir)) {
-                paths.filter(Files::isRegularFile)
-                        .forEach(path -> {
-                            try {
-                                Files.delete(path);
-                            } catch (IOException e) {
-                                throw new UncheckedIOException(e);
-                            }
-                        });
-            }
-        }
+        inventoryFile = tempDirectory.resolve("inventory.csv");
 
-        inventory = new ArtInventoryManager();
+        Files.deleteIfExists(inventoryFile);
+
+        inventory = new ArtInventoryManager(inventoryFile);
 
         Art artPiece = new Print(
                 "1111111111",
@@ -114,7 +105,7 @@ class ArtInventoryManagerTest {
         assertEquals(1, allArt.size(), "Inventory should contain exactly one item");
         System.out.println("\t\tPassed: Art inventory contains 1 item after addition");
 
-        Art art = allArt.get(0);
+        Art art = allArt.getFirst();
         assertEquals("Print Art", art.getTitle(), "Art title should match expected value");
         System.out.println("\t\tPassed: Correct art title retrieved");
     }
@@ -157,16 +148,16 @@ class ArtInventoryManagerTest {
      */
     @Test
     void testSaveAndLoadInventory() throws IOException {
-        System.setProperty("runtime.mode", "test");
 
         System.out.println(
                 "\tRunning test: testSaveAndLoadInventory - Verifies inventory is saved to file and accurately reloaded"
         );
 
-        Path file = Paths.get(EnvironmentConfig.getInventoryDirectory(), "inventory.csv");
+        Path file = inventoryFile;
         Files.deleteIfExists(file);
 
-        ArtInventoryManager freshManager = new ArtInventoryManager();
+        ArtInventoryManager freshManager =
+                new ArtInventoryManager(file);
         Art art = new Print(
                 "1112223334",
                 120.00,
@@ -183,7 +174,8 @@ class ArtInventoryManagerTest {
         freshManager.saveInventoryToFile();
         System.out.println("\t\tPassed: Inventory saved to file");
 
-        ArtInventoryManager loadedManager = new ArtInventoryManager();
+        ArtInventoryManager loadedManager =
+                new ArtInventoryManager(file);
         loadedManager.loadInventoryFromFile();
         System.out.println("\t\tPassed: Inventory loaded from file");
 
@@ -192,7 +184,7 @@ class ArtInventoryManagerTest {
         assertEquals(1, loadedArt.size(), "Exactly one art piece should be loaded");
         System.out.println("\t\tPassed: Correct number of art pieces loaded");
 
-        Art loaded = loadedArt.get(0);
+        Art loaded = loadedArt.getFirst();
         assertEquals("1112223334", loaded.getArtIdentification(), "Loaded art ID should match");
         System.out.println("\t\tPassed: Art ID matches");
 

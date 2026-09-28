@@ -4,6 +4,8 @@
  */
 package com.artstore.gui.panel;
 
+import com.artstore.utilities.PageResetHelper;
+import com.artstore.utilities.Resettable;
 import com.artstore.core.TransactionManager;
 import com.artstore.gui.InventoryEventBroadcaster;
 import com.artstore.model.Transaction;
@@ -13,6 +15,8 @@ import com.artstore.utilities.TransactionFormatter;
 
 import java.util.HashMap;
 import java.util.Map;
+import com.artstore.utilities.PageNavigationHelper;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
@@ -28,7 +32,7 @@ import java.util.Optional;
  * and removing a pending transaction after user confirmation.
  * </p>
  */
-public class RemoveOrderPanel extends JPanel implements InventoryChangeListener {
+public class RemoveOrderPanel extends JPanel implements Resettable, InventoryChangeListener {
 
     /**
      * Transaction manager used to query and remove transactions.
@@ -59,6 +63,9 @@ public class RemoveOrderPanel extends JPanel implements InventoryChangeListener 
      * Button used to remove a selected pending transaction.
      */
     private final JButton removeButton = new JButton("Remove Transaction");
+
+    /** Shared inline confirmation and operation status for this screen. */
+    private final InlineFeedbackPanel feedback = new InlineFeedbackPanel();
 
     /**
      * Dropdown controlling the sort order for pending transaction listings.
@@ -169,6 +176,16 @@ public class RemoveOrderPanel extends JPanel implements InventoryChangeListener 
         gbc.weighty = 0;
         add(buttonPanel, gbc);
 
+        // Inline confirmation and feedback directly below the remove button.
+        GridBagConstraints feedbackConstraints = new GridBagConstraints();
+        feedbackConstraints.gridx = 0;
+        feedbackConstraints.gridy = 20;
+        feedbackConstraints.gridwidth = 2;
+        feedbackConstraints.weightx = 1;
+        feedbackConstraints.fill = GridBagConstraints.HORIZONTAL;
+        feedbackConstraints.insets = new Insets(5, 5, 5, 5);
+        add(feedback, feedbackConstraints);
+
         /*
          * Return to menu navigation
          */
@@ -176,9 +193,15 @@ public class RemoveOrderPanel extends JPanel implements InventoryChangeListener 
         returnButton.setFont(new Font("Papyrus", Font.BOLD, 16));
         returnButton.addActionListener(e -> {
             Container parent = getParent();
-            if (parent != null && parent.getLayout() instanceof CardLayout layout) {
-                layout.first(parent);
-            }
+            if (parent instanceof JPanel mainPanel
+        && parent.getLayout() instanceof CardLayout layout) {
+
+    PageNavigationHelper.navigate(
+            layout,
+            mainPanel,
+            "Home"
+    );
+}
         });
 
         JPanel returnPanel = new JPanel();
@@ -217,38 +240,33 @@ public class RemoveOrderPanel extends JPanel implements InventoryChangeListener 
             Transaction transaction = labelToTransactionMap.get(selectedLabel);
 
             if (transaction == null) {
-                transactionDetailsArea.setText("No transaction selected.");
+                feedback.error("Select a pending transaction to remove.");
                 return;
             }
 
             if (!transaction.isPending()) {
-                transactionDetailsArea.setText("Only pending orders can be removed.");
+                feedback.error("Only pending orders can be removed.");
                 return;
             }
 
-            int confirm = JOptionPane.showConfirmDialog(
-                    this,
-                    "Are you sure you want to remove this transaction?",
-                    "Confirm Removal",
-                    JOptionPane.YES_NO_OPTION
-            );
-
-            if (confirm != JOptionPane.YES_OPTION) {
-                return;
-            }
-
-            /*
-             * Remove the transaction and persist related inventory changes.
-             */
-            transactionManager.removeTransaction(transaction.getTransactionId());
-            createOrder.onInventoryChanged();
-
-            refreshDropdown.run();
-
-            transactionDetailsArea.setText(
-                    "Transaction removed successfully. Art pieces have been unreserved."
-            );
-            transactionDropdown.setSelectedItem(null);
+            // Inline confirmation replaces the modal removal dialog.
+            feedback.confirm("Remove order " + transaction.getTransactionId() + "?", "Confirm Removal", () -> {
+                try {
+                    if (!transaction.isPending()) {
+                        feedback.error("This order is no longer pending.");
+                        refreshDropdown.run();
+                        return;
+                    }
+                    transactionManager.removeTransaction(transaction.getTransactionId());
+                    createOrder.onInventoryChanged();
+                    refreshDropdown.run();
+                    transactionDropdown.setSelectedItem(null);
+                    transactionDetailsArea.setText("");
+                    feedback.success("Transaction removed; its artwork has been unreserved.");
+                } catch (RuntimeException ex) {
+                    feedback.error("Could not remove transaction: " + ex.getMessage());
+                }
+            });
         });
     }
 
@@ -298,4 +316,14 @@ public class RemoveOrderPanel extends JPanel implements InventoryChangeListener 
     public void onInventoryChanged() {
         populateTransactionDropdown();
     }
+
+    /**
+     * Restores temporary input and selection controls
+     * when leaving this page.
+     */
+    @Override
+    public void resetPage() {
+        PageResetHelper.resetControls(this);
+    }
+
 }

@@ -183,12 +183,16 @@ class FullTransactionPersistenceTest {
     }
 
     /**
-     * Creates a standard {@link ArtInventoryManager} for tests.
+     * Creates an inventory manager using isolated temporary storage.
      *
-     * @return a new {@link ArtInventoryManager}
+     * @return an ArtInventoryManager configured with a temporary inventory file
      */
     private static ArtInventoryManager createInventoryManager() {
-        return new ArtInventoryManager();
+        Path inventoryFile = tempDir.resolve(
+                "Art_Inventory_Files/inventory.csv"
+        );
+
+        return new ArtInventoryManager(inventoryFile);
     }
 
     /**
